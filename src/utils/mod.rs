@@ -150,11 +150,18 @@ fn three_pts_ladder(m: Vec<bool>, points: (BigUint, BigUint, BigUint), c: &Curve
         c: BigUint::from(1 as u8),
     };
 
+    let mut p0 = p0;
+    let mut p1 = p1;
+    let mut p2 = p2;
     for b in m {
         if b {
-            let (p0, p1) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            let (p0v, p1v) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            p0 = p0v;
+            p1 = p1v;
         } else {
-            let (p0, p2) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            let (p0v, p2v) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            p0 = p0v;
+            p2 = p2v;
         }
     }
 
