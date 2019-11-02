@@ -210,12 +210,12 @@ fn get_curve_coefficient(points: (BigUint, BigUint, BigUint)) -> Curve {
     let a = a - (1 as u8);
 
     let t0 = &t0 + &t0;
-    let t1 = t1 + &x_pq; // <- Please check
+    let t1 = t1 + &x_pq;
     let t0 = &t0 + &t0;
 
     let a = &a * &a;
     let a = a / &t0;
-    let a = a - (1 as u8);
+    let a = a - &t1;
 
     Curve {
         a,
