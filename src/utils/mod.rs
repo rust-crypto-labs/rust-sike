@@ -23,7 +23,7 @@ struct Curve {
     c: BigUint,
 }
 
-// Point Doubling 
+// Point Doubling
 // Alg 3 (p54)
 fn double(p: &Point, c: &Curve) -> Point {
     let t0 = &p.x - &p.z;
@@ -46,9 +46,9 @@ fn double(p: &Point, c: &Curve) -> Point {
 // Repeated point doubling
 // Alg 4 (p55)
 fn ndouble(p: Point, c: &Curve, n: u64) -> Point {
-    let point = p;
-    for i in 0..n {
-        let point = double(&point, c);
+    let mut point = p;
+    for _ in 0..n {
+        point = double(&point, c);
     }
     point
 }
@@ -121,9 +121,9 @@ fn triple(p: &Point, c: &Curve) -> Point {
 // Repeated point tripling
 // Alg 7 (p56)
 fn ntriple(p: Point, c: &Curve, n: u64) -> Point {
-    let point = p;
-    for i in 0..n {
-        let point = triple(&point, c);
+    let mut point = p;
+    for _ in 0..n {
+        point = triple(&point, c);
     }
     point
 }
@@ -184,14 +184,12 @@ fn j_invariant(c: &Curve) -> BigUint {
     let t0 = &t0 + &t0;
     let t0 = &t0 + &t0;
 
-    let j = &t0 / j;
-
-    j
+    &t0 / j
 }
 
 // Recovering Montgomery curve coefficient
 // Algo 10 (p57)
-// NOTE: Here we return the curve directly instead of juste the coefficient
+// NOTE: Here we return the curve directly instead of just the coefficient
 fn get_curve_coefficient(points: (BigUint, BigUint, BigUint)) -> Curve {
     let (x_p, x_q, x_pq) = points;
 
@@ -205,7 +203,7 @@ fn get_curve_coefficient(points: (BigUint, BigUint, BigUint)) -> Curve {
     let a = a - (1 as u8);
 
     let t0 = &t0 + &t0;
-    let t1 = t1 + &x_pq;
+    let t1 = t1 + &x_pq; // <- Please check
     let t0 = &t0 + &t0;
 
     let a = &a * &a;
@@ -393,7 +391,7 @@ fn three_e_iso(
 
 // Computing public key on the 2-torsion
 // Algo 21 (p62)
-// MOTE: p belongs to the input but is not used ... Missing something ?
+// NOTE: p belongs to the input but is not used ... Missing something ?
 pub fn isogen2(sk: Vec<bool>) -> (BigUint, BigUint, BigUint) {
     let (c1, c2) = (
         Curve {
