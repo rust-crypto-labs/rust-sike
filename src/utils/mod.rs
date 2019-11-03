@@ -64,6 +64,18 @@ impl<K: FiniteField + Copy> Curve<K> {
         Self { a, c }
     }
 
+    /// Starting curve 1.3.2
+    /// Curve with equation y² = x³ + 6x² + x
+     fn starting_curve() -> Curve<K> {
+        let one = K::one();
+        let two = one.add(&one);
+        let three = two.add(&one);
+        let six = two.mul(&three);
+
+        Curve::from_coeffs(six, one)
+    }
+
+
     // Montgomery j-invariant Algo 9 (p56)
     fn j_invariant(&self) -> K {
         let j = self.a.mul(&self.a); // 1.
@@ -87,37 +99,11 @@ impl<K: FiniteField + Copy> Curve<K> {
 
         j
     }
-}
 
-pub struct PublicParameters<K> {
-    e2: u64,
-    e3: u64,
-    xp2: K,
-    xq2: K,
-    xr2: K,
-    xp3: K,
-    xq3: K,
-    xr3: K,
-}
-pub struct CurveIsogenies<K> {
-    params: PublicParameters<K>,
-}
-
-impl<K: FiniteField + Copy> CurveIsogenies<K> {
-    /// Starting curve 1.3.2
-    /// Curve with equation y² = x³ + 6x² + x
-    pub fn starting_curve() -> Curve<K> {
-        let one = K::one();
-        let two = one.add(&one);
-        let three = two.add(&one);
-        let six = two.mul(&three);
-
-        Curve::from_coeffs(six, one)
-    }
 
     /// Algorithm 1.2.1 "cfpk"
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
-    pub fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
+    fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
         let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
 
         if x_p.is_zero() || x_q.is_zero() || x_r.is_zero() {
@@ -136,6 +122,28 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
 
         Some(Curve::from_coeffs(a, c))
     }
+}
+
+pub struct PublicParameters<K> {
+    e2: u64,
+    e3: u64,
+    xp2: K,
+    xq2: K,
+    xr2: K,
+    xp3: K,
+    xq3: K,
+    xr3: K,
+}
+pub struct CurveIsogenies<K> {
+    params: PublicParameters<K>,
+}
+
+impl<K: FiniteField + Copy> CurveIsogenies<K> {
+
+    pub fn init(params: PublicParameters<K>) -> Self {
+        Self { params }
+    }
+
 
     /// Coordinate doubling Algorithm xDBL 3 p. 54
     /// Input: P. Output: [2]P
@@ -582,7 +590,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
-        let curve = Self::from_public_key(pk).unwrap();
+        let curve = Curve::from_public_key(pk).unwrap();
 
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
         let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
@@ -604,7 +612,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
     pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
         let one = K::one();
         let two = one.add(&one);
-        let curve = Self::from_public_key(pk).unwrap();
+        let curve = Curve::from_public_key(pk).unwrap();
 
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
         let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
