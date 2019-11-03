@@ -1,5 +1,3 @@
-
-
 use crate::ff::FiniteField;
 
 // Public parameter: Depends SIKE Implem
@@ -49,26 +47,77 @@ impl<K: FiniteField + Clone> Point<K> {
 }
 
 /// Montgomery M_{A,1} Curve defined by (A : C) in projective cooridnates
-pub struct Curve<K: FiniteField + Clone> {
+pub struct Curve<K> {
     a: K,
     c: K,
 }
 
-impl<K: FiniteField + Clone> Curve<K> {
+impl<K: FiniteField + Copy> Curve<K> {
+    pub fn clone(&self) -> Self {
+        Self {
+            a: self.a,
+            c: self.c,
+        }
+    }
+
+    pub fn from_coeffs(a: K, c: K) -> Self {
+        Self { a, c }
+    }
+
+    // Montgomery j-invariant Algo 9 (p56)
+    fn j_invariant(&self) -> K {
+        let j = self.a.mul(&self.a); // 1.
+        let t1 = self.c.mul(&self.c); //2.
+        let t0 = t1.add(&t1); // 3.
+        let t0 = j.sub(&t0); // 4.
+        let t0 = t0.sub(&t1); //5.
+
+        let j = t0.sub(&t1); // 6.
+        let t1 = t1.mul(&t1); //7.
+        let j = j.mul(&t1); // 8.
+        let t0 = t0.add(&t0); // 9.
+        let t0 = t0.add(&t0); // 10.
+
+        let t1 = t0.mul(&t0); // 11.
+        let t0 = t0.mul(&t1); // 12.
+        let t0 = t0.add(&t0); // 13.
+        let t0 = t0.add(&t0); // 14.
+        let j = j.inv(); // 15.
+        let j = t0.mul(&j);
+
+        j
+    }
+}
+
+pub struct PublicParameters<K> {
+    e2: u64,
+    e3: u64,
+    xp2: K,
+    xq2: K,
+    xr2: K,
+    xp3: K,
+    xq3: K,
+    xr3: K,
+}
+pub struct CurveIsogenies<K> {
+    params: PublicParameters<K>,
+}
+
+impl<K: FiniteField + Copy> CurveIsogenies<K> {
     /// Starting curve 1.3.2
     /// Curve with equation y² = x³ + 6x² + x
-    pub fn starting_curve() -> Self {
+    pub fn starting_curve() -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
         let three = two.add(&one);
         let six = two.mul(&three);
 
-        Self { a: six, c: one }
+        Curve::from_coeffs(six, one)
     }
 
     /// Algorithm 1.2.1 "cfpk"
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
-    pub fn from_public_key(pk: &PublicKey<K>) -> Option<Self> {
+    pub fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
         let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
 
         if x_p.is_zero() || x_q.is_zero() || x_r.is_zero() {
@@ -85,12 +134,12 @@ impl<K: FiniteField + Clone> Curve<K> {
         let a = frac.sub(&x_p).sub(&x_q).sub(&x_r);
         let c = K::one();
 
-        Some(Self { a, c })
+        Some(Curve::from_coeffs(a, c))
     }
 
     /// Coordinate doubling Algorithm xDBL 3 p. 54
     /// Input: P. Output: [2]P
-    fn double(p: &Point<K>, curve: &Self) -> Point<K> {
+    fn double(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
         let a_24_plus = &curve.a;
         let c_24 = &curve.c;
 
@@ -110,7 +159,7 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     // Repeated coordinate doubling xDBLe Alg 4 (p55)
     // Input: P, e. Output : [2^e]P
-    fn ndouble(p: Point<K>, e: u64, curve: &Self) -> Point<K> {
+    fn ndouble(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {
         let mut point = p;
         for _ in 0..e {
             point = Self::double(&point, curve);
@@ -154,7 +203,7 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     /// Coordinate tripling xTPL Algorithm 6 (p55)
     /// Input: P. Output: [3]P
-    fn triple(p: &Point<K>, curve: &Self) -> Point<K> {
+    fn triple(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
         let a_24_plus = &curve.a;;
         let a_24_minus = &curve.c;
 
@@ -189,7 +238,7 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     /// Repeated point tripling xTPLe Alg 7 (p56)
     /// Input: P, e. Output: [E^e]P
-    fn ntriple(p: Point<K>, e: u64, curve: &Self) -> Point<K> {
+    fn ntriple(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {
         let mut point = p;
         for _ in 0..e {
             point = Self::triple(&point, curve);
@@ -200,7 +249,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     /// Three point ladder Ladder3pt Alg 8 (p56)
     /// Input: m (binary), x_p, x_q, x_(Q-P)
     /// Output: P + [m]Q
-    fn three_pts_ladder(m: &[bool], x_p: K, x_q: K, x_qmp: K, curve: &Self) -> Point<K> {
+    fn three_pts_ladder(m: &[bool], x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
         let mut p0 = Point::from_x(x_q);
         let mut p1 = Point::from_x(x_p);
         let mut p2 = Point::from_x(x_qmp);
@@ -222,33 +271,10 @@ impl<K: FiniteField + Clone> Curve<K> {
         p1
     }
 
-    // Montgomery j-invariant Algo 9 (p56)
-    fn j_invariant(&self) -> K {
-        let j = self.a.mul(&self.a); // 1.
-        let t1 = self.c.mul(&self.c); //2.
-        let t0 = t1.add(&t1); // 3.
-        let t0 = j.sub(&t0); // 4.
-        let t0 = t0.sub(&t1); //5.
-
-        let j = t0.sub(&t1); // 6.
-        let t1 = t1.mul(&t1); //7.
-        let j = j.mul(&t1); // 8.
-        let t0 = t0.add(&t0); // 9.
-        let t0 = t0.add(&t0); // 10.
-
-        let t1 = t0.mul(&t0); // 11.
-        let t0 = t0.mul(&t1); // 12.
-        let t0 = t0.add(&t0); // 13.
-        let t0 = t0.add(&t0); // 14.
-        let j = j.inv(); // 15.
-        let j = t0.mul(&j);
-
-        j
-    }
     /// Recovering Montgomery curve coefficient get_A Algo 10 (p57)
     /// Input: x_p, x_q, x_(Q-P)
     /// Output: A
-    fn from_points(x_p: K, x_q: K, x_qmp: K) -> Self {
+    fn from_points(x_p: K, x_q: K, x_qmp: K) -> Curve<K> {
         let t1 = x_p.add(&x_q); //1.
         let t0 = x_p.mul(&x_q); //2.
         let a = x_qmp.mul(&t1); //3.
@@ -266,18 +292,18 @@ impl<K: FiniteField + Clone> Curve<K> {
 
         let a = a.sub(&t1); // 13.
 
-        Self { a, c: K::one() }
+        Curve::from_coeffs(a, K::one())
     }
 
     /// Computing the two-isogenous curve 2_iso_curve Algo 11 (p57)
     /// Input: P of order 2 on the curve
     /// Output: E/<P>
-    fn two_isogenous_curve(&self, p: &Point<K>) -> Self {
+    fn two_isogenous_curve(&self, p: &Point<K>) -> Curve<K> {
         let a = p.x.mul(&p.x); // 1.
         let c = p.z.mul(&p.z); // 2.
         let a = a.sub(&c); //3.
 
-        Self { a, c }
+        Curve::from_coeffs(a, c)
     }
 
     /// Evaluate the two-isogeny at a point 2_iso_eval Algo 12 (p57)
@@ -301,7 +327,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     /// Computing the four-isogenous curve 4_iso_curve Algo 13 (p57)
     /// Input: P of order 4.  
     /// Output: E/<P> and constants k1, k2, k3
-    fn four_isogenous_curve(p: &Point<K>) -> (Self, K, K, K) {
+    fn four_isogenous_curve(p: &Point<K>) -> (Curve<K>, K, K, K) {
         let k2 = p.x.sub(&p.z); // 1.
         let k3 = p.x.add(&p.z); // 2.
         let k1 = p.z.mul(&p.z); // 3.
@@ -312,7 +338,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         let a = a.add(&a); // 8.
         let a = a.mul(&a); // 9.
 
-        (Curve { a, c }, k1, k2, k3)
+        (Curve::from_coeffs(a, c), k1, k2, k3)
     }
 
     /// Evaluate the four-isogeny at a point 4_iso_eval Algo 14 (p58)
@@ -343,7 +369,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     /// Computing the three-isogenious curve 3_iso_curve Algo 15 (p58)
     /// Input; P of order 3
     /// Output E/<P> and constants k1, k2
-    fn three_isogenious_curve(p: &Point<K>) -> (Self, K, K) {
+    fn three_isogenious_curve(p: &Point<K>) -> (Curve<K>, K, K) {
         let k1 = p.x.sub(&p.z); // 1.
         let t0 = k1.mul(&k1); // 2.
         let k2 = p.x.add(&p.z); // 3.
@@ -368,7 +394,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         let t0 = t4.sub(&c); // 19.
         let a = c.add(&t0); // 20.
 
-        (Self { a, c }, k1, k2)
+        (Curve::from_coeffs(a, c), k1, k2)
     }
     /// Evaluate the three-isogeny at a point 3_iso_eval Algo 16 (p58)
     /// Input: k1, k2, Q
@@ -398,13 +424,10 @@ impl<K: FiniteField + Clone> Curve<K> {
     fn two_e_iso(
         s: Point<K>,
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
-        curve: &Self,
-    ) -> (Self, Option<(Point<K>, Point<K>, Point<K>)>) {
+        curve: &Curve<K>,
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
         let opt_input = opt.is_some();
-        let mut c = Self {
-            a: curve.a.clone(),
-            c: curve.c.clone(),
-        };
+        let mut c = curve.clone();
         let mut s = s;
 
         if !opt_input {
@@ -439,19 +462,17 @@ impl<K: FiniteField + Clone> Curve<K> {
     /// Optional output: three points on the new curve
 
     fn three_e_iso(
+        &self,
         s: Point<K>,
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
-        curve: &Self,
-    ) -> (Self, Option<(Point<K>, Point<K>, Point<K>)>) {
+        curve: &Curve<K>,
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
         let opt_input = opt.is_some();
-        let mut c = Self {
-            a: curve.a.clone(),
-            c: curve.c.clone(),
-        };
+        let mut c = curve.clone();
         let mut s = s;
 
         if !opt_input {
-            for e in (0..=SIKE_E3 - 1).rev() {
+            for e in (0..=self.params.e3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
                 let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
                 c = new_c;
@@ -461,7 +482,7 @@ impl<K: FiniteField + Clone> Curve<K> {
             (c, None)
         } else {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..=SIKE_E3 - 1).rev() {
+            for e in (0..=self.params.e3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
                 let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
                 c = new_c;
@@ -475,46 +496,26 @@ impl<K: FiniteField + Clone> Curve<K> {
         }
     }
 
-    fn get_xp2() -> K {
-        unimplemented!()
-    }
-    fn get_xq2() -> K {
-        unimplemented!()
-    }
-    fn get_xr2() -> K {
-        unimplemented!()
-    }
-
-    fn get_xp3() -> K {
-        unimplemented!()
-    }
-    fn get_xq3() -> K {
-        unimplemented!()
-    }
-    fn get_xr3() -> K {
-        unimplemented!()
-    }
-
     /// Computing public key on the 2-torsion, isogen_2 Algo 21 (p62)
     /// Input: sk secret key
     /// Output: public key
-    pub fn isogen2(sk: &SecretKey) -> PublicKey<K> {
+    pub fn isogen2(&self, sk: &SecretKey) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
         let six = two.add(&four);
         let eight = four.add(&four);
 
-        let curve = Self { a: six, c: one };
-        let curve_plus = Self { a: eight, c: four };
+        let curve = Curve::from_coeffs(six, one);
+        let curve_plus = Curve::from_coeffs(eight, four);
 
-        let xp2 = Self::get_xp2();
-        let xq2 = Self::get_xq2();
-        let xr2 = Self::get_xr2();
+        let xp2 = self.params.xp2;
+        let xq2 = self.params.xq2;
+        let xr2 = self.params.xr2;
 
-        let xp3 = Self::get_xp3();
-        let xq3 = Self::get_xq3();
-        let xr3 = Self::get_xr3();
+        let xp3 = self.params.xp3;
+        let xq3 = self.params.xq3;
+        let xr3 = self.params.xr3;
 
         let p1 = Point::from_x(xp3);
         let p2 = Point::from_x(xq3);
@@ -538,23 +539,23 @@ impl<K: FiniteField + Clone> Curve<K> {
     /// Input: secret key
     /// Output: public key
 
-    pub fn isogen3(sk: &SecretKey) -> PublicKey<K> {
+    pub fn isogen3(&self, sk: &SecretKey) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
         let six = two.add(&four);
         let eight = four.add(&four);
 
-        let curve_plus = Self { a: six, c: one };
-        let curve_minus = Self { a: eight, c: four };
+        let curve_plus = Curve::from_coeffs(six, one);
+        let curve_minus = Curve::from_coeffs(eight, four);
 
-        let xp2 = Self::get_xp2();
-        let xq2 = Self::get_xq2();
-        let xr2 = Self::get_xr2();
+        let xp2 = self.params.xp2;
+        let xq2 = self.params.xq2;
+        let xr2 = self.params.xr2;
 
-        let xp3 = Self::get_xp3();
-        let xq3 = Self::get_xq3();
-        let xr3 = Self::get_xr3();
+        let xp3 = self.params.xp3;
+        let xq3 = self.params.xq3;
+        let xr3 = self.params.xr3;
 
         let p1 = Point::from_x(xp2);
         let p2 = Point::from_x(xq2);
@@ -563,7 +564,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         let s = Self::three_pts_ladder(&sk.bits, xp3, xq3, xr3, &curve_plus);
 
         let opt = Some((p1, p2, p3));
-        let (_, opt) = Self::three_e_iso(s, opt, &curve_minus);
+        let (_, opt) = self.three_e_iso(s, opt, &curve_minus);
 
         let (p1, p2, p3) = opt.unwrap();
 
@@ -577,7 +578,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     /// Establishing shared keys on the 2-torsion, isoex_2, Algo 23 (p63)
     /// Input; secret key, public key
     /// Output: j-invariant
-    pub fn isoex2(sk: &SecretKey, pk: &PublicKey<K>) -> K {
+    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -586,16 +587,13 @@ impl<K: FiniteField + Clone> Curve<K> {
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
         let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
 
-        let curve_plus = Self {
-            a: curve.a.add(&two),
-            c: four.clone(),
-        };
+        let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
         let (curve_plus, _) = Self::two_e_iso(s, None, &curve_plus);
 
-        let curve = Self {
-            a: curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),
-            c: curve_plus.c,
-        };
+        let curve = Curve::from_coeffs(
+            curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),
+            curve_plus.c,
+        );
 
         curve.j_invariant()
     }
@@ -603,7 +601,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     /// Establishing shared keys on the 3-torsion, Algo 24 (p63)
     /// Input: secret key, public key
     /// Output: a j-invariant
-    pub fn isoex3(sk: &SecretKey, pk: &PublicKey<K>) -> K {
+    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
         let one = K::one();
         let two = one.add(&one);
         let curve = Self::from_public_key(pk).unwrap();
@@ -611,16 +609,13 @@ impl<K: FiniteField + Clone> Curve<K> {
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
         let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
 
-        let curve_pm = Self {
-            a: curve.a.add(&two),
-            c: curve.a.sub(&two),
-        };
-        let (curve_pm, _) = Self::three_e_iso(s, None, &curve_pm);
+        let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
+        let (curve_pm, _) = self.three_e_iso(s, None, &curve_pm);
 
-        let curve = Self {
-            a: two.mul(&curve_pm.a.add(&curve_pm.c)),
-            c: curve_pm.a.sub(&curve_pm.c),
-        };
+        let curve = Curve::from_coeffs(
+            two.mul(&curve_pm.a.add(&curve_pm.c)),
+            curve_pm.a.sub(&curve_pm.c),
+        );
 
         curve.j_invariant()
     }
