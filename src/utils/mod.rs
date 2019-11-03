@@ -1,8 +1,7 @@
 use crate::ff::FiniteField;
 
-// Public parameter: Depends SIKE Implem
-const SIKE_E2: u64 = 10; // TBD
-const SIKE_E3: u64 = 10; // TBD
+pub mod constants;
+pub mod conversion;
 
 /// Secret key
 pub struct SecretKey {
@@ -11,6 +10,10 @@ pub struct SecretKey {
 
 impl SecretKey {
     pub fn get_random_secret_key(_size: usize) -> Self {
+        unimplemented!()
+    }
+
+    pub fn from_bits(bits: &[bool]) -> Self {
         unimplemented!()
     }
 }
@@ -29,6 +32,12 @@ impl<K: FiniteField> PublicKey<K> {
 
     pub fn from_bits(_bits: &[bool]) -> Self {
         unimplemented!()
+    }
+}
+
+impl<K: FiniteField> std::cmp::PartialEq for PublicKey<K> {
+    fn eq(&self, other: &Self) -> bool {
+        self.x1.equals(&other.x1) && self.x2.equals(&other.x2) && self.x3.equals(&other.x3)
     }
 }
 
@@ -66,7 +75,7 @@ impl<K: FiniteField + Copy> Curve<K> {
 
     /// Starting curve 1.3.2
     /// Curve with equation y² = x³ + 6x² + x
-     fn starting_curve() -> Curve<K> {
+    fn starting_curve() -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
         let three = two.add(&one);
@@ -74,7 +83,6 @@ impl<K: FiniteField + Copy> Curve<K> {
 
         Curve::from_coeffs(six, one)
     }
-
 
     // Montgomery j-invariant Algo 9 (p56)
     fn j_invariant(&self) -> K {
@@ -100,7 +108,6 @@ impl<K: FiniteField + Copy> Curve<K> {
         j
     }
 
-
     /// Algorithm 1.2.1 "cfpk"
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
     fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
@@ -125,25 +132,23 @@ impl<K: FiniteField + Copy> Curve<K> {
 }
 
 pub struct PublicParameters<K> {
-    e2: u64,
-    e3: u64,
-    xp2: K,
-    xq2: K,
-    xr2: K,
-    xp3: K,
-    xq3: K,
-    xr3: K,
+    pub e2: u64,
+    pub e3: u64,
+    pub xp2: K,
+    pub xq2: K,
+    pub xr2: K,
+    pub xp3: K,
+    pub xq3: K,
+    pub xr3: K,
 }
 pub struct CurveIsogenies<K> {
     params: PublicParameters<K>,
 }
 
 impl<K: FiniteField + Copy> CurveIsogenies<K> {
-
     pub fn init(params: PublicParameters<K>) -> Self {
         Self { params }
     }
-
 
     /// Coordinate doubling Algorithm xDBL 3 p. 54
     /// Input: P. Output: [2]P
@@ -430,6 +435,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
     /// Optional output: three points on the new curve
 
     fn two_e_iso(
+        &self,
         s: Point<K>,
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
         curve: &Curve<K>,
@@ -439,7 +445,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let mut s = s;
 
         if !opt_input {
-            for e in (0..SIKE_E2 - 2).rev().step_by(2) {
+            for e in (0..self.params.e2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
@@ -448,7 +454,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
             (c, None)
         } else {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..SIKE_E2 - 2).rev().step_by(2) {
+            for e in (0..self.params.e2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
@@ -533,7 +539,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
 
         let opt = Some((p1, p2, p3));
 
-        let (_, opt) = Self::two_e_iso(s, opt, &curve_plus);
+        let (_, opt) = self.two_e_iso(s, opt, &curve_plus);
 
         let (p1, p2, p3) = opt.unwrap();
 
@@ -596,7 +602,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
 
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
-        let (curve_plus, _) = Self::two_e_iso(s, None, &curve_plus);
+        let (curve_plus, _) = self.two_e_iso(s, None, &curve_plus);
 
         let curve = Curve::from_coeffs(
             curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),

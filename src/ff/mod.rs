@@ -10,10 +10,17 @@ pub trait FiniteField {
     fn sub(&self, other: &Self) -> Self;
     fn mul(&self, other: &Self) -> Self;
     fn div(&self, other: &Self) -> Self;
+    fn equals(&self, other: &Self) -> bool;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct PrimeField {}
+
+impl PrimeField {
+    pub fn from_string(s: &str) -> Self {
+        unimplemented!()
+    }
+}
 
 impl FiniteField for PrimeField {
     fn is_zero(&self) -> bool {
@@ -49,12 +56,21 @@ impl FiniteField for PrimeField {
     fn div(&self, _other: &Self) -> Self {
         unimplemented!()
     }
+    fn equals(&self, _other: &Self) -> bool {
+        unimplemented!()
+    }
 }
 
 #[derive(Clone)]
 pub struct QuadraticExtension<F: FiniteField> {
     a: F,
     b: F,
+}
+
+impl<F: FiniteField> QuadraticExtension<F> {
+    pub fn from(a: F, b: F) -> Self {
+        Self { a, b }
+    }
 }
 
 impl<F: FiniteField> FiniteField for QuadraticExtension<F> {
@@ -128,5 +144,9 @@ impl<F: FiniteField> FiniteField for QuadraticExtension<F> {
             a: inv_norm.mul(&self.a),
             b: inv_norm.mul(&self.b.inv()),
         }
+    }
+
+    fn equals(&self, other: &Self) -> bool {
+        self.a.equals(&other.a) && self.b.equals(&other.b)
     }
 }
