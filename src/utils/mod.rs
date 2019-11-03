@@ -1,10 +1,10 @@
-use num_bigint::BigUint;
+
 
 use crate::ff::FiniteField;
 
 // Public parameter: Depends SIKE Implem
-const e2: u64 = 10; // TBD
-const e3: u64 = 10; // TBD
+const SIKE_E2: u64 = 10; // TBD
+const SIKE_E3: u64 = 10; // TBD
 
 /// Secret key
 pub struct SecretKey {
@@ -12,7 +12,7 @@ pub struct SecretKey {
 }
 
 impl SecretKey {
-    pub fn get_random_secret_key(size: usize) -> Self {
+    pub fn get_random_secret_key(_size: usize) -> Self {
         unimplemented!()
     }
 }
@@ -29,7 +29,7 @@ impl<K: FiniteField> PublicKey<K> {
         unimplemented!()
     }
 
-    pub fn from_bits(bits: &[bool]) -> Self {
+    pub fn from_bits(_bits: &[bool]) -> Self {
         unimplemented!()
     }
 }
@@ -205,9 +205,6 @@ impl<K: FiniteField + Clone> Curve<K> {
         let mut p1 = Point::from_x(x_p);
         let mut p2 = Point::from_x(x_qmp);
 
-        let one = K::one();
-        let two = one.add(&one);
-        let four = two.add(&two);
         let a_24_plus = &curve.a;
 
         for &m_i in m {
@@ -411,7 +408,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         let mut s = s;
 
         if !opt_input {
-            for e in (0..e2 - 2).rev().step_by(2) {
+            for e in (0..SIKE_E2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
@@ -420,7 +417,7 @@ impl<K: FiniteField + Clone> Curve<K> {
             (c, None)
         } else {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..e2 - 2).rev().step_by(2) {
+            for e in (0..SIKE_E2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
@@ -454,7 +451,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         let mut s = s;
 
         if !opt_input {
-            for e in (0..=e3 - 1).rev() {
+            for e in (0..=SIKE_E3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
                 let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
                 c = new_c;
@@ -464,7 +461,7 @@ impl<K: FiniteField + Clone> Curve<K> {
             (c, None)
         } else {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..=e3 - 1).rev() {
+            for e in (0..=SIKE_E3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
                 let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
                 c = new_c;

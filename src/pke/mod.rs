@@ -32,7 +32,7 @@ impl PKE {
 
         let c0_bits = c0.to_bits();
         let h = Self::hash_j_invariant(j, c0_bits.len());
-        let c1_bits = Self::xor(&c0_bits, &h);
+        let c1_bits = Self::xor(&m.bits, &h);
 
         Ciphertext {
             bits0: c0_bits,
@@ -48,11 +48,11 @@ impl PKE {
         Message { bits: m }
     }
 
-    fn hash_j_invariant<K: FiniteField>(j: K, size: usize) -> Vec<bool> {
+    fn hash_j_invariant<K: FiniteField>(_j: K, _size: usize) -> Vec<bool> {
         unimplemented!()
     }
 
-    fn xor(input1: &[bool], input2: &[bool]) -> Vec<bool> {
+    fn xor(_input1: &[bool], _input2: &[bool]) -> Vec<bool> {
         unimplemented!()
     }
 }
