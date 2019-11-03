@@ -23,7 +23,7 @@ struct Curve {
     c: BigUint,
 }
 
-// Point Doubling 
+// Point Doubling
 // Alg 3 (p54)
 fn double(p: &Point, c: &Curve) -> Point {
     let t0 = &p.x - &p.z;
@@ -46,9 +46,9 @@ fn double(p: &Point, c: &Curve) -> Point {
 // Repeated point doubling
 // Alg 4 (p55)
 fn ndouble(p: Point, c: &Curve, n: u64) -> Point {
-    let point = p;
-    for i in 0..n {
-        let point = double(&point, c);
+    let mut point = p;
+    for _ in 0..n {
+        point = double(&point, c);
     }
     point
 }
@@ -121,9 +121,9 @@ fn triple(p: &Point, c: &Curve) -> Point {
 // Repeated point tripling
 // Alg 7 (p56)
 fn ntriple(p: Point, c: &Curve, n: u64) -> Point {
-    let point = p;
-    for i in 0..n {
-        let point = triple(&point, c);
+    let mut point = p;
+    for _ in 0..n {
+        point = triple(&point, c);
     }
     point
 }
@@ -150,11 +150,18 @@ fn three_pts_ladder(m: Vec<bool>, points: (BigUint, BigUint, BigUint), c: &Curve
         c: BigUint::from(1 as u8),
     };
 
+    let mut p0 = p0;
+    let mut p1 = p1;
+    let mut p2 = p2;
     for b in m {
         if b {
-            let (p0, p1) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            let (p0v, p1v) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            p0 = p0v;
+            p1 = p1v;
         } else {
-            let (p0, p2) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            let (p0v, p2v) = double_and_add(&p0, &p1, &p2, &curve_tmp);
+            p0 = p0v;
+            p2 = p2v;
         }
     }
 
@@ -184,14 +191,12 @@ fn j_invariant(c: &Curve) -> BigUint {
     let t0 = &t0 + &t0;
     let t0 = &t0 + &t0;
 
-    let j = &t0 / j;
-
-    j
+    &t0 / j
 }
 
 // Recovering Montgomery curve coefficient
 // Algo 10 (p57)
-// NOTE: Here we return the curve directly instead of juste the coefficient
+// NOTE: Here we return the curve directly instead of just the coefficient
 fn get_curve_coefficient(points: (BigUint, BigUint, BigUint)) -> Curve {
     let (x_p, x_q, x_pq) = points;
 
@@ -210,7 +215,7 @@ fn get_curve_coefficient(points: (BigUint, BigUint, BigUint)) -> Curve {
 
     let a = &a * &a;
     let a = a / &t0;
-    let a = a - (1 as u8);
+    let a = a - &t1;
 
     Curve {
         a,
@@ -393,7 +398,7 @@ fn three_e_iso(
 
 // Computing public key on the 2-torsion
 // Algo 21 (p62)
-// MOTE: p belongs to the input but is not used ... Missing something ?
+// NOTE: p belongs to the input but is not used ... Missing something ?
 pub fn isogen2(sk: Vec<bool>) -> (BigUint, BigUint, BigUint) {
     let (c1, c2) = (
         Curve {
