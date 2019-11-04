@@ -5,6 +5,7 @@ use crate::ff::FiniteField;
 pub mod constants;
 pub mod conversion;
 pub mod shake;
+pub mod strategy;
 
 /// Secret key
 pub struct SecretKey {
