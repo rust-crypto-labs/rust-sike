@@ -27,7 +27,7 @@ pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
 
         // 5.
         let mut new_s = vec![b as usize];
-        new_s.extend(&s[(i - b -1) as usize]);
+        new_s.extend(&s[(i - b - 1) as usize]);
         new_s.extend(&s[b as usize - 1]);
         s.push(new_s);
 
