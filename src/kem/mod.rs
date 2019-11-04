@@ -7,6 +7,8 @@ use crate::{
     },
 };
 
+use rand::prelude::*;
+
 use std::convert::TryInto;
 
 pub struct KEM<K> {
@@ -26,7 +28,7 @@ impl<K: FiniteField + Copy> KEM<K> {
 
     pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
         let nsk3 = str_to_u64(SIKE_P434_NKS3);
-        let sk3 = SecretKey::get_random_secret_key(nsk3);
+        let sk3 = SecretKey::get_random_secret_key(nsk3 as usize);
         let pk3 = self.pke.isogenies.isogen3(&sk3);
         let s = Self::random_string(self.n);
 
@@ -64,7 +66,9 @@ impl<K: FiniteField + Copy> KEM<K> {
     }
 
     fn random_string(size: usize) -> Vec<u8> {
-        unimplemented!()
+        let mut result = vec![0; size];
+        rand::rngs::OsRng.fill_bytes(&mut result);
+        result
     }
 
     fn hash_function_g(&self, m: &Message, r: &PublicKey<K>) -> Vec<u8> {

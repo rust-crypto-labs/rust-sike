@@ -66,7 +66,7 @@ impl FiniteField for PrimeField {
     }
 }
 
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub struct QuadraticExtension<F: FiniteField> {
     a: F,
     b: F,

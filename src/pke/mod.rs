@@ -44,14 +44,14 @@ impl<K: FiniteField + Copy> PKE<K> {
 
     pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
         let nks3 = str_to_u64(SIKE_P434_NKS3);
-        let sk3 = SecretKey::get_random_secret_key(nks3);
+        let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
         let pk3 = self.isogenies.isogen3(&sk3);
         (sk3, pk3)
     }
 
     pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
         let nks2 = str_to_u64(SIKE_P434_NKS2);
-        let sk2 = SecretKey::get_random_secret_key(nks2);
+        let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2);
         let j = self.isogenies.isoex2(&sk2, &pk);
 
