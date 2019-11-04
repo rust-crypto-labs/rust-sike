@@ -1,7 +1,11 @@
+use crate::utils::{constants::SIKE_P434_P, conversion::str_to_bigint};
+use num_bigint::BigInt;
+use num_traits::{One, Zero};
+
 pub trait FiniteField {
     fn is_zero(&self) -> bool;
     fn dimension() -> usize;
-    fn order() -> u128; // TODO: replace by BigInt
+    fn order() -> BigInt;
     fn zero() -> Self;
     fn one() -> Self;
     fn neg(&self) -> Self;
@@ -15,51 +19,72 @@ pub trait FiniteField {
     fn to_bytes(self) -> Vec<u8>;
 }
 
-#[derive(Clone, Copy)]
-pub struct PrimeField {}
+#[derive(Clone)]
+pub struct PrimeField_p434 {
+    val: BigInt,
+}
 
-impl PrimeField {
+impl PrimeField_p434 {
     pub fn from_string(s: &str) -> Self {
         unimplemented!()
     }
 }
 
-impl FiniteField for PrimeField {
+impl FiniteField for PrimeField_p434 {
     fn is_zero(&self) -> bool {
-        unimplemented!()
+        self.val == BigInt::zero()
     }
     fn dimension() -> usize {
-        unimplemented!()
+        1
     }
-    fn order() -> u128 {
-        unimplemented!()
+    fn order() -> BigInt {
+        str_to_bigint(SIKE_P434_P)
     }
     fn zero() -> Self {
-        unimplemented!()
+        Self {
+            val: BigInt::zero(),
+        }
     }
     fn one() -> Self {
-        unimplemented!()
+        Self { val: BigInt::one() }
     }
     fn neg(&self) -> Self {
-        unimplemented!()
+        Self {
+            val: Self::order() - &self.val,
+        }
     }
     fn inv(&self) -> Self {
-        unimplemented!()
+        let two = BigInt::one() + BigInt::one();
+        Self {
+            val: self.val.modpow(&(Self::order() - two), &Self::order()),
+        }
     }
-    fn add(&self, _other: &Self) -> Self {
-        unimplemented!()
+    fn add(&self, other: &Self) -> Self {
+        let sum = &self.val + &other.val;
+        Self {
+            val: sum.modpow(&BigInt::one(), &Self::order()),
+        }
     }
-    fn sub(&self, _other: &Self) -> Self {
-        unimplemented!()
+    fn sub(&self, other: &Self) -> Self {
+        let diff = &self.val - &other.val;
+        Self {
+            val: diff.modpow(&BigInt::one(), &Self::order()),
+        }
     }
-    fn mul(&self, _other: &Self) -> Self {
-        unimplemented!()
+    fn mul(&self, other: &Self) -> Self {
+        let prod = &self.val * &other.val;
+        Self {
+            val: prod.modpow(&BigInt::one(), &Self::order()),
+        }
     }
-    fn div(&self, _other: &Self) -> Self {
-        unimplemented!()
+    fn div(&self, other: &Self) -> Self {
+        let div = &self.val * &other.inv().val;
+        Self {
+            val: div.modpow(&BigInt::one(), &Self::order()),
+        }
     }
-    fn equals(&self, _other: &Self) -> bool {
-        unimplemented!()
+    fn equals(&self, other: &Self) -> bool {
+        self.val == other.val
     }
     fn to_bytes(self) -> Vec<u8> {
         unimplemented!()
@@ -87,8 +112,8 @@ impl<F: FiniteField> FiniteField for QuadraticExtension<F> {
         2 * F::dimension()
     }
 
-    fn order() -> u128 {
-        F::order()
+    fn order() -> BigInt {
+        F::order() * F::order()
     }
 
     fn zero() -> Self {
