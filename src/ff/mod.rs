@@ -11,6 +11,8 @@ pub trait FiniteField {
     fn mul(&self, other: &Self) -> Self;
     fn div(&self, other: &Self) -> Self;
     fn equals(&self, other: &Self) -> bool;
+
+    fn to_bytes(self) -> Vec<u8>;
 }
 
 #[derive(Clone, Copy)]
@@ -57,6 +59,9 @@ impl FiniteField for PrimeField {
         unimplemented!()
     }
     fn equals(&self, _other: &Self) -> bool {
+        unimplemented!()
+    }
+    fn to_bytes(self) -> Vec<u8> {
         unimplemented!()
     }
 }
@@ -148,5 +153,11 @@ impl<F: FiniteField> FiniteField for QuadraticExtension<F> {
 
     fn equals(&self, other: &Self) -> bool {
         self.a.equals(&other.a) && self.b.equals(&other.b)
+    }
+
+    fn to_bytes(self) -> Vec<u8> {
+        use crate::utils::shake::concatenate;
+
+        concatenate(&[&self.a.to_bytes(), &self.b.to_bytes()])
     }
 }

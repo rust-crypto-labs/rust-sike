@@ -15,6 +15,7 @@ mod tests {
         let seclevel = 256;
 
         let params = PublicParameters {
+            secparam: 128,
             e2: str_to_u64(SIKE_P434_E2),
             e3: str_to_u64(SIKE_P434_E3),
             xp2: str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),

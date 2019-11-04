@@ -2,6 +2,7 @@ use crate::ff::FiniteField;
 
 pub mod constants;
 pub mod conversion;
+pub mod shake;
 
 /// Secret key
 pub struct SecretKey {
@@ -16,9 +17,14 @@ impl SecretKey {
     pub fn from_bits(bits: &[bool]) -> Self {
         unimplemented!()
     }
+
+    pub fn from_bytes(bits: &[u8]) -> Self {
+        unimplemented!()
+    }
 }
 
 /// Public key
+#[derive(Clone)]
 pub struct PublicKey<K: FiniteField> {
     x1: K,
     x2: K,
@@ -30,7 +36,15 @@ impl<K: FiniteField> PublicKey<K> {
         unimplemented!()
     }
 
+    pub fn to_bytes(self) -> Vec<u8> {
+        unimplemented!()
+    }
+
     pub fn from_bits(_bits: &[bool]) -> Self {
+        unimplemented!()
+    }
+
+    pub fn from_bytes(_bytes: &[u8]) -> Self {
         unimplemented!()
     }
 }
@@ -131,7 +145,9 @@ impl<K: FiniteField + Copy> Curve<K> {
     }
 }
 
+#[derive(Clone)]
 pub struct PublicParameters<K> {
+    pub secparam: usize,
     pub e2: u64,
     pub e3: u64,
     pub xp2: K,

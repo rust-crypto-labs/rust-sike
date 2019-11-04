@@ -1,13 +1,16 @@
 use crate::{
     ff::FiniteField,
     pke::{Ciphertext, Message, PKE},
-    utils::{PublicKey, PublicParameters, SecretKey},
+    utils::{shake, PublicKey, PublicParameters, SecretKey},
 };
+
+use std::convert::TryInto;
 
 const NSK2: usize = 10; // TODO: see 1.3.8
 const NSK3: usize = 10; // TODO: see 1.3.8
 
 pub struct KEM<K> {
+    params: PublicParameters<K>,
     pke: PKE<K>,
     n: usize,
 }
@@ -15,12 +18,13 @@ pub struct KEM<K> {
 impl<K: FiniteField + Copy> KEM<K> {
     pub fn setup(params: PublicParameters<K>, n: usize) -> Self {
         Self {
-            pke: PKE::setup(params),
+            pke: PKE::setup(params.clone()),
             n,
+            params,
         }
     }
 
-    pub fn keygen(&self) -> (Vec<bool>, SecretKey, PublicKey<K>) {
+    pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
         let sk3 = SecretKey::get_random_secret_key(NSK3);
         let pk3 = self.pke.isogenies.isogen3(&sk3);
         let s = Self::random_string(self.n);
@@ -28,53 +32,52 @@ impl<K: FiniteField + Copy> KEM<K> {
         (s, sk3, pk3)
     }
 
-    pub fn encaps(&self, pk: &PublicKey<K>) -> (Ciphertext, Vec<bool>) {
-        let m = Message::from_bits(Self::random_string(self.n));
-        let r = Self::hash_function_g(&m.clone(), &pk);
+    pub fn encaps(&self, pk: &PublicKey<K>) -> (Ciphertext, Vec<u8>) {
+        let m = Message::from_bytes(Self::random_string(self.n));
+        let r = self.hash_function_g(&m.clone(), &pk);
 
         // Algorithm 2, Encaps, Line 7: is it m, r, or some combination!?
-        let c = self.pke.enc(&pk, Message::from_bits(r));
+        let c = self.pke.enc(&pk, Message::from_bytes(r));
 
-        let k = Self::hash_function_h(&m.clone(), &c);
+        let k = self.hash_function_h(&m.clone(), &c);
         (c, k)
     }
 
-    pub fn decaps(
-        &self,
-        s: &[bool],
-        sk: &SecretKey,
-        pk: &PublicKey<K>,
-        c: Ciphertext,
-    ) -> Vec<bool> {
+    pub fn decaps(&self, s: &[u8], sk: &SecretKey, pk: &PublicKey<K>, c: Ciphertext) -> Vec<u8> {
         let m = self.pke.dec(&sk, c.clone());
-        let s = Message::from_bits(s.to_vec());
-        let r = Self::hash_function_g(&m.clone(), &pk);
+        let s = Message::from_bytes(s.to_vec());
+        let r = self.hash_function_g(&m.clone(), &pk);
 
-        let c0 = PublicKey::from_bits(&c.bits0);
-        let rsk = SecretKey::from_bits(&r);
+        let c0 = PublicKey::from_bytes(&c.bytes0);
+        let rsk = SecretKey::from_bytes(&r);
 
         let c0p = self.pke.isogenies.isogen2(&rsk);
 
         let k = if c0p == c0 {
-            Self::hash_function_h(&m, &c)
+            self.hash_function_h(&m, &c)
         } else {
-            Self::hash_function_h(&s, &c)
+            self.hash_function_h(&s, &c)
         };
 
         k
     }
 
-    fn random_string(size: usize) -> Vec<bool> {
+    fn random_string(size: usize) -> Vec<u8> {
         unimplemented!()
     }
 
-    fn hash_function_g(m: &Message, r: &PublicKey<K>) -> Vec<bool> {
-        // Refer to 1.4.
-        unimplemented!()
+    fn hash_function_g(&self, m: &Message, r: &PublicKey<K>) -> Vec<u8> {
+        let input = shake::concatenate(&[&m.clone().to_bytes(), &r.clone().to_bytes()]);
+        let n = self.params.e2.try_into().unwrap();
+
+        shake::shake256(&input, n)
     }
 
-    fn hash_function_h(m: &Message, c: &Ciphertext) -> Vec<bool> {
-        // Refer to 1.4.
-        unimplemented!()
+    fn hash_function_h(&self, m: &Message, c: &Ciphertext) -> Vec<u8> {
+        let input = shake::concatenate(&[&m.clone().to_bytes(), &c.bytes0, &c.bytes1]);
+
+        let n = self.params.secparam;
+
+        shake::shake256(&input, n)
     }
 }
