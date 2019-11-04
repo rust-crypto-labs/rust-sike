@@ -2,6 +2,13 @@ use crate::utils::{constants::SIKE_P434_P, conversion};
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
+use once_cell::sync::Lazy;
+
+static P434_PRIME: Lazy<BigInt> = Lazy::new(|| {
+    conversion::str_to_bigint(SIKE_P434_P)
+});
+
+
 pub trait FiniteField {
     fn is_zero(&self) -> bool;
     fn dimension() -> usize;
@@ -43,7 +50,7 @@ impl FiniteField for PrimeField_p434 {
     }
 
     fn order() -> BigInt {
-        conversion::str_to_bigint(SIKE_P434_P)
+        P434_PRIME.clone()
     }
 
     fn zero() -> Self {

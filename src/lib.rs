@@ -1,6 +1,3 @@
-//extern crate num_bigint;
-//extern crate num_traits;
-
 mod ff;
 mod isogeny;
 mod kem;
