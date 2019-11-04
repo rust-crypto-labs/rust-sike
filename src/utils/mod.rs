@@ -12,7 +12,7 @@ pub struct SecretKey {
 }
 
 impl SecretKey {
-    pub fn get_random_secret_key(_size: usize) -> Self {
+    pub fn get_random_secret_key(_size: u64) -> Self {
         unimplemented!()
     }
 

@@ -1,10 +1,11 @@
 use crate::{
     ff::FiniteField,
-    utils::{shake, CurveIsogenies, PublicKey, PublicParameters, SecretKey},
+    utils::{
+        constants::{SIKE_P434_NKS2, SIKE_P434_NKS3},
+        conversion::str_to_u64,
+        shake, CurveIsogenies, PublicKey, PublicParameters, SecretKey,
+    },
 };
-
-const NSK2: usize = 10; // TODO: see 1.3.8
-const NSK3: usize = 10; // TODO: see 1.3.8
 
 #[derive(Clone)]
 pub struct Message {
@@ -42,13 +43,15 @@ impl<K: FiniteField + Copy> PKE<K> {
     }
 
     pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
-        let sk3 = SecretKey::get_random_secret_key(NSK3);
+        let nks3 = str_to_u64(SIKE_P434_NKS3);
+        let sk3 = SecretKey::get_random_secret_key(nks3);
         let pk3 = self.isogenies.isogen3(&sk3);
         (sk3, pk3)
     }
 
     pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
-        let sk2 = SecretKey::get_random_secret_key(NSK2);
+        let nks2 = str_to_u64(SIKE_P434_NKS2);
+        let sk2 = SecretKey::get_random_secret_key(nks2);
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2);
         let j = self.isogenies.isoex2(&sk2, &pk);
 
