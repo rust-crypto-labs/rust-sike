@@ -400,7 +400,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
     /// Computing the three-isogenious curve 3_iso_curve Algo 15 (p58)
     /// Input; P of order 3
     /// Output E/<P> and constants k1, k2
-    fn three_isogenious_curve(p: &Point<K>) -> (Curve<K>, K, K) {
+    fn three_isogenous_curve(p: &Point<K>) -> (Curve<K>, K, K) {
         let k1 = p.x.sub(&p.z); // 1.
         let t0 = k1.mul(&k1); // 2.
         let k2 = p.x.add(&p.z); // 3.
@@ -586,7 +586,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         if !opt_input {
             for e in (0..=self.params.e3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
-                let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
+                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
                 c = new_c;
                 s = Self::three_isogeny_eval(&s, &k1, &k2);
             }
@@ -596,7 +596,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
             for e in (0..=self.params.e3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
-                let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
+                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
                 c = new_c;
                 s = Self::three_isogeny_eval(&s, &k1, &k2);
 
@@ -647,6 +647,86 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
 
         PublicKey { x1, x2, x3 }
     }
+
+    /// Computing & evaluating 3^e-isogeny, optimised version
+    /// Algorithm 20, 3_e_iso, p. 61
+    /// Input: S of order 2^(e_2), curve, strategy
+    /// Optional input: three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn three_e_iso_optim(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        curve: &Curve<K>,
+        strategy: &[usize],
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let mut queue = vec![(self.params.e3, s)];
+        let mut new_curve = Curve::starting_curve();
+        let mut opt_output = None;
+
+        if opt.is_some() {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_pm, k1, k2) = Self::three_isogenous_curve(&p);
+                    new_curve = curve_pm;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+
+                    p1 = Self::three_isogeny_eval(&p1, &k1, &k2);
+                    p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
+                    p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ntriple(p, s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        } else {
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2) = Self::three_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ntriple(p, s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        }
+
+        (new_curve, opt_output)
+    }
+
     /// Computing public key on the 3-torsion, isogen_3 Algo 22 (p62)
     /// Input: secret key
     /// Output: public key
