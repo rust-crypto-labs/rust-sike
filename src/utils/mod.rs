@@ -11,7 +11,7 @@ pub mod strategy;
 
 /// Secret key
 pub struct SecretKey {
-    bits: Vec<bool>,
+    bytes: Vec<u8>,
 }
 
 impl SecretKey {
@@ -25,8 +25,18 @@ impl SecretKey {
         unimplemented!()
     }
 
-    pub fn from_bytes(bits: &[u8]) -> Self {
+    pub fn to_bits(&self) -> Vec<bool> {
         unimplemented!()
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.bytes.clone()
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        Self {
+            bytes: bytes.to_vec(),
+        }
     }
 }
 
@@ -638,7 +648,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let p2 = Point::from_x(xq3);
         let p3 = Point::from_x(xr3);
 
-        let s = Self::three_pts_ladder(&sk.bits, xp2, xq2, xr2, &curve);
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp2, xq2, xr2, &curve);
 
         let opt = Some((p1, p2, p3));
 
@@ -758,7 +768,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let p2 = Point::from_x(xq2);
         let p3 = Point::from_x(xr2);
 
-        let s = Self::three_pts_ladder(&sk.bits, xp3, xq3, xr3, &curve_plus);
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve_plus);
 
         let opt = Some((p1, p2, p3));
         let (_, opt) = self.three_e_iso(s, opt, &curve_minus);
@@ -782,7 +792,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let curve = Curve::from_public_key(pk).unwrap();
 
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
-        let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
+        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
 
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
         let (curve_plus, _) = self.two_e_iso(s, None, &curve_plus);
@@ -804,7 +814,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let curve = Curve::from_public_key(pk).unwrap();
 
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
-        let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
+        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
 
         let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
         let (curve_pm, _) = self.three_e_iso(s, None, &curve_pm);

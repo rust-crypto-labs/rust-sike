@@ -6,7 +6,10 @@ mod utils;
 #[cfg(test)]
 mod tests {
 
-    fn compare_arrays<T>(array1: &[T], array2: &[T]) -> bool where T:PartialEq + std::fmt::Debug {
+    fn compare_arrays<T>(array1: &[T], array2: &[T]) -> bool
+    where
+        T: PartialEq + std::fmt::Debug,
+    {
         let couples = array1.iter().zip(array2.iter());
 
         for (x, y) in couples {
@@ -177,5 +180,16 @@ mod tests {
         let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
 
         assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_concatenate() {
+        let a = vec![1, 2, 3, 4, 5];
+        let b = vec![6, 7, 8];
+        let c = vec![1, 2, 3, 4, 5, 6, 7, 8];
+
+        let d = crate::utils::shake::concatenate(&[&a, &b]);
+
+        assert_eq!(c, d)
     }
 }
