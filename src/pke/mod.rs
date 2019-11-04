@@ -34,7 +34,7 @@ pub struct PKE<K> {
 }
 
 /// Algorithm 1, Section 1.3.9
-impl<K: FiniteField + Copy> PKE<K> {
+impl<K: FiniteField+Clone > PKE<K> {
     pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             isogenies: CurveIsogenies::init(params.clone()),

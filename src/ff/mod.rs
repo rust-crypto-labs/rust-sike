@@ -25,7 +25,7 @@ pub struct PrimeField_p434 {
 }
 
 impl PrimeField_p434 {
-    pub fn from_string(s: &str) -> Self {
+    pub fn from_string(_s: &str) -> Self {
         unimplemented!()
     }
 }

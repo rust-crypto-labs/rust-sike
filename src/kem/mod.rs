@@ -17,7 +17,7 @@ pub struct KEM<K> {
     n: usize,
 }
 
-impl<K: FiniteField + Copy> KEM<K> {
+impl<K: FiniteField+Clone> KEM<K> {
     pub fn setup(params: PublicParameters<K>, n: usize) -> Self {
         Self {
             pke: PKE::setup(params.clone()),

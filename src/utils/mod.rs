@@ -21,7 +21,7 @@ impl SecretKey {
         Self::from_bytes(&bytes)
     }
 
-    pub fn from_bits(bits: &[bool]) -> Self {
+    pub fn from_bits(_bits: &[bool]) -> Self {
         unimplemented!()
     }
 
@@ -92,11 +92,11 @@ pub struct Curve<K> {
     c: K,
 }
 
-impl<K: FiniteField + Copy> Curve<K> {
+impl<K: FiniteField + Clone> Curve<K> {
     pub fn clone(&self) -> Self {
         Self {
-            a: self.a,
-            c: self.c,
+            a: self.a.clone(),
+            c: self.c.clone(),
         }
     }
 
@@ -178,7 +178,7 @@ pub struct CurveIsogenies<K> {
     params: PublicParameters<K>,
 }
 
-impl<K: FiniteField + Copy> CurveIsogenies<K> {
+impl<K: FiniteField + Clone> CurveIsogenies<K> {
     pub fn init(params: PublicParameters<K>) -> Self {
         Self { params }
     }
@@ -513,12 +513,12 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         &self,
         s: Point<K>,
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
-        curve: &Curve<K>,
+        _curve: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
         let mut queue = vec![(self.params.e2 / 2, s)];
         let mut new_curve = Curve::starting_curve();
-        let mut opt_output = None;
+        let opt_output = None;
 
         if opt.is_some() {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
@@ -636,13 +636,13 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let curve = Curve::from_coeffs(six, one);
         let curve_plus = Curve::from_coeffs(eight, four);
 
-        let xp2 = self.params.xp2;
-        let xq2 = self.params.xq2;
-        let xr2 = self.params.xr2;
+        let xp2 = self.params.xp2.clone();
+        let xq2 = self.params.xq2.clone();
+        let xr2 = self.params.xr2.clone();
 
-        let xp3 = self.params.xp3;
-        let xq3 = self.params.xq3;
-        let xr3 = self.params.xr3;
+        let xp3 = self.params.xp3.clone();
+        let xq3 = self.params.xq3.clone();
+        let xr3 = self.params.xr3.clone();
 
         let p1 = Point::from_x(xp3);
         let p2 = Point::from_x(xq3);
@@ -674,12 +674,12 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         &self,
         s: Point<K>,
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
-        curve: &Curve<K>,
+        _curve: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
         let mut queue = vec![(self.params.e3, s)];
         let mut new_curve = Curve::starting_curve();
-        let mut opt_output = None;
+        let opt_output = None;
 
         if opt.is_some() {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
@@ -756,13 +756,13 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let curve_plus = Curve::from_coeffs(six, one);
         let curve_minus = Curve::from_coeffs(eight, four);
 
-        let xp2 = self.params.xp2;
-        let xq2 = self.params.xq2;
-        let xr2 = self.params.xr2;
+        let xp2 = self.params.xp2.clone();
+        let xq2 = self.params.xq2.clone();
+        let xr2 = self.params.xr2.clone();
 
-        let xp3 = self.params.xp3;
-        let xq3 = self.params.xq3;
-        let xr3 = self.params.xr3;
+        let xp3 = self.params.xp3.clone();
+        let xq3 = self.params.xq3.clone();
+        let xr3 = self.params.xr3.clone();
 
         let p1 = Point::from_x(xp2);
         let p2 = Point::from_x(xq2);
