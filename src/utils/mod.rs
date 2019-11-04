@@ -1,5 +1,7 @@
 use std::convert::TryInto;
 
+use rand::prelude::*;
+
 use crate::ff::FiniteField;
 
 pub mod constants;
@@ -13,8 +15,10 @@ pub struct SecretKey {
 }
 
 impl SecretKey {
-    pub fn get_random_secret_key(_size: u64) -> Self {
-        unimplemented!()
+    pub fn get_random_secret_key(size: usize) -> Self {
+        let mut bytes = vec![0; size];
+        rand::rngs::OsRng.fill_bytes(&mut bytes);
+        Self::from_bytes(&bytes)
     }
 
     pub fn from_bits(bits: &[bool]) -> Self {

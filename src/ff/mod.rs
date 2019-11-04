@@ -1,8 +1,6 @@
+use crate::utils::{constants::SIKE_P434_P, conversion::str_to_bigint};
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
-use crate::utils::{constants::SIKE_P434_P, conversion::str_to_bigint};
-
-
 
 pub trait FiniteField {
     fn is_zero(&self) -> bool;
@@ -58,9 +56,7 @@ impl FiniteField for PrimeField_p434 {
     fn inv(&self) -> Self {
         let two = BigInt::one() + BigInt::one();
         Self {
-            val: self
-                .val
-                .modpow(&(Self::order() - two), &Self::order()),
+            val: self.val.modpow(&(Self::order() - two), &Self::order()),
         }
     }
     fn add(&self, other: &Self) -> Self {
