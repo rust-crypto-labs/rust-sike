@@ -1,13 +1,13 @@
 use crate::{
     ff::FiniteField,
     pke::{Ciphertext, Message, PKE},
-    utils::{shake, PublicKey, PublicParameters, SecretKey},
+    utils::{
+        constants::SIKE_P434_NKS3, conversion::str_to_u64, shake, PublicKey, PublicParameters,
+        SecretKey,
+    },
 };
 
 use std::convert::TryInto;
-
-const NSK2: usize = 10; // TODO: see 1.3.8
-const NSK3: usize = 10; // TODO: see 1.3.8
 
 pub struct KEM<K> {
     params: PublicParameters<K>,
@@ -25,7 +25,8 @@ impl<K: FiniteField + Copy> KEM<K> {
     }
 
     pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
-        let sk3 = SecretKey::get_random_secret_key(NSK3);
+        let nsk3 = str_to_u64(SIKE_P434_NKS3);
+        let sk3 = SecretKey::get_random_secret_key(nsk3);
         let pk3 = self.pke.isogenies.isogen3(&sk3);
         let s = Self::random_string(self.n);
 
