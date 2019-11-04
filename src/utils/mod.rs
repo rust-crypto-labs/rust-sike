@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::ff::FiniteField;
 
 pub mod constants;
@@ -484,6 +486,86 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
             (c, Some((p1, p2, p3)))
         }
     }
+
+    /// Computing & evaluating 2^e-isogeny, optimised version
+    /// Algorithm 19, 2_e_iso, p. 60
+    /// Input: S of order 2^(e_2), curve, strategy
+    /// Optional input: three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn two_e_iso_optim(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        curve: &Curve<K>,
+        strategy: &[usize],
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let mut queue = vec![(self.params.e2 / 2, s)];
+        let mut new_curve = Curve::starting_curve();
+        let mut opt_output = None;
+
+        if opt.is_some() {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+
+                    p1 = Self::four_isogeny_eval(&k1, &k2, &k3, &p1);
+                    p2 = Self::four_isogeny_eval(&k1, &k2, &k3, &p2);
+                    p3 = Self::four_isogeny_eval(&k1, &k2, &k3, &p3);
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ndouble(p, 2 * s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        } else {
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ndouble(p, 2 * s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        }
+
+        (new_curve, opt_output)
+    }
+
     /// Computing and evaluating the 3^e isogeny, simple version
     /// Algo 3_e_iso 18 (p59)
     /// Input: S of order 3^(e_3) on the curve

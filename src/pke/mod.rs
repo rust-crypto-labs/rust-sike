@@ -74,7 +74,7 @@ impl<K: FiniteField + Copy> PKE<K> {
         shake::shake256(&j.to_bytes(), self.params.secparam)
     }
 
-    fn xor(input1: &[u8],input2: &[u8]) -> Vec<u8> {
+    fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {
         let mut result = vec![];
         let couples = input1.iter().zip(input2.iter());
 
