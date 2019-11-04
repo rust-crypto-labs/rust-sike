@@ -36,6 +36,7 @@ impl PrimeField_p434 {
     pub fn from_string(s: &str) -> Self {
         let val = conversion::str_to_bigint(s);
 
+        // TODO: check that val < p
         Self { val }
     }
 }
@@ -112,7 +113,7 @@ impl FiniteField for PrimeField_p434 {
         unimplemented!()
     }
 
-    fn from_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(_bytes: &[u8]) -> Self {
         unimplemented!()
     }
 }
