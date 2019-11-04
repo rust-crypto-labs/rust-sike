@@ -1,8 +1,11 @@
+use std::convert::TryInto;
+
 use crate::ff::FiniteField;
 
-// Public parameter: Depends SIKE Implem
-const SIKE_E2: u64 = 10; // TBD
-const SIKE_E3: u64 = 10; // TBD
+pub mod constants;
+pub mod conversion;
+pub mod shake;
+pub mod strategy;
 
 /// Secret key
 pub struct SecretKey {
@@ -10,12 +13,21 @@ pub struct SecretKey {
 }
 
 impl SecretKey {
-    pub fn get_random_secret_key(_size: usize) -> Self {
+    pub fn get_random_secret_key(_size: u64) -> Self {
+        unimplemented!()
+    }
+
+    pub fn from_bits(bits: &[bool]) -> Self {
+        unimplemented!()
+    }
+
+    pub fn from_bytes(bits: &[u8]) -> Self {
         unimplemented!()
     }
 }
 
 /// Public key
+#[derive(Clone)]
 pub struct PublicKey<K: FiniteField> {
     x1: K,
     x2: K,
@@ -27,8 +39,22 @@ impl<K: FiniteField> PublicKey<K> {
         unimplemented!()
     }
 
+    pub fn to_bytes(self) -> Vec<u8> {
+        unimplemented!()
+    }
+
     pub fn from_bits(_bits: &[bool]) -> Self {
         unimplemented!()
+    }
+
+    pub fn from_bytes(_bytes: &[u8]) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<K: FiniteField> std::cmp::PartialEq for PublicKey<K> {
+    fn eq(&self, other: &Self) -> bool {
+        self.x1.equals(&other.x1) && self.x2.equals(&other.x2) && self.x3.equals(&other.x3)
     }
 }
 
@@ -66,7 +92,7 @@ impl<K: FiniteField + Copy> Curve<K> {
 
     /// Starting curve 1.3.2
     /// Curve with equation y² = x³ + 6x² + x
-     fn starting_curve() -> Curve<K> {
+    fn starting_curve() -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
         let three = two.add(&one);
@@ -74,7 +100,6 @@ impl<K: FiniteField + Copy> Curve<K> {
 
         Curve::from_coeffs(six, one)
     }
-
 
     // Montgomery j-invariant Algo 9 (p56)
     fn j_invariant(&self) -> K {
@@ -100,7 +125,6 @@ impl<K: FiniteField + Copy> Curve<K> {
         j
     }
 
-
     /// Algorithm 1.2.1 "cfpk"
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
     fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
@@ -124,26 +148,26 @@ impl<K: FiniteField + Copy> Curve<K> {
     }
 }
 
+#[derive(Clone)]
 pub struct PublicParameters<K> {
-    e2: u64,
-    e3: u64,
-    xp2: K,
-    xq2: K,
-    xr2: K,
-    xp3: K,
-    xq3: K,
-    xr3: K,
+    pub secparam: usize,
+    pub e2: u64,
+    pub e3: u64,
+    pub xp2: K,
+    pub xq2: K,
+    pub xr2: K,
+    pub xp3: K,
+    pub xq3: K,
+    pub xr3: K,
 }
 pub struct CurveIsogenies<K> {
     params: PublicParameters<K>,
 }
 
 impl<K: FiniteField + Copy> CurveIsogenies<K> {
-
     pub fn init(params: PublicParameters<K>) -> Self {
         Self { params }
     }
-
 
     /// Coordinate doubling Algorithm xDBL 3 p. 54
     /// Input: P. Output: [2]P
@@ -377,7 +401,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
     /// Computing the three-isogenious curve 3_iso_curve Algo 15 (p58)
     /// Input; P of order 3
     /// Output E/<P> and constants k1, k2
-    fn three_isogenious_curve(p: &Point<K>) -> (Curve<K>, K, K) {
+    fn three_isogenous_curve(p: &Point<K>) -> (Curve<K>, K, K) {
         let k1 = p.x.sub(&p.z); // 1.
         let t0 = k1.mul(&k1); // 2.
         let k2 = p.x.add(&p.z); // 3.
@@ -430,6 +454,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
     /// Optional output: three points on the new curve
 
     fn two_e_iso(
+        &self,
         s: Point<K>,
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
         curve: &Curve<K>,
@@ -439,7 +464,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let mut s = s;
 
         if !opt_input {
-            for e in (0..SIKE_E2 - 2).rev().step_by(2) {
+            for e in (0..self.params.e2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
@@ -448,7 +473,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
             (c, None)
         } else {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..SIKE_E2 - 2).rev().step_by(2) {
+            for e in (0..self.params.e2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
@@ -462,6 +487,86 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
             (c, Some((p1, p2, p3)))
         }
     }
+
+    /// Computing & evaluating 2^e-isogeny, optimised version
+    /// Algorithm 19, 2_e_iso, p. 60
+    /// Input: S of order 2^(e_2), curve, strategy
+    /// Optional input: three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn two_e_iso_optim(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        curve: &Curve<K>,
+        strategy: &[usize],
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let mut queue = vec![(self.params.e2 / 2, s)];
+        let mut new_curve = Curve::starting_curve();
+        let mut opt_output = None;
+
+        if opt.is_some() {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+
+                    p1 = Self::four_isogeny_eval(&k1, &k2, &k3, &p1);
+                    p2 = Self::four_isogeny_eval(&k1, &k2, &k3, &p2);
+                    p3 = Self::four_isogeny_eval(&k1, &k2, &k3, &p3);
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ndouble(p, 2 * s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        } else {
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ndouble(p, 2 * s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        }
+
+        (new_curve, opt_output)
+    }
+
     /// Computing and evaluating the 3^e isogeny, simple version
     /// Algo 3_e_iso 18 (p59)
     /// Input: S of order 3^(e_3) on the curve
@@ -482,7 +587,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         if !opt_input {
             for e in (0..=self.params.e3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
-                let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
+                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
                 c = new_c;
                 s = Self::three_isogeny_eval(&s, &k1, &k2);
             }
@@ -492,7 +597,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
             for e in (0..=self.params.e3 - 1).rev() {
                 let t = Self::ntriple(s.clone(), e, &c);
-                let (new_c, k1, k2) = Self::three_isogenious_curve(&t);
+                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
                 c = new_c;
                 s = Self::three_isogeny_eval(&s, &k1, &k2);
 
@@ -533,7 +638,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
 
         let opt = Some((p1, p2, p3));
 
-        let (_, opt) = Self::two_e_iso(s, opt, &curve_plus);
+        let (_, opt) = self.two_e_iso(s, opt, &curve_plus);
 
         let (p1, p2, p3) = opt.unwrap();
 
@@ -543,6 +648,86 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
 
         PublicKey { x1, x2, x3 }
     }
+
+    /// Computing & evaluating 3^e-isogeny, optimised version
+    /// Algorithm 20, 3_e_iso, p. 61
+    /// Input: S of order 2^(e_2), curve, strategy
+    /// Optional input: three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn three_e_iso_optim(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        curve: &Curve<K>,
+        strategy: &[usize],
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let mut queue = vec![(self.params.e3, s)];
+        let mut new_curve = Curve::starting_curve();
+        let mut opt_output = None;
+
+        if opt.is_some() {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_pm, k1, k2) = Self::three_isogenous_curve(&p);
+                    new_curve = curve_pm;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+
+                    p1 = Self::three_isogeny_eval(&p1, &k1, &k2);
+                    p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
+                    p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ntriple(p, s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        } else {
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2) = Self::three_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ntriple(p, s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        }
+
+        (new_curve, opt_output)
+    }
+
     /// Computing public key on the 3-torsion, isogen_3 Algo 22 (p62)
     /// Input: secret key
     /// Output: public key
@@ -596,7 +781,7 @@ impl<K: FiniteField + Copy> CurveIsogenies<K> {
         let s = Self::three_pts_ladder(&sk.bits, x1.clone(), x2.clone(), x3.clone(), &curve);
 
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
-        let (curve_plus, _) = Self::two_e_iso(s, None, &curve_plus);
+        let (curve_plus, _) = self.two_e_iso(s, None, &curve_plus);
 
         let curve = Curve::from_coeffs(
             curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),
