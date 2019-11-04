@@ -57,6 +57,11 @@ impl<K: FiniteField + Copy> PKE<K> {
 
         let c0_bytes = c0.to_bytes();
         let h = self.hash_function_f(j);
+
+        if h.len() != m.bytes.len() {
+            panic!("Message should be the same length as the output of F.")
+        }
+
         let c1_bytes = Self::xor(&m.bytes, &h);
 
         Ciphertext {
@@ -74,7 +79,7 @@ impl<K: FiniteField + Copy> PKE<K> {
     }
 
     fn hash_function_f(&self, j: K) -> Vec<u8> {
-        shake::shake256(&j.to_bytes(), self.params.secparam)
+        shake::shake256(&j.to_bytes(), self.params.secparam / 8)
     }
 
     fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {

@@ -73,9 +73,9 @@ impl<K: FiniteField + Copy> KEM<K> {
 
     fn hash_function_g(&self, m: &Message, r: &PublicKey<K>) -> Vec<u8> {
         let input = shake::concatenate(&[&m.clone().to_bytes(), &r.clone().to_bytes()]);
-        let n = self.params.e2.try_into().unwrap();
+        let n: usize = self.params.e2.try_into().unwrap();
 
-        shake::shake256(&input, n)
+        shake::shake256(&input, n / 8)
     }
 
     fn hash_function_h(&self, m: &Message, c: &Ciphertext) -> Vec<u8> {
@@ -83,6 +83,6 @@ impl<K: FiniteField + Copy> KEM<K> {
 
         let n = self.params.secparam;
 
-        shake::shake256(&input, n)
+        shake::shake256(&input, n / 8)
     }
 }

@@ -12,7 +12,7 @@ The SIKE submission already comes with reference implementations, including opti
 
 `rust-sike` currently supports both algorithms from the SIKE suite: a public-key encryption primitive, and a key-encapsulation mechanism build from this primitive.
 
-Under the hood, isogeny computations are performed using optimised, but not strategy-optimised, algorithms. 
+Under the hood, isogeny computations are performed using strategy-optimised algorithms. 
 The updated specification (17 april 2019) is used as a basis for implementation.
 
 #### Supported parameters
