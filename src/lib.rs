@@ -1,7 +1,8 @@
-extern crate num_bigint;
-extern crate num_traits;
+//extern crate num_bigint;
+//extern crate num_traits;
 
 mod ff;
+mod isogeny;
 mod kem;
 mod pke;
 mod utils;
@@ -113,8 +114,9 @@ mod tests {
     #[test]
     fn test_pke() {
         use crate::{
+            isogeny::PublicParameters,
             pke::{Message, PKE},
-            utils::{constants::*, conversion::*, PublicParameters},
+            utils::{constants::*, conversion::*},
         };
 
         let seclevel = 128;
@@ -152,8 +154,9 @@ mod tests {
     #[test]
     fn test_kem() {
         use crate::{
+            isogeny::PublicParameters,
             kem::KEM,
-            utils::{constants::*, conversion::*, PublicParameters},
+            utils::{constants::*, conversion::*},
         };
 
         let seclevel = 128;
@@ -191,7 +194,7 @@ mod tests {
         let b = vec![6, 7, 8];
         let c = vec![1, 2, 3, 4, 5, 6, 7, 8];
 
-        let d = crate::utils::shake::concatenate(&[&a, &b]);
+        let d = crate::utils::conversion::concatenate(&[&a, &b]);
 
         assert_eq!(c, d)
     }

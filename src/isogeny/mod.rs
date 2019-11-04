@@ -1,0 +1,823 @@
+use rand::prelude::*;
+use std::convert::TryInto;
+
+use crate::ff::FiniteField;
+
+/// Secret key
+pub struct SecretKey {
+    bytes: Vec<u8>,
+}
+
+impl SecretKey {
+    pub fn get_random_secret_key(size: usize) -> Self {
+        let mut bytes = vec![0; size];
+        rand::rngs::OsRng.fill_bytes(&mut bytes);
+        Self::from_bytes(&bytes)
+    }
+
+    pub fn from_bits(_bits: &[bool]) -> Self {
+        unimplemented!()
+    }
+
+    pub fn to_bits(&self) -> Vec<bool> {
+        unimplemented!()
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.bytes.clone()
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        Self {
+            bytes: bytes.to_vec(),
+        }
+    }
+}
+
+/// Public key
+#[derive(Clone)]
+pub struct PublicKey<K: FiniteField> {
+    x1: K,
+    x2: K,
+    x3: K,
+}
+
+impl<K: FiniteField> PublicKey<K> {
+    pub fn to_bits(self) -> Vec<bool> {
+        unimplemented!()
+    }
+
+    pub fn to_bytes(self) -> Vec<u8> {
+        unimplemented!()
+    }
+
+    pub fn from_bits(_bits: &[bool]) -> Self {
+        unimplemented!()
+    }
+
+    pub fn from_bytes(_bytes: &[u8]) -> Self {
+        unimplemented!()
+    }
+}
+
+impl<K: FiniteField> std::cmp::PartialEq for PublicKey<K> {
+    fn eq(&self, other: &Self) -> bool {
+        self.x1.equals(&other.x1) && self.x2.equals(&other.x2) && self.x3.equals(&other.x3)
+    }
+}
+
+/// Point defined by (X: Z) in projective coordinates
+#[derive(Clone)]
+struct Point<K: FiniteField + Clone> {
+    x: K,
+    z: K,
+}
+
+impl<K: FiniteField + Clone> Point<K> {
+    /// Returns the points (x : 1)
+    pub fn from_x(x: K) -> Self {
+        Self { x, z: K::one() }
+    }
+}
+
+/// Montgomery M_{A,1} Curve defined by (A : C) in projective cooridnates
+pub struct Curve<K> {
+    a: K,
+    c: K,
+}
+
+impl<K: FiniteField + Clone> Curve<K> {
+    pub fn clone(&self) -> Self {
+        Self {
+            a: self.a.clone(),
+            c: self.c.clone(),
+        }
+    }
+
+    pub fn from_coeffs(a: K, c: K) -> Self {
+        Self { a, c }
+    }
+
+    /// Starting curve 1.3.2
+    /// Curve with equation y² = x³ + 6x² + x
+    fn starting_curve() -> Curve<K> {
+        let one = K::one();
+        let two = one.add(&one);
+        let three = two.add(&one);
+        let six = two.mul(&three);
+
+        Curve::from_coeffs(six, one)
+    }
+
+    // Montgomery j-invariant Algo 9 (p56)
+    fn j_invariant(&self) -> K {
+        let j = self.a.mul(&self.a); // 1.
+        let t1 = self.c.mul(&self.c); //2.
+        let t0 = t1.add(&t1); // 3.
+        let t0 = j.sub(&t0); // 4.
+        let t0 = t0.sub(&t1); //5.
+
+        let j = t0.sub(&t1); // 6.
+        let t1 = t1.mul(&t1); //7.
+        let j = j.mul(&t1); // 8.
+        let t0 = t0.add(&t0); // 9.
+        let t0 = t0.add(&t0); // 10.
+
+        let t1 = t0.mul(&t0); // 11.
+        let t0 = t0.mul(&t1); // 12.
+        let t0 = t0.add(&t0); // 13.
+        let t0 = t0.add(&t0); // 14.
+        let j = j.inv(); // 15.
+        let j = t0.mul(&j);
+
+        j
+    }
+
+    /// Algorithm 1.2.1 "cfpk"
+    /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
+    fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
+        let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
+
+        if x_p.is_zero() || x_q.is_zero() || x_r.is_zero() {
+            return None;
+        }
+        let num = K::one()
+            .sub(&x_p.mul(&x_q))
+            .sub(&x_p.mul(&x_r))
+            .sub(&x_q.mul(&x_r));
+        let num = num.mul(&num);
+        let denom = x_p.mul(&x_q).mul(&x_r);
+        let denom = denom.add(&denom).add(&denom).add(&denom);
+        let frac = num.div(&denom);
+        let a = frac.sub(&x_p).sub(&x_q).sub(&x_r);
+        let c = K::one();
+
+        Some(Curve::from_coeffs(a, c))
+    }
+}
+
+#[derive(Clone)]
+pub struct PublicParameters<K> {
+    pub secparam: usize,
+    pub e2: u64,
+    pub e3: u64,
+    pub xp2: K,
+    pub xq2: K,
+    pub xr2: K,
+    pub xp3: K,
+    pub xq3: K,
+    pub xr3: K,
+}
+pub struct CurveIsogenies<K> {
+    params: PublicParameters<K>,
+}
+
+impl<K: FiniteField + Clone> CurveIsogenies<K> {
+    pub fn init(params: PublicParameters<K>) -> Self {
+        Self { params }
+    }
+
+    /// Coordinate doubling Algorithm xDBL 3 p. 54
+    /// Input: P. Output: [2]P
+    fn double(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
+        let a_24_plus = &curve.a;
+        let c_24 = &curve.c;
+
+        let t0 = p.x.sub(&p.z); // 1.
+        let t1 = p.x.add(&p.z); // 2.
+        let t0 = t0.mul(&t0); // 3.
+        let t1 = t1.mul(&t1); // 4.
+        let z = c_24.mul(&t0); // 5.
+        let x = z.mul(&t1); // 6.
+        let t1 = t1.sub(&t0); // 7.
+        let t0 = a_24_plus.mul(&t1); // 8.
+        let z = z.add(&t0); // 9.
+        let z = z.mul(&t1); // 10.
+
+        Point { x, z }
+    }
+
+    // Repeated coordinate doubling xDBLe Alg 4 (p55)
+    // Input: P, e. Output : [2^e]P
+    fn ndouble(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {
+        let mut point = p;
+        for _ in 0..e {
+            point = Self::double(&point, curve);
+        }
+        point
+    }
+
+    /// Combined coordinate doubling and differential addition xDBLADD
+    /// Alg 5 (p55)
+    /// Input: P, Q, Q - P, a_24_plus. Output: 2P, P+Q.
+    fn double_and_add(
+        p: &Point<K>,
+        q: &Point<K>,
+        qmp: &Point<K>,
+        a_24_plus: &K,
+    ) -> (Point<K>, Point<K>) {
+        let t0 = p.x.add(&p.z); //1.
+        let t1 = p.x.sub(&p.z); // 2.
+        let x2 = t0.mul(&t0); // 3.
+        let t2 = q.x.sub(&q.z); // 4.
+        let xpq = q.x.add(&q.z); // 5.
+        let t0 = t0.mul(&t2); // 6.
+        let z2 = t1.mul(&t1); // 7.
+
+        let t1 = t1.mul(&xpq); // 8.
+        let t2 = x2.sub(&z2); // 9.
+        let x2 = x2.mul(&z2); // 10.
+        let xpq = t2.mul(a_24_plus); // 11.
+        let zpq = t0.sub(&t1); // 12.
+        let z2 = xpq.add(&z2); // 13.
+        let xpq = t0.add(&t1); // 14.
+
+        let z2 = z2.mul(&t2); // 15.
+        let zpq = zpq.mul(&zpq); // 16.
+        let xpq = xpq.mul(&xpq); // 17.
+        let zpq = qmp.x.mul(&zpq); // 18.
+        let xpq = qmp.z.mul(&xpq); // 19.
+
+        (Point { x: x2, z: z2 }, Point { x: xpq, z: zpq })
+    }
+
+    /// Coordinate tripling xTPL Algorithm 6 (p55)
+    /// Input: P. Output: [3]P
+    fn triple(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
+        let a_24_plus = &curve.a;;
+        let a_24_minus = &curve.c;
+
+        let t0 = p.x.sub(&p.z); // 1.
+        let t2 = t0.mul(&t0); // 2.
+        let t1 = p.x.add(&p.z); // 3.
+        let t3 = t1.mul(&t1); // 4.
+        let t4 = t1.add(&t0); // 5.
+        let t0 = t1.sub(&t0); // 6.
+
+        let t1 = t4.mul(&t4); // 7.
+        let t1 = t1.sub(&t3); // 8.
+        let t1 = t1.sub(&t2); // 9.
+        let t5 = t3.mul(&a_24_plus); // 10.
+        let t3 = t5.mul(&t3); // 11.
+        let t6 = t2.mul(&a_24_minus); // 12.
+
+        let t2 = t2.mul(&t6); // 13.
+        let t3 = t2.sub(&t3); // 14.
+        let t2 = t5.sub(&t6); // 15.
+        let t1 = t2.mul(&t1); // 16.
+        let t2 = t3.add(&t1); // 17.
+        let t2 = t2.mul(&t2); // 18.
+
+        let x = t2.mul(&t4); // 19.
+        let t1 = t3.sub(&t1); // 20.
+        let t1 = t1.mul(&t1); // 21.
+        let z = t1.mul(&t0); // 22.
+
+        Point { x, z }
+    }
+
+    /// Repeated point tripling xTPLe Alg 7 (p56)
+    /// Input: P, e. Output: [E^e]P
+    fn ntriple(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {
+        let mut point = p;
+        for _ in 0..e {
+            point = Self::triple(&point, curve);
+        }
+        point
+    }
+
+    /// Three point ladder Ladder3pt Alg 8 (p56)
+    /// Input: m (binary), x_p, x_q, x_(Q-P)
+    /// Output: P + [m]Q
+    fn three_pts_ladder(m: &[bool], x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
+        let mut p0 = Point::from_x(x_q);
+        let mut p1 = Point::from_x(x_p);
+        let mut p2 = Point::from_x(x_qmp);
+
+        let a_24_plus = &curve.a;
+
+        for &m_i in m {
+            if m_i {
+                let (p0v, p1v) = Self::double_and_add(&p0, &p1, &p2, a_24_plus);
+                p0 = p0v;
+                p1 = p1v;
+            } else {
+                let (p0v, p2v) = Self::double_and_add(&p0, &p2, &p1, a_24_plus);
+                p0 = p0v;
+                p2 = p2v;
+            }
+        }
+
+        p1
+    }
+
+    /// Recovering Montgomery curve coefficient get_A Algo 10 (p57)
+    /// Input: x_p, x_q, x_(Q-P)
+    /// Output: A
+    fn from_points(x_p: K, x_q: K, x_qmp: K) -> Curve<K> {
+        let t1 = x_p.add(&x_q); //1.
+        let t0 = x_p.mul(&x_q); //2.
+        let a = x_qmp.mul(&t1); //3.
+        let a = a.add(&t0); //4.
+
+        let t0 = t0.mul(&x_qmp); //5.
+        let a = a.sub(&K::one()); //6.
+        let t0 = t0.add(&t0); //7.
+        let t1 = t1.add(&x_qmp); //8.
+
+        let t0 = t0.add(&t0); //9.
+        let a = a.mul(&a); // 10.
+        let t0 = t0.inv(); //11.
+        let a = a.mul(&t0); // 12.
+
+        let a = a.sub(&t1); // 13.
+
+        Curve::from_coeffs(a, K::one())
+    }
+
+    /// Computing the two-isogenous curve 2_iso_curve Algo 11 (p57)
+    /// Input: P of order 2 on the curve
+    /// Output: E/<P>
+    fn two_isogenous_curve(&self, p: &Point<K>) -> Curve<K> {
+        let a = p.x.mul(&p.x); // 1.
+        let c = p.z.mul(&p.z); // 2.
+        let a = a.sub(&c); //3.
+
+        Curve::from_coeffs(a, c)
+    }
+
+    /// Evaluate the two-isogeny at a point 2_iso_eval Algo 12 (p57)
+    /// Input: P of order 2, Q, both on the curve
+    /// Output: Q' on a 2-iso curve
+    fn two_isogeny_eval(&self, p: &Point<K>, q: &Point<K>) -> Point<K> {
+        let t0 = p.x.add(&p.z); // 1.
+        let t1 = p.x.sub(&p.z); // 2.
+        let t2 = q.x.add(&q.z); // 3.
+        let t3 = q.x.sub(&q.z); // 4.
+        let t0 = t0.mul(&t3); // 5.
+        let t1 = t1.mul(&t2); // 6.
+        let t2 = t0.add(&t1); // 7.
+        let t3 = t0.sub(&t1); // 8.
+        let x = q.x.mul(&t2); // 9.
+        let z = q.z.mul(&t3); // 10.
+
+        Point { x, z }
+    }
+
+    /// Computing the four-isogenous curve 4_iso_curve Algo 13 (p57)
+    /// Input: P of order 4.  
+    /// Output: E/<P> and constants k1, k2, k3
+    fn four_isogenous_curve(p: &Point<K>) -> (Curve<K>, K, K, K) {
+        let k2 = p.x.sub(&p.z); // 1.
+        let k3 = p.x.add(&p.z); // 2.
+        let k1 = p.z.mul(&p.z); // 3.
+        let k1 = k1.add(&k1); // 4.
+        let c = k1.mul(&k1); // 5.
+        let k1 = k1.add(&k1); // 6.
+        let a = p.x.mul(&p.x); // 7.
+        let a = a.add(&a); // 8.
+        let a = a.mul(&a); // 9.
+
+        (Curve::from_coeffs(a, c), k1, k2, k3)
+    }
+
+    /// Evaluate the four-isogeny at a point 4_iso_eval Algo 14 (p58)
+    /// Input: (k1, k2, k3), Q
+    /// Output: Q' on a 4-isogenous curve
+    fn four_isogeny_eval(k1: &K, k2: &K, k3: &K, q: &Point<K>) -> Point<K> {
+        let t0 = q.x.add(&q.z); // 1.
+        let t1 = q.x.sub(&q.z); // 2.
+        let x = t0.mul(&k2); // 3.
+        let z = t1.mul(&k3); // 4.
+
+        let t0 = t0.mul(&t1); // 5.
+        let t0 = t0.mul(&k1); // 6.
+        let t1 = x.add(&z); // 7.
+        let z = x.sub(&z); // 8.
+
+        let t1 = t1.mul(&t1); // 9.
+        let z = z.mul(&z); //  10.
+        let x = t0.add(&t1); // 11.
+        let t0 = z.sub(&t0); // 12.
+
+        let x = x.mul(&t1); // 13.
+        let z = z.mul(&t0); // 14.
+
+        Point { x, z }
+    }
+
+    /// Computing the three-isogenious curve 3_iso_curve Algo 15 (p58)
+    /// Input; P of order 3
+    /// Output E/<P> and constants k1, k2
+    fn three_isogenous_curve(p: &Point<K>) -> (Curve<K>, K, K) {
+        let k1 = p.x.sub(&p.z); // 1.
+        let t0 = k1.mul(&k1); // 2.
+        let k2 = p.x.add(&p.z); // 3.
+        let t1 = k2.mul(&k2); // 4.
+        let t2 = t0.add(&t1); // 5.
+        let t3 = k1.add(&k2); // 6.
+
+        let t3 = t3.mul(&t3); // 7.
+        let t3 = t3.sub(&t2); // 8.
+        let t2 = t1.add(&t3); // 9.
+        let t3 = t3.add(&t0); // 10.
+        let t4 = t3.add(&t0); // 11.
+        let t4 = t4.add(&t4); // 12.
+
+        let t4 = t1.add(&t4); // 13.
+        let c = t2.mul(&t4); // 14.
+        let t4 = t1.add(&t2); // 15.
+        let t4 = t4.add(&t4); // 16.
+        let t4 = t0.add(&t4); // 17.
+        let t4 = t3.mul(&t4); // 18.
+
+        let t0 = t4.sub(&c); // 19.
+        let a = c.add(&t0); // 20.
+
+        (Curve::from_coeffs(a, c), k1, k2)
+    }
+    /// Evaluate the three-isogeny at a point 3_iso_eval Algo 16 (p58)
+    /// Input: k1, k2, Q
+    /// Output: Q' on the 3-isogenous curve
+    fn three_isogeny_eval(q: &Point<K>, k1: &K, k2: &K) -> Point<K> {
+        let t0 = q.x.add(&q.z); // 1.
+        let t1 = q.x.sub(&q.z); // 2.
+        let t0 = k1.mul(&t0); // 3.
+        let t1 = k2.mul(&t1); // 4.
+        let t2 = t0.sub(&t1); // 5.
+        let t0 = t1.sub(&t0); // 6.
+        let t2 = t2.mul(&t2); // 7.
+        let t0 = t0.mul(&t0); // 8.
+        let x = q.x.mul(&t2); // 9.
+        let z = q.z.mul(&t0); // 10.
+
+        Point { x, z }
+    }
+
+    /// Computing and evaluating the 2^e isogeny, simple version
+    /// Algo 17 2_e_iso (p59)
+    /// Input: S of order 2^(e_2)
+    /// Optional input: three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn two_e_iso(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        curve: &Curve<K>,
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let opt_input = opt.is_some();
+        let mut c = curve.clone();
+        let mut s = s;
+
+        if !opt_input {
+            for e in (0..self.params.e2 - 2).rev().step_by(2) {
+                let t = Self::ndouble(s.clone(), e, &c);
+                let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
+                c = new_c;
+                s = Self::four_isogeny_eval(&k1, &k2, &k3, &s);
+            }
+            (c, None)
+        } else {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+            for e in (0..self.params.e2 - 2).rev().step_by(2) {
+                let t = Self::ndouble(s.clone(), e, &c);
+                let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
+                c = new_c;
+                s = Self::four_isogeny_eval(&k1, &k2, &k3, &s);
+
+                p1 = Self::four_isogeny_eval(&k1, &k2, &k3, &p1);
+                p2 = Self::four_isogeny_eval(&k1, &k2, &k3, &p2);
+                p3 = Self::four_isogeny_eval(&k1, &k2, &k3, &p3);
+            }
+
+            (c, Some((p1, p2, p3)))
+        }
+    }
+
+    /// Computing & evaluating 2^e-isogeny, optimised version
+    /// Algorithm 19, 2_e_iso, p. 60
+    /// Input: S of order 2^(e_2), curve, strategy
+    /// Optional input: three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn two_e_iso_optim(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        _curve: &Curve<K>,
+        strategy: &[usize],
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let mut queue = vec![(self.params.e2 / 2, s)];
+        let mut new_curve = Curve::starting_curve();
+        let opt_output = None;
+
+        if opt.is_some() {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+
+                    p1 = Self::four_isogeny_eval(&k1, &k2, &k3, &p1);
+                    p2 = Self::four_isogeny_eval(&k1, &k2, &k3, &p2);
+                    p3 = Self::four_isogeny_eval(&k1, &k2, &k3, &p3);
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ndouble(p, 2 * s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        } else {
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ndouble(p, 2 * s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        }
+
+        (new_curve, opt_output)
+    }
+
+    /// Computing and evaluating the 3^e isogeny, simple version
+    /// Algo 3_e_iso 18 (p59)
+    /// Input: S of order 3^(e_3) on the curve
+    /// Optional input : three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn three_e_iso(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        curve: &Curve<K>,
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let opt_input = opt.is_some();
+        let mut c = curve.clone();
+        let mut s = s;
+
+        if !opt_input {
+            for e in (0..=self.params.e3 - 1).rev() {
+                let t = Self::ntriple(s.clone(), e, &c);
+                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
+                c = new_c;
+                s = Self::three_isogeny_eval(&s, &k1, &k2);
+            }
+
+            (c, None)
+        } else {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+            for e in (0..=self.params.e3 - 1).rev() {
+                let t = Self::ntriple(s.clone(), e, &c);
+                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
+                c = new_c;
+                s = Self::three_isogeny_eval(&s, &k1, &k2);
+
+                p1 = Self::three_isogeny_eval(&p1, &k1, &k2);
+                p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
+                p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
+            }
+            (c, Some((p1, p2, p3)))
+        }
+    }
+
+    /// Computing public key on the 2-torsion, isogen_2 Algo 21 (p62)
+    /// Input: sk secret key
+    /// Output: public key
+    pub fn isogen2(&self, sk: &SecretKey) -> PublicKey<K> {
+        let one = K::one();
+        let two = one.add(&one);
+        let four = two.add(&two);
+        let six = two.add(&four);
+        let eight = four.add(&four);
+
+        let curve = Curve::from_coeffs(six, one);
+        let curve_plus = Curve::from_coeffs(eight, four);
+
+        let xp2 = self.params.xp2.clone();
+        let xq2 = self.params.xq2.clone();
+        let xr2 = self.params.xr2.clone();
+
+        let xp3 = self.params.xp3.clone();
+        let xq3 = self.params.xq3.clone();
+        let xr3 = self.params.xr3.clone();
+
+        let p1 = Point::from_x(xp3);
+        let p2 = Point::from_x(xq3);
+        let p3 = Point::from_x(xr3);
+
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp2, xq2, xr2, &curve);
+
+        let opt = Some((p1, p2, p3));
+
+        let (_, opt) = self.two_e_iso(s, opt, &curve_plus);
+
+        let (p1, p2, p3) = opt.unwrap();
+
+        let x1 = p1.x.div(&p1.z);
+        let x2 = p2.x.div(&p2.z);
+        let x3 = p3.x.div(&p3.z);
+
+        PublicKey { x1, x2, x3 }
+    }
+
+    /// Computing & evaluating 3^e-isogeny, optimised version
+    /// Algorithm 20, 3_e_iso, p. 61
+    /// Input: S of order 2^(e_2), curve, strategy
+    /// Optional input: three points on the curve
+    /// Output: E/<S>
+    /// Optional output: three points on the new curve
+
+    fn three_e_iso_optim(
+        &self,
+        s: Point<K>,
+        opt: Option<(Point<K>, Point<K>, Point<K>)>,
+        _curve: &Curve<K>,
+        strategy: &[usize],
+    ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        let mut queue = vec![(self.params.e3, s)];
+        let mut new_curve = Curve::starting_curve();
+        let opt_output = None;
+
+        if opt.is_some() {
+            let (mut p1, mut p2, mut p3) = opt.unwrap();
+
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_pm, k1, k2) = Self::three_isogenous_curve(&p);
+                    new_curve = curve_pm;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+
+                    p1 = Self::three_isogeny_eval(&p1, &k1, &k2);
+                    p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
+                    p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ntriple(p, s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        } else {
+            let mut i = 1;
+            while !queue.is_empty() {
+                let s_i = strategy[i].try_into().unwrap();
+                let (h, p) = queue.pop().unwrap();
+                if h == 1 {
+                    let (curve_plus, k1, k2) = Self::three_isogenous_curve(&p);
+                    new_curve = curve_plus;
+                    let mut tmp_queue = vec![];
+
+                    while !queue.is_empty() {
+                        let (h, p) = queue.pop().unwrap();
+                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
+                        tmp_queue.push((h - 1, p));
+                    }
+                    queue = tmp_queue;
+                } else if h > s_i {
+                    queue.push((h, p.clone()));
+                    let p = Self::ntriple(p, s_i, &new_curve);
+                    queue.push((h - s_i, p));
+                    i += 1;
+                } else {
+                    panic!("Invalid strategy!")
+                }
+            }
+        }
+
+        (new_curve, opt_output)
+    }
+
+    /// Computing public key on the 3-torsion, isogen_3 Algo 22 (p62)
+    /// Input: secret key
+    /// Output: public key
+
+    pub fn isogen3(&self, sk: &SecretKey) -> PublicKey<K> {
+        let one = K::one();
+        let two = one.add(&one);
+        let four = two.add(&two);
+        let six = two.add(&four);
+        let eight = four.add(&four);
+
+        let curve_plus = Curve::from_coeffs(six, one);
+        let curve_minus = Curve::from_coeffs(eight, four);
+
+        let xp2 = self.params.xp2.clone();
+        let xq2 = self.params.xq2.clone();
+        let xr2 = self.params.xr2.clone();
+
+        let xp3 = self.params.xp3.clone();
+        let xq3 = self.params.xq3.clone();
+        let xr3 = self.params.xr3.clone();
+
+        let p1 = Point::from_x(xp2);
+        let p2 = Point::from_x(xq2);
+        let p3 = Point::from_x(xr2);
+
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve_plus);
+
+        let opt = Some((p1, p2, p3));
+        let (_, opt) = self.three_e_iso(s, opt, &curve_minus);
+
+        let (p1, p2, p3) = opt.unwrap();
+
+        let x1 = p1.x.div(&p1.z);
+        let x2 = p2.x.div(&p2.z);
+        let x3 = p3.x.div(&p3.z);
+
+        PublicKey { x1, x2, x3 }
+    }
+
+    /// Establishing shared keys on the 2-torsion, isoex_2, Algo 23 (p63)
+    /// Input; secret key, public key
+    /// Output: j-invariant
+    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
+        let one = K::one();
+        let two = one.add(&one);
+        let four = two.add(&two);
+        let curve = Curve::from_public_key(pk).unwrap();
+
+        let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
+        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
+
+        let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
+        let (curve_plus, _) = self.two_e_iso(s, None, &curve_plus);
+
+        let curve = Curve::from_coeffs(
+            curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),
+            curve_plus.c,
+        );
+
+        curve.j_invariant()
+    }
+
+    /// Establishing shared keys on the 3-torsion, Algo 24 (p63)
+    /// Input: secret key, public key
+    /// Output: a j-invariant
+    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
+        let one = K::one();
+        let two = one.add(&one);
+        let curve = Curve::from_public_key(pk).unwrap();
+
+        let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
+        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
+
+        let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
+        let (curve_pm, _) = self.three_e_iso(s, None, &curve_pm);
+
+        let curve = Curve::from_coeffs(
+            two.mul(&curve_pm.a.add(&curve_pm.c)),
+            curve_pm.a.sub(&curve_pm.c),
+        );
+
+        curve.j_invariant()
+    }
+}

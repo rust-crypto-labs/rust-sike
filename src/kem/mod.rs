@@ -1,10 +1,8 @@
 use crate::{
     ff::FiniteField,
+    isogeny::{PublicKey, PublicParameters, SecretKey},
     pke::{Ciphertext, Message, PKE},
-    utils::{
-        constants::SIKE_P434_NKS3, conversion::str_to_u64, shake, PublicKey, PublicParameters,
-        SecretKey,
-    },
+    utils::{constants::SIKE_P434_NKS3, conversion, shake},
 };
 
 use rand::prelude::*;
@@ -17,7 +15,7 @@ pub struct KEM<K> {
     n: usize,
 }
 
-impl<K: FiniteField+Clone> KEM<K> {
+impl<K: FiniteField + Clone> KEM<K> {
     pub fn setup(params: PublicParameters<K>, n: usize) -> Self {
         Self {
             pke: PKE::setup(params.clone()),
@@ -27,7 +25,7 @@ impl<K: FiniteField+Clone> KEM<K> {
     }
 
     pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
-        let nsk3 = str_to_u64(SIKE_P434_NKS3);
+        let nsk3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk3 = SecretKey::get_random_secret_key(nsk3 as usize);
         let pk3 = self.pke.isogenies.isogen3(&sk3);
         let s = Self::random_string(self.n);
@@ -72,14 +70,14 @@ impl<K: FiniteField+Clone> KEM<K> {
     }
 
     fn hash_function_g(&self, m: &Message, r: &PublicKey<K>) -> Vec<u8> {
-        let input = shake::concatenate(&[&m.clone().to_bytes(), &r.clone().to_bytes()]);
+        let input = conversion::concatenate(&[&m.clone().to_bytes(), &r.clone().to_bytes()]);
         let n: usize = self.params.e2.try_into().unwrap();
 
         shake::shake256(&input, n / 8)
     }
 
     fn hash_function_h(&self, m: &Message, c: &Ciphertext) -> Vec<u8> {
-        let input = shake::concatenate(&[&m.clone().to_bytes(), &c.bytes0, &c.bytes1]);
+        let input = conversion::concatenate(&[&m.clone().to_bytes(), &c.bytes0, &c.bytes1]);
 
         let n = self.params.secparam;
 

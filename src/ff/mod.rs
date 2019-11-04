@@ -1,4 +1,4 @@
-use crate::utils::{constants::SIKE_P434_P, conversion::str_to_bigint};
+use crate::utils::{constants::SIKE_P434_P, conversion};
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
@@ -17,6 +17,7 @@ pub trait FiniteField {
     fn equals(&self, other: &Self) -> bool;
 
     fn to_bytes(self) -> Vec<u8>;
+    fn from_bytes(bytes: &[u8]) -> Self;
 }
 
 #[derive(Clone)]
@@ -25,8 +26,10 @@ pub struct PrimeField_p434 {
 }
 
 impl PrimeField_p434 {
-    pub fn from_string(_s: &str) -> Self {
-        unimplemented!()
+    pub fn from_string(s: &str) -> Self {
+        let val = conversion::str_to_bigint(s);
+
+        Self { val }
     }
 }
 
@@ -34,59 +37,75 @@ impl FiniteField for PrimeField_p434 {
     fn is_zero(&self) -> bool {
         self.val == BigInt::zero()
     }
+
     fn dimension() -> usize {
         1
     }
+
     fn order() -> BigInt {
-        str_to_bigint(SIKE_P434_P)
+        conversion::str_to_bigint(SIKE_P434_P)
     }
+
     fn zero() -> Self {
         Self {
             val: BigInt::zero(),
         }
     }
+
     fn one() -> Self {
         Self { val: BigInt::one() }
     }
+
     fn neg(&self) -> Self {
         Self {
             val: Self::order() - &self.val,
         }
     }
+
     fn inv(&self) -> Self {
         let two = BigInt::one() + BigInt::one();
         Self {
             val: self.val.modpow(&(Self::order() - two), &Self::order()),
         }
     }
+
     fn add(&self, other: &Self) -> Self {
         let sum = &self.val + &other.val;
         Self {
             val: sum.modpow(&BigInt::one(), &Self::order()),
         }
     }
+
     fn sub(&self, other: &Self) -> Self {
         let diff = &self.val - &other.val;
         Self {
             val: diff.modpow(&BigInt::one(), &Self::order()),
         }
     }
+
     fn mul(&self, other: &Self) -> Self {
         let prod = &self.val * &other.val;
         Self {
             val: prod.modpow(&BigInt::one(), &Self::order()),
         }
     }
+
     fn div(&self, other: &Self) -> Self {
         let div = &self.val * &other.inv().val;
         Self {
             val: div.modpow(&BigInt::one(), &Self::order()),
         }
     }
+
     fn equals(&self, other: &Self) -> bool {
         self.val == other.val
     }
+
     fn to_bytes(self) -> Vec<u8> {
+        unimplemented!()
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Self {
         unimplemented!()
     }
 }
@@ -181,8 +200,16 @@ impl<F: FiniteField> FiniteField for QuadraticExtension<F> {
     }
 
     fn to_bytes(self) -> Vec<u8> {
-        use crate::utils::shake::concatenate;
+        use crate::utils::conversion::concatenate;
 
         concatenate(&[&self.a.to_bytes(), &self.b.to_bytes()])
+    }
+
+    /// Algorithm 1.2.4. ostofp2
+    fn from_bytes(bytes: &[u8]) -> Self {
+        let n = bytes.len() / 2;
+        let a = F::from_bytes(&bytes[..n]);
+        let b = F::from_bytes(&bytes[n..]);
+        Self::from(a, b)
     }
 }

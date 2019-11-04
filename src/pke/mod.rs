@@ -1,9 +1,10 @@
 use crate::{
     ff::FiniteField,
+    isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
     utils::{
         constants::{SIKE_P434_NKS2, SIKE_P434_NKS3},
         conversion::str_to_u64,
-        shake, CurveIsogenies, PublicKey, PublicParameters, SecretKey,
+        shake,
     },
 };
 
@@ -34,7 +35,7 @@ pub struct PKE<K> {
 }
 
 /// Algorithm 1, Section 1.3.9
-impl<K: FiniteField+Clone > PKE<K> {
+impl<K: FiniteField + Clone> PKE<K> {
     pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             isogenies: CurveIsogenies::init(params.clone()),
