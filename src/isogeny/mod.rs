@@ -1,3 +1,4 @@
+use bitvec::prelude::*;
 use rand::prelude::*;
 use std::convert::TryInto;
 
@@ -15,11 +16,11 @@ impl SecretKey {
         Self::from_bytes(&bytes)
     }
 
-    pub fn from_bits(_bits: &[bool]) -> Self {
+    pub fn from_bits(_bits: &BitSlice) -> Self {
         unimplemented!()
     }
 
-    pub fn to_bits(&self) -> Vec<bool> {
+    pub fn to_bits(&self) -> BitVec {
         unimplemented!()
     }
 
@@ -51,7 +52,7 @@ impl<K: FiniteField> PublicKey<K> {
         unimplemented!()
     }
 
-    pub fn from_bits(_bits: &[bool]) -> Self {
+    pub fn from_bits(_bits: &BitSlice) -> Self {
         unimplemented!()
     }
 
@@ -289,14 +290,14 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
     /// Three point ladder Ladder3pt Alg 8 (p56)
     /// Input: m (binary), x_p, x_q, x_(Q-P)
     /// Output: P + [m]Q
-    fn three_pts_ladder(m: &[bool], x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
+    fn three_pts_ladder(m: &BitSlice, x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
         let mut p0 = Point::from_x(x_q);
         let mut p1 = Point::from_x(x_p);
         let mut p2 = Point::from_x(x_qmp);
 
         let a_24_plus = &curve.a;
 
-        for &m_i in m {
+        for m_i in m.iter() {
             if m_i {
                 let (p0v, p1v) = Self::double_and_add(&p0, &p1, &p2, a_24_plus);
                 p0 = p0v;

@@ -4,10 +4,7 @@ use num_traits::{One, Zero};
 
 use once_cell::sync::Lazy;
 
-static P434_PRIME: Lazy<BigInt> = Lazy::new(|| {
-    conversion::str_to_bigint(SIKE_P434_P)
-});
-
+static P434_PRIME: Lazy<BigInt> = Lazy::new(|| conversion::str_to_bigint(SIKE_P434_P));
 
 pub trait FiniteField {
     fn is_zero(&self) -> bool;
