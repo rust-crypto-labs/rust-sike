@@ -7,7 +7,7 @@ use crate::{
 
 use rand::prelude::*;
 
-use std::{convert::TryInto,fmt::Debug};
+use std::{convert::TryInto, fmt::Debug};
 
 pub struct KEM<K> {
     params: PublicParameters<K>,
@@ -15,7 +15,7 @@ pub struct KEM<K> {
     n: usize,
 }
 
-impl<K: FiniteField + Clone+Debug> KEM<K> {
+impl<K: FiniteField + Clone + Debug> KEM<K> {
     pub fn setup(params: PublicParameters<K>, n: usize) -> Self {
         Self {
             pke: PKE::setup(params.clone()),
@@ -49,7 +49,7 @@ impl<K: FiniteField + Clone+Debug> KEM<K> {
         let s = Message::from_bytes(s.to_vec());
         let r = self.hash_function_g(&m.clone(), &pk);
 
-        let c0 = PublicKey::from_bytes(&c.bytes0);
+        let c0 = PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
         let rsk = SecretKey::from_bytes(&r);
 
         let c0p = self.pke.isogenies.isogen2(&rsk);
@@ -70,15 +70,23 @@ impl<K: FiniteField + Clone+Debug> KEM<K> {
     }
 
     fn hash_function_g(&self, m: &Message, r: &PublicKey<K>) -> Vec<u8> {
-        let input = conversion::concatenate(&[&m.clone().to_bytes(), &r.clone().to_bytes()]);
-        
+        let (part1, part2, part3) = r.clone().to_bytes();
+        let msg_bytes = m.clone().to_bytes();
+        let input = conversion::concatenate(&[&msg_bytes, &part1, &part2, &part3]);
+
         let n: usize = self.params.e2.try_into().unwrap();
 
         shake::shake256(&input, n / 8)
     }
 
     fn hash_function_h(&self, m: &Message, c: &Ciphertext) -> Vec<u8> {
-        let input = conversion::concatenate(&[&m.clone().to_bytes(), &c.bytes0, &c.bytes1]);
+        let input = conversion::concatenate(&[
+            &m.clone().to_bytes(),
+            &c.bytes00,
+            &c.bytes01,
+            &c.bytes02,
+            &c.bytes1,
+        ]);
 
         let n = self.params.secparam;
 

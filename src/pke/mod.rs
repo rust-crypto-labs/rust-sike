@@ -27,7 +27,9 @@ impl Message {
 
 #[derive(Clone)]
 pub struct Ciphertext {
-    pub bytes0: Vec<u8>,
+    pub bytes00: Vec<u8>,
+    pub bytes01: Vec<u8>,
+    pub bytes02: Vec<u8>,
     pub bytes1: Vec<u8>,
 }
 
@@ -37,7 +39,7 @@ pub struct PKE<K> {
 }
 
 /// Algorithm 1, Section 1.3.9
-impl<K: FiniteField + Clone+Debug> PKE<K> {
+impl<K: FiniteField + Clone + Debug> PKE<K> {
     pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             isogenies: CurveIsogenies::init(params.clone()),
@@ -60,24 +62,32 @@ impl<K: FiniteField + Clone+Debug> PKE<K> {
 
         let j = self.isogenies.isoex2(&sk2, &pk);
 
-        let c0_bytes = c0.to_bytes();
+        let (part1, part2, part3) = c0.to_bytes();
         let h = self.hash_function_f(j);
 
         if h.len() != m.bytes.len() {
-            panic!(
-                format!("Message has length {}, should be {} (same length as the output of F).", m.bytes.len(), h.len()))
+            panic!(format!(
+                "Message has length {}, should be {} (same length as the output of F).",
+                m.bytes.len(),
+                h.len()
+            ))
         }
 
         let c1_bytes = Self::xor(&m.bytes, &h);
 
         Ciphertext {
-            bytes0: c0_bytes,
+            bytes00: part1,
+            bytes01: part2,
+            bytes02: part3,
             bytes1: c1_bytes,
         }
     }
 
     pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
-        let j: K = self.isogenies.isoex3(sk, &PublicKey::from_bytes(&c.bytes0));
+        let j: K = self.isogenies.isoex3(
+            sk,
+            &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02),
+        );
         let h = self.hash_function_f(j);
         let m = Self::xor(&h, &c.bytes1);
 

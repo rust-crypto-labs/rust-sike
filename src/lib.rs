@@ -26,7 +26,7 @@ mod tests {
         true
     }
 
-   #[test]
+    #[test]
     fn test_strategy_2tor() {
         use crate::utils::strategy;
 
@@ -41,7 +41,7 @@ mod tests {
         ));
     }
 
-   #[test]
+    #[test]
     fn test_strategy_3tor() {
         use crate::utils::strategy;
 
@@ -57,7 +57,7 @@ mod tests {
         ));
     }
 
-   #[test]
+    #[test]
     fn test_shake256_0bit() {
         use crate::utils::shake;
 
@@ -133,22 +133,25 @@ mod tests {
         let pke = PKE::setup(params);
 
         // Alice generates a keypair, she published her pk
+        println!("[Debug] Key generation");
         let (sk, pk) = pke.gen();
 
         // Bob writes a message
-        let msg = Message::from_bytes(vec![0; seclevel/8]);
+        let msg = Message::from_bytes(vec![0; seclevel / 8]);
         // Bob encrypts the message using Alice's pk
+        println!("[Debug] Encryption");
         let ciphertext = pke.enc(&pk, msg.clone());
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
+        println!("[Debug] Decryption");
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
     }
 
-   #[test]
+    #[test]
     fn test_kem() {
         use crate::{
             isogeny::PublicParameters,
@@ -185,7 +188,7 @@ mod tests {
         assert_eq!(k, k_recovered);
     }
 
-   #[test]
+    #[test]
     fn test_concatenate() {
         let a = vec![1, 2, 3, 4, 5];
         let b = vec![6, 7, 8];
@@ -194,5 +197,85 @@ mod tests {
         let d = crate::utils::conversion::concatenate(&[&a, &b]);
 
         assert_eq!(c, d)
+    }
+
+    #[test]
+    fn test_conversion_ff434_bytes() {
+        use crate::{
+            ff::{FiniteField, PrimeField_p434},
+            utils::constants::*,
+        };
+
+        let num = PrimeField_p434::from_string(SIKE_P434_XP20);
+
+        let b = num.clone().to_bytes();
+        let num_recovered = PrimeField_p434::from_bytes(&b);
+
+        println!("{:?}", num);
+        println!("{:?}", num_recovered);
+
+        assert!(num.equals(&num_recovered));
+    }
+
+    #[test]
+    fn test_conversion_quadratic_bytes() {
+        use crate::{
+            ff::{FiniteField, PrimeField_p434, QuadraticExtension},
+            utils::constants::*,
+        };
+
+        let num1 = PrimeField_p434::from_string(SIKE_P434_XP20);
+        let num2 = PrimeField_p434::from_string(SIKE_P434_XP21);
+
+        let q = QuadraticExtension::from(num1, num2);
+        let b = q.clone().to_bytes();
+        let q_recovered = QuadraticExtension::from_bytes(&b);
+
+        println!("{:?}", q);
+        println!("{:?}", q_recovered);
+
+        assert!(q.equals(&q_recovered));
+    }
+
+    #[test]
+    fn test_conversion_secretkey_bytes() {
+        use crate::isogeny::SecretKey;
+
+        let k = SecretKey::get_random_secret_key(256);
+        let b = k.clone().to_bytes();
+        let k_recovered = SecretKey::from_bytes(&b);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_conversion_publickey_bytes() {
+        use crate::{
+            ff::{FiniteField, PrimeField_p434, QuadraticExtension},
+            isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
+            utils::{constants::*, conversion},
+        };
+
+        let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
+        let sk = SecretKey::get_random_secret_key(nks3 as usize);
+
+        let params = PublicParameters {
+            secparam: 128,
+            e2: conversion::str_to_u64(SIKE_P434_E2),
+            e3: conversion::str_to_u64(SIKE_P434_E3),
+            xp2: conversion::str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
+            xq2: conversion::str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
+            xr2: conversion::str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
+            xp3: conversion::str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
+            xq3: conversion::str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
+            xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
+        };
+        let iso = CurveIsogenies::init(params);
+        let pk = iso.isogen3(&sk);
+        let (b0, b1, b2) = pk.clone().to_bytes();
+
+        let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2);
+
+        assert_eq!(pk, pk_recovered)
     }
 }

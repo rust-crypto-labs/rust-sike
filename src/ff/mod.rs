@@ -1,7 +1,7 @@
 use crate::utils::{constants::SIKE_P434_P, conversion};
-use num_bigint::{BigInt,Sign};
-use num_traits::{One, Zero};
+use num_bigint::{BigInt, Sign};
 use num_integer::Integer;
+use num_traits::{One, Zero};
 
 use once_cell::sync::Lazy;
 
@@ -48,7 +48,6 @@ impl Debug for PrimeField_p434 {
         write!(f, "{:?}", bytes)
     }
 }
-
 
 impl FiniteField for PrimeField_p434 {
     fn is_zero(&self) -> bool {
@@ -101,12 +100,10 @@ impl FiniteField for PrimeField_p434 {
     }
 
     fn mul(&self, other: &Self) -> Self {
-        
         let prod = self.val.clone().mul(&other.val);
 
-
         Self {
-            val: prod.mod_floor(&P434_PRIME.clone())
+            val: prod.mod_floor(&P434_PRIME.clone()),
         }
     }
 
@@ -122,13 +119,13 @@ impl FiniteField for PrimeField_p434 {
     }
 
     fn to_bytes(self) -> Vec<u8> {
-        let (_, bytes ) = self.val.to_bytes_be();
+        let (_, bytes) = self.val.to_bytes_be();
         bytes
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
         Self {
-            val: BigInt::from_bytes_be(Sign::Plus, bytes)
+            val: BigInt::from_bytes_be(Sign::Plus, bytes),
         }
     }
 }
@@ -151,7 +148,7 @@ impl<F: FiniteField> QuadraticExtension<F> {
     }
 }
 
-impl<F: FiniteField+Debug> FiniteField for QuadraticExtension<F> {
+impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
     fn is_zero(&self) -> bool {
         self.a.is_zero() && self.b.is_zero()
     }
@@ -201,8 +198,7 @@ impl<F: FiniteField+Debug> FiniteField for QuadraticExtension<F> {
     }
 
     fn mul(&self, other: &Self) -> Self {
-
-        let m1 = self.a.mul(&other.a);  
+        let m1 = self.a.mul(&other.a);
         let m2 = self.b.mul(&other.b);
 
         let m3 = self.a.mul(&other.b);
@@ -232,7 +228,18 @@ impl<F: FiniteField+Debug> FiniteField for QuadraticExtension<F> {
     fn to_bytes(self) -> Vec<u8> {
         use crate::utils::conversion::concatenate;
 
-        concatenate(&[&self.a.to_bytes(), &self.b.to_bytes()])
+        let part1 = self.a.to_bytes();
+        let part2 = self.b.to_bytes();
+
+        // Left padding to the nearest power of 2
+        let p21 = part1.len().next_power_of_two();
+        let p22 = part2.len().next_power_of_two();
+        let len = std::cmp::max(p21, p22);
+
+        let pad1 = vec![0; len - part1.len()];
+        let pad2 = vec![0; len - part2.len()];
+
+        concatenate(&[&pad1, &part1, &pad2, &part2])
     }
 
     /// Algorithm 1.2.4. ostofp2
