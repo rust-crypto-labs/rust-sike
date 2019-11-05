@@ -64,11 +64,12 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let nks2 = str_to_u64(SIKE_P434_NKS2);
         let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
 
-        // 5.        
+        // 5.
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2);
 
         // 6.
         let j = self.isogenies.isoex2(&sk2, &pk);
+        println!("[Debug] (enc) j_invariant = {:?}", j);
 
         // 7.
         let h = self.hash_function_f(j);
@@ -90,12 +91,11 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
         // 10.
         let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
-        let j: K = self.isogenies.isoex3(
-            sk,
-            c0
-        );
+        let j: K = self.isogenies.isoex3(sk, c0);
 
-        // 11.        
+        println!("[Debug] (dec) j_invariant = {:?}", j);
+
+        // 11.
         let h = self.hash_function_f(j);
 
         // 12.

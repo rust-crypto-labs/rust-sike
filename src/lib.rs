@@ -250,7 +250,10 @@ mod tests {
 
     #[test]
     fn test_j_invariant() {
-        use crate::{isogeny::{ Curve},ff::{FiniteField,QuadraticExtension,PrimeField_p434}};
+        use crate::{
+            ff::{FiniteField, PrimeField_p434, QuadraticExtension},
+            isogeny::Curve,
+        };
         let curve = Curve::starting_curve();
 
         let j: QuadraticExtension<PrimeField_p434> = curve.j_invariant();
