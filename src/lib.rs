@@ -249,6 +249,18 @@ mod tests {
     }
 
     #[test]
+    fn test_j_invariant() {
+        use crate::{isogeny::{ Curve},ff::{FiniteField,QuadraticExtension,PrimeField_p434}};
+        let curve = Curve::starting_curve();
+
+        let j: QuadraticExtension<PrimeField_p434> = curve.j_invariant();
+        let bytes = j.to_bytes();
+
+        // 287496 + 0i
+        assert_eq!(bytes, [0, 4, 99, 8, 0, 0, 0, 0])
+    }
+
+    #[test]
     fn test_conversion_publickey_bytes() {
         use crate::{
             ff::{FiniteField, PrimeField_p434, QuadraticExtension},

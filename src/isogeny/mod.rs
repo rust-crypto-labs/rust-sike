@@ -130,7 +130,7 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     /// Starting curve 1.3.2
     /// Curve with equation y² = x³ + 6x² + x
-    fn starting_curve() -> Curve<K> {
+    pub fn starting_curve() -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
         let three = two.add(&one);
@@ -140,7 +140,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     }
 
     // Montgomery j-invariant Algo 9 (p56)
-    fn j_invariant(&self) -> K {
+    pub fn j_invariant(&self) -> K {
         let j = self.a.mul(&self.a); // 1.
         let t1 = self.c.mul(&self.c); //2.
         let t0 = t1.add(&t1); // 3.
