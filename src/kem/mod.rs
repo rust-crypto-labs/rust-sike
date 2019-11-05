@@ -7,7 +7,7 @@ use crate::{
 
 use rand::prelude::*;
 
-use std::convert::TryInto;
+use std::{convert::TryInto,fmt::Debug};
 
 pub struct KEM<K> {
     params: PublicParameters<K>,
@@ -15,7 +15,7 @@ pub struct KEM<K> {
     n: usize,
 }
 
-impl<K: FiniteField + Clone> KEM<K> {
+impl<K: FiniteField + Clone+Debug> KEM<K> {
     pub fn setup(params: PublicParameters<K>, n: usize) -> Self {
         Self {
             pke: PKE::setup(params.clone()),
@@ -71,6 +71,7 @@ impl<K: FiniteField + Clone> KEM<K> {
 
     fn hash_function_g(&self, m: &Message, r: &PublicKey<K>) -> Vec<u8> {
         let input = conversion::concatenate(&[&m.clone().to_bytes(), &r.clone().to_bytes()]);
+        
         let n: usize = self.params.e2.try_into().unwrap();
 
         shake::shake256(&input, n / 8)

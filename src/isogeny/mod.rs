@@ -1,12 +1,18 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
-use std::convert::TryInto;
+use std::{fmt::Debug,convert::TryInto};
 
-use crate::ff::FiniteField;
+use crate::{ff::FiniteField, utils::conversion};
 
 /// Secret key
 pub struct SecretKey {
     bytes: Vec<u8>,
+}
+
+impl std::fmt::Debug for SecretKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.bytes)
+    }
 }
 
 impl SecretKey {
@@ -21,7 +27,14 @@ impl SecretKey {
     }
 
     pub fn to_bits(&self) -> BitVec {
-        unimplemented!()
+        let mut result = vec![];
+        for byte in self.bytes.iter() {
+            let bits = byte.as_bitslice::<BigEndian>().as_slice();
+            result.push(bits);
+        }
+
+        conversion::concatenate(&result).into()
+
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -43,21 +56,40 @@ pub struct PublicKey<K: FiniteField> {
     x3: K,
 }
 
+impl<K: FiniteField + std::fmt::Debug> std::fmt::Debug for PublicKey<K> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}, {:?}, {:?}", self.x1, self.x2, self.x3)
+    }
+}
+
 impl<K: FiniteField> PublicKey<K> {
     pub fn to_bits(self) -> Vec<bool> {
         unimplemented!()
     }
 
     pub fn to_bytes(self) -> Vec<u8> {
-        unimplemented!()
+        let part1 = self.x1.to_bytes();
+        let part2 = self.x2.to_bytes();
+        let part3 = self.x3.to_bytes();
+
+        conversion::concatenate(&[&part1, &part2, &part3])
     }
 
     pub fn from_bits(_bits: &BitSlice) -> Self {
         unimplemented!()
     }
 
-    pub fn from_bytes(_bytes: &[u8]) -> Self {
-        unimplemented!()
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        let n = bytes.len()/3;
+        let part1 = &bytes[..n];
+        let part2 = &bytes[n..2*n];
+        let part3 = &bytes[2*n..];
+
+        Self {
+            x1: K::from_bytes(part1),
+            x2:K::from_bytes(part2),
+            x3: K::from_bytes(part3)
+        }
     }
 }
 
@@ -72,6 +104,12 @@ impl<K: FiniteField> std::cmp::PartialEq for PublicKey<K> {
 struct Point<K: FiniteField + Clone> {
     x: K,
     z: K,
+}
+
+impl<K:FiniteField + Clone +Debug > Debug for Point<K> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({:?}:{:?})", self.x, self.z)
+    }
 }
 
 impl<K: FiniteField + Clone> Point<K> {
@@ -173,7 +211,7 @@ pub struct CurveIsogenies<K> {
     params: PublicParameters<K>,
 }
 
-impl<K: FiniteField + Clone> CurveIsogenies<K> {
+impl<K: FiniteField + Clone+Debug> CurveIsogenies<K> {
     pub fn init(params: PublicParameters<K>) -> Self {
         Self { params }
     }
@@ -217,6 +255,7 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
         qmp: &Point<K>,
         a_24_plus: &K,
     ) -> (Point<K>, Point<K>) {
+
         let t0 = p.x.add(&p.z); //1.
         let t1 = p.x.sub(&p.z); // 2.
         let x2 = t0.mul(&t0); // 3.
@@ -238,8 +277,12 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
         let xpq = xpq.mul(&xpq); // 17.
         let zpq = qmp.x.mul(&zpq); // 18.
         let xpq = qmp.z.mul(&xpq); // 19.
+ 
 
-        (Point { x: x2, z: z2 }, Point { x: xpq, z: zpq })
+    let two_p = Point { x: x2, z: z2 };
+    let p_plus_q = Point { x: xpq, z: zpq };
+
+        (two_p, p_plus_q)
     }
 
     /// Coordinate tripling xTPL Algorithm 6 (p55)
@@ -297,17 +340,21 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
 
         let a_24_plus = &curve.a;
 
+
         for m_i in m.iter() {
+
             if m_i {
                 let (p0v, p1v) = Self::double_and_add(&p0, &p1, &p2, a_24_plus);
                 p0 = p0v;
                 p1 = p1v;
+
             } else {
                 let (p0v, p2v) = Self::double_and_add(&p0, &p2, &p1, a_24_plus);
                 p0 = p0v;
                 p2 = p2v;
             }
         }
+
 
         p1
     }
@@ -411,6 +458,8 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
     /// Input; P of order 3
     /// Output E/<P> and constants k1, k2
     fn three_isogenous_curve(p: &Point<K>) -> (Curve<K>, K, K) {
+        
+
         let k1 = p.x.sub(&p.z); // 1.
         let t0 = k1.mul(&k1); // 2.
         let k2 = p.x.add(&p.z); // 3.
@@ -434,6 +483,8 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
 
         let t0 = t4.sub(&c); // 19.
         let a = c.add(&t0); // 20.
+  
+
 
         (Curve::from_coeffs(a, c), k1, k2)
     }
@@ -605,15 +656,22 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
         } else {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
             for e in (0..=self.params.e3 - 1).rev() {
+
                 let t = Self::ntriple(s.clone(), e, &c);
+
                 let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
+
                 c = new_c;
                 s = Self::three_isogeny_eval(&s, &k1, &k2);
 
                 p1 = Self::three_isogeny_eval(&p1, &k1, &k2);
                 p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
                 p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
+
+
             }
+
+
             (c, Some((p1, p2, p3)))
         }
     }
@@ -765,14 +823,20 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
 
         let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve_plus);
 
+                    
+
         let opt = Some((p1, p2, p3));
         let (_, opt) = self.three_e_iso(s, opt, &curve_minus);
-
+    
         let (p1, p2, p3) = opt.unwrap();
+
 
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
         let x3 = p3.x.div(&p3.z);
+
+
+
 
         PublicKey { x1, x2, x3 }
     }
@@ -784,7 +848,7 @@ impl<K: FiniteField + Clone> CurveIsogenies<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
-        let curve = Curve::from_public_key(pk).unwrap();
+        let curve = Curve::from_public_key(pk).expect("Incorrect public key!");
 
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
         let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);

@@ -8,6 +8,8 @@ use crate::{
     },
 };
 
+use std::fmt::Debug;
+
 #[derive(Clone)]
 pub struct Message {
     bytes: Vec<u8>,
@@ -35,7 +37,7 @@ pub struct PKE<K> {
 }
 
 /// Algorithm 1, Section 1.3.9
-impl<K: FiniteField + Clone> PKE<K> {
+impl<K: FiniteField + Clone+Debug> PKE<K> {
     pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             isogenies: CurveIsogenies::init(params.clone()),
@@ -47,6 +49,7 @@ impl<K: FiniteField + Clone> PKE<K> {
         let nks3 = str_to_u64(SIKE_P434_NKS3);
         let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
         let pk3 = self.isogenies.isogen3(&sk3);
+
         (sk3, pk3)
     }
 
@@ -54,13 +57,15 @@ impl<K: FiniteField + Clone> PKE<K> {
         let nks2 = str_to_u64(SIKE_P434_NKS2);
         let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2);
+
         let j = self.isogenies.isoex2(&sk2, &pk);
 
         let c0_bytes = c0.to_bytes();
         let h = self.hash_function_f(j);
 
         if h.len() != m.bytes.len() {
-            panic!("Message should be the same length as the output of F.")
+            panic!(
+                format!("Message has length {}, should be {} (same length as the output of F).", m.bytes.len(), h.len()))
         }
 
         let c1_bytes = Self::xor(&m.bytes, &h);
@@ -84,7 +89,7 @@ impl<K: FiniteField + Clone> PKE<K> {
     }
 
     fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {
-        let mut result = vec![];
+        let mut result = vec![0; input1.len()];
         let couples = input1.iter().zip(input2.iter());
 
         for (pos, (x, y)) in couples.enumerate() {

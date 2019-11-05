@@ -26,7 +26,7 @@ mod tests {
         true
     }
 
-    #[test]
+   #[test]
     fn test_strategy_2tor() {
         use crate::utils::strategy;
 
@@ -41,7 +41,7 @@ mod tests {
         ));
     }
 
-    #[test]
+   #[test]
     fn test_strategy_3tor() {
         use crate::utils::strategy;
 
@@ -57,7 +57,7 @@ mod tests {
         ));
     }
 
-    #[test]
+   #[test]
     fn test_shake256_0bit() {
         use crate::utils::shake;
 
@@ -136,7 +136,7 @@ mod tests {
         let (sk, pk) = pke.gen();
 
         // Bob writes a message
-        let msg = Message::from_bytes(vec![0; seclevel]);
+        let msg = Message::from_bytes(vec![0; seclevel/8]);
         // Bob encrypts the message using Alice's pk
         let ciphertext = pke.enc(&pk, msg.clone());
 
@@ -148,7 +148,7 @@ mod tests {
         assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
     }
 
-    #[test]
+   #[test]
     fn test_kem() {
         use crate::{
             isogeny::PublicParameters,
@@ -185,7 +185,7 @@ mod tests {
         assert_eq!(k, k_recovered);
     }
 
-    #[test]
+   #[test]
     fn test_concatenate() {
         let a = vec![1, 2, 3, 4, 5];
         let b = vec![6, 7, 8];
