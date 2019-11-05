@@ -35,9 +35,8 @@ pub struct PrimeField_p434 {
 
 impl PrimeField_p434 {
     pub fn from_string(s: &str) -> Self {
-        let val = conversion::str_to_bigint(s);
+        let val = conversion::str_to_bigint(s).mod_floor(&P434_PRIME.clone());
 
-        // TODO: check that val < p
         Self { val }
     }
 }
@@ -74,28 +73,29 @@ impl FiniteField for PrimeField_p434 {
 
     fn neg(&self) -> Self {
         Self {
-            val: Self::order() - &self.val,
+            val: &P434_PRIME.clone() - &self.val,
         }
     }
 
     fn inv(&self) -> Self {
         let two = BigInt::one() + BigInt::one();
+        let P = &P434_PRIME.clone();
         Self {
-            val: self.val.modpow(&(Self::order() - two), &Self::order()),
+            val: self.val.modpow(&(P - two), P),
         }
     }
 
     fn add(&self, other: &Self) -> Self {
         let sum = &self.val + &other.val;
         Self {
-            val: sum.modpow(&BigInt::one(), &Self::order()),
+            val: sum.mod_floor(&P434_PRIME.clone()),
         }
     }
 
     fn sub(&self, other: &Self) -> Self {
         let diff = &self.val - &other.val;
         Self {
-            val: diff.modpow(&BigInt::one(), &Self::order()),
+            val: diff.mod_floor(&P434_PRIME.clone()),
         }
     }
 
@@ -110,7 +110,7 @@ impl FiniteField for PrimeField_p434 {
     fn div(&self, other: &Self) -> Self {
         let div = &self.val * &other.inv().val;
         Self {
-            val: div.modpow(&BigInt::one(), &Self::order()),
+            val: div.mod_floor(&P434_PRIME.clone()),
         }
     }
 
@@ -124,9 +124,8 @@ impl FiniteField for PrimeField_p434 {
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        Self {
-            val: BigInt::from_bytes_be(Sign::Plus, bytes),
-        }
+        let val = BigInt::from_bytes_be(Sign::Plus, bytes).mod_floor(&P434_PRIME.clone());
+        Self { val }
     }
 }
 
