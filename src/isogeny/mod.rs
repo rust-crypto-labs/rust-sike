@@ -163,6 +163,34 @@ impl<K: FiniteField + Clone> Curve<K> {
         j
     }
 
+    // Montgomery j-invariant Algo 31 (p66)
+    pub fn j_invariant_ref(&self) -> K {
+        let one = K::one();
+        let two = one.add(&one);
+        let three = two.add(&one);
+        let four = two.add(&two);
+
+        let t0 = self.a.mul(&self.a);
+        let j = three;
+        let j = t0.sub(&j);
+        let t1 = j.mul(&j);
+        let j = j.mul(&t1);
+        let j = j.add(&j);
+        let j = j.add(&j);
+        let j = j.add(&j);
+        let j = j.add(&j);
+        let j = j.add(&j);
+        let j = j.add(&j);
+        let j = j.add(&j);
+        let j = j.add(&j);
+        let t1 = four;
+        let t0 = t0.sub(&t1);
+        let t0 = t0.inv();
+        let j = j.mul(&t0);
+
+        j
+    }
+
     /// Algorithm 1.2.1 "cfpk"
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
     fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
@@ -389,7 +417,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Evaluate the two-isogeny at a point 2_iso_eval Algo 12 (p57)
     /// Input: P of order 2, Q, both on the curve
     /// Output: Q' on a 2-iso curve
-    fn two_isogeny_eval(&self, p: &Point<K>, q: &Point<K>) -> Point<K> {
+    fn two_isogeny_eval(p: &Point<K>, q: &Point<K>) -> Point<K> {
         let t0 = p.x.add(&p.z); // 1.
         let t1 = p.x.sub(&p.z); // 2.
         let t2 = q.x.add(&q.z); // 3.
@@ -908,6 +936,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             curve_plus.c,
         );
 
+        println!("REF jinv = {:?}", curve.j_invariant_ref());
+        println!("OPT jinv = {:?}", curve.j_invariant());
+
         // 6, 7.
         curve.j_invariant()
     }
@@ -938,6 +969,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             two.mul(&curve_pm.a.add(&curve_pm.c)),
             curve_pm.a.sub(&curve_pm.c),
         );
+
+        println!("REF jinv = {:?}", curve.j_invariant_ref());
+        println!("OPT jinv = {:?}", curve.j_invariant());
 
         // 6, 7.
         curve.j_invariant()

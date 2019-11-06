@@ -75,7 +75,6 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let j = self
             .isogenies
             .isoex2(&sk2, &pk, &strategy::P434_TWO_TORSION_STRATEGY);
-        println!("[Debug] (enc) j_invariant = {:?}", j);
 
         // 7.
         let h = self.hash_function_f(j);
@@ -100,8 +99,6 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let j: K = self
             .isogenies
             .isoex3(sk, c0, &strategy::P434_THREE_TORSION_STRATEGY);
-
-        println!("[Debug] (dec) j_invariant = {:?}", j);
 
         // 11.
         let h = self.hash_function_f(j);

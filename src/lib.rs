@@ -257,10 +257,10 @@ mod tests {
         let curve = Curve::starting_curve();
 
         let j: QuadraticExtension<PrimeField_p434> = curve.j_invariant();
-        let bytes = j.to_bytes();
+        let j_ref: QuadraticExtension<PrimeField_p434> = curve.j_invariant_ref();
 
         // 287496 + 0i
-        assert_eq!(bytes, [0, 4, 99, 8, 0, 0, 0, 0])
+        assert_eq!(j, j_ref)
     }
 
     //#[test]

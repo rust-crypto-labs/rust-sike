@@ -28,7 +28,7 @@ pub trait FiniteField {
     fn from_bytes(bytes: &[u8]) -> Self;
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct PrimeField_p434 {
     val: BigInt,
 }
@@ -129,7 +129,7 @@ impl FiniteField for PrimeField_p434 {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct QuadraticExtension<F: FiniteField> {
     a: F,
     b: F,
