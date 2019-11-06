@@ -149,7 +149,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext,&p434strat_3);
+        let msg_recovered = pke.dec(&sk, ciphertext, &p434strat_3);
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());

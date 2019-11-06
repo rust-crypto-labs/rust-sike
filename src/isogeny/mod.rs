@@ -1,6 +1,6 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
-use std::{convert::TryInto, fmt::Debug};
+use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
 use crate::{ff::FiniteField, utils::conversion};
 
@@ -550,26 +550,33 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         _curve: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
-        let mut queue = vec![(self.params.e2 / 2, s)];
         let mut new_curve = Curve::starting_curve();
-        let opt_output = None;
+        let mut opt_output = None;
+
+        let mut queue = VecDeque::new();
+
+        queue.push_back((self.params.e2 / 2, s));
 
         if opt.is_some() {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
 
             let mut i = 1;
             while !queue.is_empty() {
-                let s_i = strategy[i].try_into().unwrap();
-                let (h, p) = queue.pop().unwrap();
+                let s_i = if i <= strategy.len() {
+                    strategy[i - 1].try_into().unwrap()
+                } else {
+                    1
+                };
+                let (h, p) = queue.pop_back().unwrap();
                 if h == 1 {
                     let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
                     new_curve = curve_plus;
-                    let mut tmp_queue = vec![];
+                    let mut tmp_queue = VecDeque::new();
 
                     while !queue.is_empty() {
-                        let (h, p) = queue.pop().unwrap();
+                        let (h, p) = queue.pop_front().unwrap();
                         let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
-                        tmp_queue.push((h - 1, p));
+                        tmp_queue.push_back((h - 1, p));
                     }
                     queue = tmp_queue;
 
@@ -577,34 +584,40 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                     p2 = Self::four_isogeny_eval(&k1, &k2, &k3, &p2);
                     p3 = Self::four_isogeny_eval(&k1, &k2, &k3, &p3);
                 } else if h > s_i {
-                    queue.push((h, p.clone()));
+                    queue.push_back((h, p.clone()));
                     let p = Self::ndouble(p, 2 * s_i, &new_curve);
-                    queue.push((h - s_i, p));
+                    queue.push_back((h - s_i, p));
                     i += 1;
                 } else {
                     panic!("Invalid strategy!")
                 }
             }
+
+            opt_output = Some((p1, p2, p3))
         } else {
             let mut i = 1;
             while !queue.is_empty() {
-                let s_i = strategy[i].try_into().unwrap();
-                let (h, p) = queue.pop().unwrap();
+                let s_i = if i <= strategy.len() {
+                    strategy[i - 1].try_into().unwrap()
+                } else {
+                    1
+                };
+                let (h, p) = queue.pop_back().unwrap();
                 if h == 1 {
                     let (curve_plus, k1, k2, k3) = Self::four_isogenous_curve(&p);
                     new_curve = curve_plus;
-                    let mut tmp_queue = vec![];
+                    let mut tmp_queue = VecDeque::new();
 
                     while !queue.is_empty() {
-                        let (h, p) = queue.pop().unwrap();
+                        let (h, p) = queue.pop_front().unwrap();
                         let p = Self::four_isogeny_eval(&k1, &k2, &k3, &p);
-                        tmp_queue.push((h - 1, p));
+                        tmp_queue.push_back((h - 1, p));
                     }
                     queue = tmp_queue;
                 } else if h > s_i {
-                    queue.push((h, p.clone()));
+                    queue.push_back((h, p.clone()));
                     let p = Self::ndouble(p, 2 * s_i, &new_curve);
-                    queue.push((h - s_i, p));
+                    queue.push_back((h - s_i, p));
                     i += 1;
                 } else {
                     panic!("Invalid strategy!")
@@ -690,6 +703,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let opt = Some((p1, p2, p3));
+
+        //let (_, opt) = self.two_e_iso(s.clone(), opt.clone(), &curve_plus);
         let (_, opt) = self.two_e_iso_optim(s, opt, &curve_plus, strategy);
 
         // 5.
@@ -716,26 +731,48 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         _curve: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
-        let mut queue = vec![(self.params.e3, s)];
         let mut new_curve = Curve::starting_curve();
-        let opt_output = None;
+        let mut opt_output = None;
+
+        assert_eq!(self.params.e3 as usize - 1, strategy.len());
+
+        // 1.
+        let mut queue = VecDeque::new();
+
+        //2.
+        queue.push_back((self.params.e3, s));
 
         if opt.is_some() {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
 
+            // 3.
             let mut i = 1;
+
+            //4.
             while !queue.is_empty() {
-                let s_i = strategy[i].try_into().unwrap();
-                let (h, p) = queue.pop().unwrap();
+                let s_i = if i <= strategy.len() {
+                    strategy[i - 1].try_into().unwrap()
+                } else {
+                    1
+                };
+
+                // 5.
+                let (h, p) = queue.pop_back().unwrap();
+
+                // 6.
                 if h == 1 {
+                    // 7.
                     let (curve_pm, k1, k2) = Self::three_isogenous_curve(&p);
                     new_curve = curve_pm;
-                    let mut tmp_queue = vec![];
 
+                    // 8.
+                    let mut tmp_queue = VecDeque::new();
+
+                    // 9.
                     while !queue.is_empty() {
-                        let (h, p) = queue.pop().unwrap();
+                        let (h, p) = queue.pop_front().unwrap();
                         let p = Self::three_isogeny_eval(&p, &k1, &k2);
-                        tmp_queue.push((h - 1, p));
+                        tmp_queue.push_back((h - 1, p));
                     }
                     queue = tmp_queue;
 
@@ -743,34 +780,51 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                     p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
                     p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
                 } else if h > s_i {
-                    queue.push((h, p.clone()));
+                    queue.push_back((h, p.clone()));
                     let p = Self::ntriple(p, s_i, &new_curve);
-                    queue.push((h - s_i, p));
+                    queue.push_back((h - s_i, p));
                     i += 1;
                 } else {
                     panic!("Invalid strategy!")
                 }
             }
-        } else {
-            let mut i = 1;
-            while !queue.is_empty() {
-                let s_i = strategy[i].try_into().unwrap();
-                let (h, p) = queue.pop().unwrap();
-                if h == 1 {
-                    let (curve_plus, k1, k2) = Self::three_isogenous_curve(&p);
-                    new_curve = curve_plus;
-                    let mut tmp_queue = vec![];
 
+            opt_output = Some((p1, p2, p3));
+        } else {
+            // 3.
+            let mut i = 1;
+
+            //4.
+            while !queue.is_empty() {
+                let s_i = if i <= strategy.len() {
+                    strategy[i - 1].try_into().unwrap()
+                } else {
+                    1
+                };
+
+                // 5.
+                let (h, p) = queue.pop_back().unwrap();
+
+                // 6.
+                if h == 1 {
+                    // 7.
+                    let (curve_pm, k1, k2) = Self::three_isogenous_curve(&p);
+                    new_curve = curve_pm;
+
+                    // 8.
+                    let mut tmp_queue = VecDeque::new();
+
+                    // 9.
                     while !queue.is_empty() {
-                        let (h, p) = queue.pop().unwrap();
+                        let (h, p) = queue.pop_front().unwrap();
                         let p = Self::three_isogeny_eval(&p, &k1, &k2);
-                        tmp_queue.push((h - 1, p));
+                        tmp_queue.push_back((h - 1, p));
                     }
                     queue = tmp_queue;
                 } else if h > s_i {
-                    queue.push((h, p.clone()));
+                    queue.push_back((h, p.clone()));
                     let p = Self::ntriple(p, s_i, &new_curve);
-                    queue.push((h - s_i, p));
+                    queue.push_back((h - s_i, p));
                     i += 1;
                 } else {
                     panic!("Invalid strategy!")
@@ -816,6 +870,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 4.
         let opt = Some((p1, p2, p3));
         let (_, opt) = self.three_e_iso_optim(s, opt, &curve_pm, strategy);
+        //let (_, opt) = self.three_e_iso(s, opt, &curve_pm);
 
         // 5.
         let (p1, p2, p3) = opt.unwrap();
@@ -847,6 +902,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_plus, _) = self.two_e_iso_optim(s, None, &curve_plus, strategy);
+        //let (curve_plus, _) = self.two_e_iso(s, None, &curve_plus);
 
         // 5.
         let curve = Curve::from_coeffs(
@@ -877,6 +933,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_pm, _) = self.three_e_iso_optim(s, None, &curve_pm, strategy);
+        //let (curve_pm, _) = self.three_e_iso(s, None, &curve_pm);
 
         // 5.
         let curve = Curve::from_coeffs(
