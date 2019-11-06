@@ -26,7 +26,7 @@ mod tests {
         true
     }
 
-    #[test]
+    //#[test]
     fn test_strategy_2tor() {
         use crate::utils::strategy;
 
@@ -41,7 +41,7 @@ mod tests {
         ));
     }
 
-    #[test]
+    //#[test]
     fn test_strategy_3tor() {
         use crate::utils::strategy;
 
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn test_j_invariant() {
         use crate::{
-            ff::{FiniteField, PrimeField_p434, QuadraticExtension},
+            ff::{PrimeField_p434, QuadraticExtension},
             isogeny::Curve,
         };
         let curve = Curve::starting_curve();

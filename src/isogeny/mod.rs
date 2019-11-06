@@ -141,14 +141,8 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     // Montgomery j-invariant Algo 9 (p56)
     pub fn j_invariant(&self) -> K {
-        // TEST
-        let a = self.a.clone();
-        let c = self.c.clone();
-        let a = a.div(&c);
-        let c = K::one();
-
-        let j = self.a.mul(&a); // 1.
-        let t1 = self.c.mul(&c); //2.
+        let j = self.a.mul(&self.a); // 1.
+        let t1 = self.c.mul(&self.c); //2.
         let t0 = t1.add(&t1); // 3.
         let t0 = j.sub(&t0); // 4.
         let t0 = t0.sub(&t1); //5.
@@ -176,11 +170,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         let three = two.add(&one);
         let four = two.add(&two);
 
-        // TEST
-        let a = self.a.clone();
-        let c = self.c.clone();
-        let a = a.div(&c);
-        let c = K::one();
+        let a = self.a.div(&self.c);
 
         let t0 = a.mul(&a); // 1.
         let j = three; // 2.
@@ -547,32 +537,45 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
         curve: &Curve<K>,
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
-        let opt_input = opt.is_some();
         let mut c = curve.clone();
         let mut s = s;
 
-        if !opt_input {
-            for e in (0..=self.params.e2 - 2).rev().step_by(2) {
-                let t = Self::ndouble(s.clone(), e, &c);
-                let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
-                c = new_c;
-                s = Self::four_isogeny_eval(&k1, &k2, &k3, &s);
-            }
-            (c, None)
-        } else {
-            let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..=self.params.e2 - 2).rev().step_by(2) {
-                let t = Self::ndouble(s.clone(), e, &c);
-                let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
-                c = new_c;
-                s = Self::four_isogeny_eval(&k1, &k2, &k3, &s);
+        let mut opt_output = vec![];
+        if opt.is_some() {
+            let (p1, p2, p3) = opt.unwrap();
+            opt_output.push(p1);
+            opt_output.push(p2);
+            opt_output.push(p3);
+        }
+        let nopt = opt_output.len();
 
-                p1 = Self::four_isogeny_eval(&k1, &k2, &k3, &p1);
-                p2 = Self::four_isogeny_eval(&k1, &k2, &k3, &p2);
-                p3 = Self::four_isogeny_eval(&k1, &k2, &k3, &p3);
-            }
+        // 1.
+        for e in (0..=self.params.e2 - 2).rev().step_by(2) {
+            // 2.
+            let t = Self::ndouble(s.clone(), e, &c);
 
+            // 3.
+            let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
+            c = new_c;
+
+            // 4.
+            s = Self::four_isogeny_eval(&k1, &k2, &k3, &s);
+
+            // 5.
+            for pos in 0..nopt {
+                // 6.
+                opt_output[pos] = Self::four_isogeny_eval(&k1, &k2, &k3, &opt_output[pos]);
+            }
+        }
+
+        // 7.
+        if nopt > 0 {
+            let p1 = opt_output.remove(0);
+            let p2 = opt_output.remove(0);
+            let p3 = opt_output.remove(0);
             (c, Some((p1, p2, p3)))
+        } else {
+            (c, None)
         }
     }
 
@@ -743,7 +746,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let opt = Some((p1, p2, p3));
+        let (_, opt_v) = self.two_e_iso(s.clone(), opt.clone(), &curve_plus);
         let (_, opt) = self.two_e_iso_optim(s, opt, &curve_plus, strategy);
+
+        let (q1, _, _) = opt.clone().unwrap();
+        let (q1v, _, _) = opt_v.unwrap();
+        println!("OPT2e = {:?}", q1.x.div(&q1.z));
+        println!("NRM2e = {:?}", q1v.x.div(&q1v.z));
 
         // 5.
         let (p1, p2, p3) = opt.unwrap();
@@ -908,7 +917,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 4.
         let opt = Some((p1, p2, p3));
         let (_, opt) = self.three_e_iso_optim(s, opt, &curve_pm, strategy);
-        //let (_, opt) = self.three_e_iso(s, opt, &curve_pm);
 
         // 5.
         let (p1, p2, p3) = opt.unwrap();
@@ -948,7 +956,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             curve_plus.c,
         );
 
-        println!("REF jinv = {:?}", curve.j_invariant_ref());
         println!("OPT jinv = {:?}", curve.j_invariant());
 
         // 6, 7.
@@ -982,7 +989,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             curve_pm.a.sub(&curve_pm.c),
         );
 
-        println!("REF jinv = {:?}", curve.j_invariant_ref());
         println!("OPT jinv = {:?}", curve.j_invariant());
 
         // 6, 7.
