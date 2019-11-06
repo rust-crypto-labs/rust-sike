@@ -141,7 +141,6 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     // Montgomery j-invariant Algo 9 (p56)
     pub fn j_invariant(&self) -> K {
-
         // TEST
         let a = self.a.clone();
         let c = self.c.clone();
@@ -177,14 +176,14 @@ impl<K: FiniteField + Clone> Curve<K> {
         let three = two.add(&one);
         let four = two.add(&two);
 
-                // TEST
+        // TEST
         let a = self.a.clone();
         let c = self.c.clone();
         let a = a.div(&c);
         let c = K::one();
 
-        let t0 = a.mul(&a);  // 1.
-        let j = three;     // 2.
+        let t0 = a.mul(&a); // 1.
+        let j = three; // 2.
         let j = t0.sub(&j); // 3.
         let t1 = j.mul(&j); // 4.
         let j = j.mul(&t1); // 5.

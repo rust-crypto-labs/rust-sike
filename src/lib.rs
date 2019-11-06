@@ -295,9 +295,9 @@ mod tests {
     }
 
     #[test]
-    fn test_ff(){
-        use crate::ff::{PrimeField_p434, FiniteField};
-        
+    fn test_ff() {
+        use crate::ff::{FiniteField, PrimeField_p434};
+
         let one = PrimeField_p434::one();
         let two = one.add(&one);
         let three = two.add(&one);
@@ -305,13 +305,30 @@ mod tests {
         let four2 = two.mul(&two);
         let zero = one.sub(&one);
 
-
         println!("zero = {:?}", zero);
         println!("one = {:?}", one);
         println!("two = {:?}", two);
         println!("three = {:?}", three);
         println!("four1 = {:?}", four1);
         println!("four2 = {:?}", four2);
+    }
 
+    #[test]
+    fn test_qff() {
+        use crate::ff::{FiniteField, PrimeField_p434, QuadraticExtension};
+
+        let one = PrimeField_p434::one();
+        let two = one.add(&one);
+        let x = QuadraticExtension::from(two.clone(), two.clone());
+
+        let eight_i = x.mul(&x);
+
+        println!("eight_i = {:?}", eight_i);
+
+        let two_plus_two_i = eight_i.div(&x);
+
+        println!("two_plus_two_i = {:?}", two_plus_two_i);
+
+        assert_eq!(two_plus_two_i, x)
     }
 }
