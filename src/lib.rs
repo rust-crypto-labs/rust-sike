@@ -293,4 +293,25 @@ mod tests {
 
         assert_eq!(pk, pk_recovered)
     }
+
+    #[test]
+    fn test_ff(){
+        use crate::ff::{PrimeField_p434, FiniteField};
+        
+        let one = PrimeField_p434::one();
+        let two = one.add(&one);
+        let three = two.add(&one);
+        let four1 = two.add(&two);
+        let four2 = two.mul(&two);
+        let zero = one.sub(&one);
+
+
+        println!("zero = {:?}", zero);
+        println!("one = {:?}", one);
+        println!("two = {:?}", two);
+        println!("three = {:?}", three);
+        println!("four1 = {:?}", four1);
+        println!("four2 = {:?}", four2);
+
+    }
 }

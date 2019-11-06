@@ -79,9 +79,9 @@ impl FiniteField for PrimeField_p434 {
 
     fn inv(&self) -> Self {
         let two = BigInt::one() + BigInt::one();
-        let P = &P434_PRIME.clone();
+        let p = &P434_PRIME.clone();
         Self {
-            val: self.val.modpow(&(P - two), P),
+            val: self.val.modpow(&(p - two), p),
         }
     }
 
@@ -93,10 +93,7 @@ impl FiniteField for PrimeField_p434 {
     }
 
     fn sub(&self, other: &Self) -> Self {
-        let diff = &self.val - &other.val;
-        Self {
-            val: diff.mod_floor(&P434_PRIME.clone()),
-        }
+        self.add(&other.neg())
     }
 
     fn mul(&self, other: &Self) -> Self {
@@ -108,14 +105,11 @@ impl FiniteField for PrimeField_p434 {
     }
 
     fn div(&self, other: &Self) -> Self {
-        let div = &self.val * &other.inv().val;
-        Self {
-            val: div.mod_floor(&P434_PRIME.clone()),
-        }
+        self.mul(&other.inv())
     }
 
     fn equals(&self, other: &Self) -> bool {
-        self.val == other.val
+        self.sub(&other).is_zero()
     }
 
     fn to_bytes(self) -> Vec<u8> {

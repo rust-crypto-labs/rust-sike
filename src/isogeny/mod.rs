@@ -141,8 +141,15 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     // Montgomery j-invariant Algo 9 (p56)
     pub fn j_invariant(&self) -> K {
-        let j = self.a.mul(&self.a); // 1.
-        let t1 = self.c.mul(&self.c); //2.
+
+        // TEST
+        let a = self.a.clone();
+        let c = self.c.clone();
+        let a = a.div(&c);
+        let c = K::one();
+
+        let j = self.a.mul(&a); // 1.
+        let t1 = self.c.mul(&c); //2.
         let t0 = t1.add(&t1); // 3.
         let t0 = j.sub(&t0); // 4.
         let t0 = t0.sub(&t1); //5.
@@ -170,23 +177,29 @@ impl<K: FiniteField + Clone> Curve<K> {
         let three = two.add(&one);
         let four = two.add(&two);
 
-        let t0 = self.a.mul(&self.a);
-        let j = three;
-        let j = t0.sub(&j);
-        let t1 = j.mul(&j);
-        let j = j.mul(&t1);
-        let j = j.add(&j);
-        let j = j.add(&j);
-        let j = j.add(&j);
-        let j = j.add(&j);
-        let j = j.add(&j);
-        let j = j.add(&j);
-        let j = j.add(&j);
-        let j = j.add(&j);
-        let t1 = four;
-        let t0 = t0.sub(&t1);
-        let t0 = t0.inv();
-        let j = j.mul(&t0);
+                // TEST
+        let a = self.a.clone();
+        let c = self.c.clone();
+        let a = a.div(&c);
+        let c = K::one();
+
+        let t0 = a.mul(&a);  // 1.
+        let j = three;     // 2.
+        let j = t0.sub(&j); // 3.
+        let t1 = j.mul(&j); // 4.
+        let j = j.mul(&t1); // 5.
+        let j = j.add(&j); // 6.
+        let j = j.add(&j); // 7.
+        let j = j.add(&j); // 8.
+        let j = j.add(&j); // 9.
+        let j = j.add(&j); // 10.
+        let j = j.add(&j); // 11.
+        let j = j.add(&j); // 12.
+        let j = j.add(&j); // 13.
+        let t1 = four; // 14.
+        let t0 = t0.sub(&t1); // 15.
+        let t0 = t0.inv(); // 16.
+        let j = j.mul(&t0); // 17.
 
         j
     }
