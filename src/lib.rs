@@ -113,7 +113,7 @@ mod tests {
         use crate::{
             isogeny::PublicParameters,
             pke::{Message, PKE},
-            utils::{constants::*, conversion::*, strategy},
+            utils::{constants::*, conversion::*},
         };
 
         let seclevel = 128;
@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn test_conversion_ff434_bytes() {
         use crate::{
-            ff::{FiniteField, PrimeField_p434},
+            ff::{ff_p434::PrimeField_p434, FiniteField},
             utils::constants::*,
         };
 
@@ -220,7 +220,7 @@ mod tests {
     #[test]
     fn test_conversion_quadratic_bytes() {
         use crate::{
-            ff::{FiniteField, PrimeField_p434, QuadraticExtension},
+            ff::{ff_p434::PrimeField_p434, FiniteField, QuadraticExtension},
             utils::constants::*,
         };
 
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn test_j_invariant() {
         use crate::{
-            ff::{FiniteField, PrimeField_p434, QuadraticExtension},
+            ff::{ff_p434::PrimeField_p434, QuadraticExtension},
             isogeny::Curve,
         };
         let curve = Curve::starting_curve();
@@ -266,7 +266,6 @@ mod tests {
     //#[test]
     fn test_conversion_publickey_bytes() {
         use crate::{
-            ff::{FiniteField, PrimeField_p434, QuadraticExtension},
             isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
             utils::{constants::*, conversion, strategy},
         };
@@ -296,7 +295,7 @@ mod tests {
 
     #[test]
     fn test_ff() {
-        use crate::ff::{FiniteField, PrimeField_p434};
+        use crate::ff::{ff_p434::PrimeField_p434, FiniteField};
 
         let one = PrimeField_p434::one();
         let two = one.add(&one);
@@ -315,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_qff() {
-        use crate::ff::{FiniteField, PrimeField_p434, QuadraticExtension};
+        use crate::ff::{ff_p434::PrimeField_p434, FiniteField, QuadraticExtension};
 
         let one = PrimeField_p434::one();
         let two = one.add(&one);
