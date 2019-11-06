@@ -130,7 +130,7 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     /// Starting curve 1.3.2
     /// Curve with equation y² = x³ + 6x² + x
-    fn starting_curve() -> Curve<K> {
+    pub fn starting_curve() -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
         let three = two.add(&one);
@@ -140,7 +140,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     }
 
     // Montgomery j-invariant Algo 9 (p56)
-    fn j_invariant(&self) -> K {
+    pub fn j_invariant(&self) -> K {
         let j = self.a.mul(&self.a); // 1.
         let t1 = self.c.mul(&self.c); //2.
         let t0 = t1.add(&t1); // 3.
@@ -168,20 +168,27 @@ impl<K: FiniteField + Clone> Curve<K> {
     fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
         let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
 
+        // 1.
         if x_p.is_zero() || x_q.is_zero() || x_r.is_zero() {
             return None;
         }
+
+        // 2.
+        let one = K::one();
+        let two = one.add(&one);
+        let four = two.add(&two);
+
         let num = K::one()
             .sub(&x_p.mul(&x_q))
             .sub(&x_p.mul(&x_r))
             .sub(&x_q.mul(&x_r));
         let num = num.mul(&num);
-        let denom = x_p.mul(&x_q).mul(&x_r);
-        let denom = denom.add(&denom).add(&denom).add(&denom);
+        let denom = four.mul(&x_p).mul(&x_q).mul(&x_r);
         let frac = num.div(&denom);
         let a = frac.sub(&x_p).sub(&x_q).sub(&x_r);
-        let c = K::one();
+        let c = one;
 
+        // 3, 4.
         Some(Curve::from_coeffs(a, c))
     }
 }
@@ -663,33 +670,35 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let six = two.add(&four);
         let eight = four.add(&four);
 
+        // 1.
         let curve = Curve::from_coeffs(six, one);
         let curve_plus = Curve::from_coeffs(eight, four);
 
+        // 2.
+        let xp3 = self.params.xp3.clone();
+        let p1 = Point::from_x(xp3);
+        let xq3 = self.params.xq3.clone();
+        let p2 = Point::from_x(xq3);
+        let xr3 = self.params.xr3.clone();
+        let p3 = Point::from_x(xr3);
+
+        // 3.
         let xp2 = self.params.xp2.clone();
         let xq2 = self.params.xq2.clone();
         let xr2 = self.params.xr2.clone();
-
-        let xp3 = self.params.xp3.clone();
-        let xq3 = self.params.xq3.clone();
-        let xr3 = self.params.xr3.clone();
-
-        let p1 = Point::from_x(xp3);
-        let p2 = Point::from_x(xq3);
-        let p3 = Point::from_x(xr3);
-
         let s = Self::three_pts_ladder(&sk.to_bits(), xp2, xq2, xr2, &curve);
 
+        // 4.
         let opt = Some((p1, p2, p3));
-
         let (_, opt) = self.two_e_iso(s, opt, &curve_plus);
 
+        // 5.
         let (p1, p2, p3) = opt.unwrap();
-
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
         let x3 = p3.x.div(&p3.z);
 
+        // 6.
         PublicKey { x1, x2, x3 }
     }
 
@@ -783,32 +792,38 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let six = two.add(&four);
         let eight = four.add(&four);
 
-        let curve_plus = Curve::from_coeffs(six, one);
-        let curve_minus = Curve::from_coeffs(eight, four);
+        // 1.
+        let curve = Curve::from_coeffs(six, one);
+        let curve_pm = Curve::from_coeffs(eight, four);
 
+        // 2.
         let xp2 = self.params.xp2.clone();
-        let xq2 = self.params.xq2.clone();
-        let xr2 = self.params.xr2.clone();
+        let p1 = Point::from_x(xp2);
 
+        let xq2 = self.params.xq2.clone();
+        let p2 = Point::from_x(xq2);
+
+        let xr2 = self.params.xr2.clone();
+        let p3 = Point::from_x(xr2);
+
+        // 3.
         let xp3 = self.params.xp3.clone();
         let xq3 = self.params.xq3.clone();
         let xr3 = self.params.xr3.clone();
 
-        let p1 = Point::from_x(xp2);
-        let p2 = Point::from_x(xq2);
-        let p3 = Point::from_x(xr2);
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve);
 
-        let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve_plus);
-
+        // 4.
         let opt = Some((p1, p2, p3));
-        let (_, opt) = self.three_e_iso(s, opt, &curve_minus);
+        let (_, opt) = self.three_e_iso(s, opt, &curve_pm);
 
+        // 5.
         let (p1, p2, p3) = opt.unwrap();
-
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
         let x3 = p3.x.div(&p3.z);
 
+        // 6.
         PublicKey { x1, x2, x3 }
     }
 
@@ -819,19 +834,27 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
+
+        // 1.
         let curve = Curve::from_public_key(pk).expect("Incorrect public key!");
 
+        // 2.
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
         let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
 
+        // 3.
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
+
+        // 4.
         let (curve_plus, _) = self.two_e_iso(s, None, &curve_plus);
 
+        // 5.
         let curve = Curve::from_coeffs(
             curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),
             curve_plus.c,
         );
 
+        // 6, 7.
         curve.j_invariant()
     }
 
@@ -841,19 +864,27 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
         let one = K::one();
         let two = one.add(&one);
-        let curve = Curve::from_public_key(pk).unwrap();
 
+        // 1.
+        let curve = Curve::from_public_key(pk).expect("Incorrect public key!");
+
+        // 2.
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
         let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
 
+        // 3.
         let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
+
+        // 4.
         let (curve_pm, _) = self.three_e_iso(s, None, &curve_pm);
 
+        // 5.
         let curve = Curve::from_coeffs(
             two.mul(&curve_pm.a.add(&curve_pm.c)),
             curve_pm.a.sub(&curve_pm.c),
         );
 
+        // 6, 7.
         curve.j_invariant()
     }
 }

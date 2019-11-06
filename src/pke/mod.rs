@@ -48,33 +48,38 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     }
 
     pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
+        // 1.
         let nks3 = str_to_u64(SIKE_P434_NKS3);
         let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
+
+        // 2.
         let pk3 = self.isogenies.isogen3(&sk3);
 
+        // 3.
         (sk3, pk3)
     }
 
     pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
+        // 4.
         let nks2 = str_to_u64(SIKE_P434_NKS2);
         let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
+
+        // 5.
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2);
 
+        // 6.
         let j = self.isogenies.isoex2(&sk2, &pk);
+        println!("[Debug] (enc) j_invariant = {:?}", j);
 
-        let (part1, part2, part3) = c0.to_bytes();
+        // 7.
         let h = self.hash_function_f(j);
 
-        if h.len() != m.bytes.len() {
-            panic!(format!(
-                "Message has length {}, should be {} (same length as the output of F).",
-                m.bytes.len(),
-                h.len()
-            ))
-        }
-
+        // 8.
+        assert_eq!(h.len(), m.bytes.len());
         let c1_bytes = Self::xor(&m.bytes, &h);
 
+        // 9.
+        let (part1, part2, part3) = c0.to_bytes();
         Ciphertext {
             bytes00: part1,
             bytes01: part2,
@@ -84,13 +89,20 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     }
 
     pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
-        let j: K = self.isogenies.isoex3(
-            sk,
-            &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02),
-        );
+        // 10.
+        let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
+        let j: K = self.isogenies.isoex3(sk, c0);
+
+        println!("[Debug] (dec) j_invariant = {:?}", j);
+
+        // 11.
         let h = self.hash_function_f(j);
+
+        // 12.
+        assert_eq!(h.len(), c.bytes1.len());
         let m = Self::xor(&h, &c.bytes1);
 
+        // 13.
         Message { bytes: m }
     }
 
