@@ -210,7 +210,7 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
 
         Self {
             a: inv_norm.mul(&self.a),
-            b: inv_norm.mul(&self.b.inv()),
+            b: inv_norm.mul(&self.b.neg()),
         }
     }
 
