@@ -505,7 +505,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let mut s = s;
 
         if !opt_input {
-            for e in (0..self.params.e2 - 2).rev().step_by(2) {
+            for e in (0..=self.params.e2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
@@ -514,7 +514,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             (c, None)
         } else {
             let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..self.params.e2 - 2).rev().step_by(2) {
+            for e in (0..=self.params.e2 - 2).rev().step_by(2) {
                 let t = Self::ndouble(s.clone(), e, &c);
                 let (new_c, k1, k2, k3) = Self::four_isogenous_curve(&t);
                 c = new_c;
