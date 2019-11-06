@@ -13,11 +13,11 @@ use std::ops::Mul;
 static PRIME_17: Lazy<BigInt> = Lazy::new(|| BigInt::from(17 as u8));
 
 #[derive(Clone, PartialEq)]
-pub struct PrimeField_p434 {
+pub struct PrimeField_17 {
     val: BigInt,
 }
 
-impl PrimeField_p434 {
+impl PrimeField_17 {
     pub fn from_string(s: &str) -> Self {
         let val = conversion::str_to_bigint(s).mod_floor(&PRIME_17.clone());
 
@@ -25,14 +25,14 @@ impl PrimeField_p434 {
     }
 }
 
-impl Debug for PrimeField_p434 {
+impl Debug for PrimeField_17 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (_, bytes) = self.val.to_bytes_be();
         write!(f, "{:?}", bytes)
     }
 }
 
-impl FiniteField for PrimeField_p434 {
+impl FiniteField for PrimeField_17 {
     fn is_zero(&self) -> bool {
         self.val == BigInt::zero()
     }
