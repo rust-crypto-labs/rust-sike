@@ -703,8 +703,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let opt = Some((p1, p2, p3));
-
-        //let (_, opt) = self.two_e_iso(s.clone(), opt.clone(), &curve_plus);
         let (_, opt) = self.two_e_iso_optim(s, opt, &curve_plus, strategy);
 
         // 5.

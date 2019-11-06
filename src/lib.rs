@@ -1,6 +1,6 @@
 mod ff;
 mod isogeny;
-//mod kem;
+mod kem;
 mod pke;
 mod utils;
 
@@ -116,10 +116,6 @@ mod tests {
             utils::{constants::*, conversion::*, strategy},
         };
 
-        let p434strat_3 = strategy::P434_THREE_TORSION_STRATEGY;
-
-        let p434strat_2 = strategy::P434_TWO_TORSION_STRATEGY;
-
         let seclevel = 128;
 
         let params = PublicParameters {
@@ -138,24 +134,24 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen(&p434strat_3);
+        let (sk, pk) = pke.gen();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; seclevel / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone(), &p434strat_2);
+        let ciphertext = pke.enc(&pk, msg.clone());
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext, &p434strat_3);
+        let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
     }
 
-    /*#[test]
+    //#[test]
     fn test_kem() {
         use crate::{
             isogeny::PublicParameters,
@@ -190,7 +186,7 @@ mod tests {
         let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
 
         assert_eq!(k, k_recovered);
-    }*/
+    }
 
     #[test]
     fn test_concatenate() {
@@ -267,12 +263,12 @@ mod tests {
         assert_eq!(bytes, [0, 4, 99, 8, 0, 0, 0, 0])
     }
 
-    /*#[test]
+    //#[test]
     fn test_conversion_publickey_bytes() {
         use crate::{
             ff::{FiniteField, PrimeField_p434, QuadraticExtension},
             isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
-            utils::{constants::*, conversion},
+            utils::{constants::*, conversion, strategy},
         };
 
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
@@ -290,11 +286,11 @@ mod tests {
             xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
         };
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen3(&sk);
+        let pk = iso.isogen3(&sk, &strategy::P434_THREE_TORSION_STRATEGY);
         let (b0, b1, b2) = pk.clone().to_bytes();
 
         let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2);
 
         assert_eq!(pk, pk_recovered)
-    }*/
+    }
 }

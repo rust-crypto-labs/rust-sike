@@ -4,7 +4,7 @@ use crate::{
     utils::{
         constants::{SIKE_P434_NKS2, SIKE_P434_NKS3},
         conversion::str_to_u64,
-        shake,
+        shake, strategy,
     },
 };
 
@@ -47,28 +47,34 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         }
     }
 
-    pub fn gen(&self, strategy: &[usize]) -> (SecretKey, PublicKey<K>) {
+    pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
         // 1.
         let nks3 = str_to_u64(SIKE_P434_NKS3);
         let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
 
         // 2.
-        let pk3 = self.isogenies.isogen3(&sk3, strategy);
+        let pk3 = self
+            .isogenies
+            .isogen3(&sk3, &strategy::P434_THREE_TORSION_STRATEGY);
 
         // 3.
         (sk3, pk3)
     }
 
-    pub fn enc(&self, pk: &PublicKey<K>, m: Message, strategy: &[usize]) -> Ciphertext {
+    pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
         // 4.
         let nks2 = str_to_u64(SIKE_P434_NKS2);
         let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
 
         // 5.
-        let c0: PublicKey<K> = self.isogenies.isogen2(&sk2, strategy);
+        let c0: PublicKey<K> = self
+            .isogenies
+            .isogen2(&sk2, &strategy::P434_TWO_TORSION_STRATEGY);
 
         // 6.
-        let j = self.isogenies.isoex2(&sk2, &pk, strategy);
+        let j = self
+            .isogenies
+            .isoex2(&sk2, &pk, &strategy::P434_TWO_TORSION_STRATEGY);
         println!("[Debug] (enc) j_invariant = {:?}", j);
 
         // 7.
@@ -88,10 +94,12 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         }
     }
 
-    pub fn dec(&self, sk: &SecretKey, c: Ciphertext, strategy: &[usize]) -> Message {
+    pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
         // 10.
         let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
-        let j: K = self.isogenies.isoex3(sk, c0, strategy);
+        let j: K = self
+            .isogenies
+            .isoex3(sk, c0, &strategy::P434_THREE_TORSION_STRATEGY);
 
         println!("[Debug] (dec) j_invariant = {:?}", j);
 
