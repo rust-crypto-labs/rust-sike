@@ -762,7 +762,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // DEBUG
         let (_, opt_v) =  match strategy {
-            Some(strat) =>  self.two_e_iso_optim(s.clone(), opt.clone(), &curve_plus, &strat),
+            Some(strat) =>  self.two_e_iso(s.clone(), opt.clone(), &curve_plus),
             None =>  self.two_e_iso_optim(s.clone(), opt.clone(), &curve_plus, &strategy::P434_TWO_TORSION_STRATEGY),
         };
         // DEBUG
