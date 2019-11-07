@@ -2,7 +2,7 @@ use crate::{
     ff::FiniteField,
     isogeny::{PublicKey, PublicParameters, SecretKey},
     pke::{Ciphertext, Message, PKE},
-    utils::{constants::SIKE_P434_NKS3, conversion, shake, strategy},
+    utils::{constants::SIKE_P434_NKS3, conversion, shake},
 };
 
 use rand::prelude::*;
@@ -30,7 +30,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         let pk3 = self
             .pke
             .isogenies
-            .isogen3(&sk3, &strategy::P434_THREE_TORSION_STRATEGY);
+            .isogen3(&sk3, &self.params.e3_strategy);
         let s = Self::random_string(self.n);
 
         (s, sk3, pk3)
@@ -58,7 +58,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         let c0p = self
             .pke
             .isogenies
-            .isogen2(&rsk, &strategy::P434_TWO_TORSION_STRATEGY);
+            .isogen2(&rsk, &self.params.e2_strategy);
 
         let k = if c0p == c0 {
             self.hash_function_h(&m, &c)

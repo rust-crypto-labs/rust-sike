@@ -120,6 +120,8 @@ mod tests {
 
         let params = PublicParameters {
             secparam: seclevel,
+            e2_strategy: None,
+            e3_strategy: None,
             e2: str_to_u64(SIKE_P434_E2),
             e3: str_to_u64(SIKE_P434_E3),
             xp2: str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
@@ -163,6 +165,8 @@ mod tests {
 
         let params = PublicParameters {
             secparam: seclevel,
+            e2_strategy: None,
+            e3_strategy: None,
             e2: str_to_u64(SIKE_P434_E2),
             e3: str_to_u64(SIKE_P434_E3),
             xp2: str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
@@ -272,9 +276,12 @@ mod tests {
 
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
+        let strat = Some(strategy::P434_THREE_TORSION_STRATEGY.to_vec());
 
         let params = PublicParameters {
             secparam: 128,
+            e2_strategy: None,
+            e3_strategy: strat.clone(),
             e2: conversion::str_to_u64(SIKE_P434_E2),
             e3: conversion::str_to_u64(SIKE_P434_E3),
             xp2: conversion::str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
@@ -285,7 +292,7 @@ mod tests {
             xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
         };
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen3(&sk, &strategy::P434_THREE_TORSION_STRATEGY);
+        let pk = iso.isogen3(&sk, &strat);
         let (b0, b1, b2) = pk.clone().to_bytes();
 
         let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2);

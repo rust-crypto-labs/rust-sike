@@ -4,7 +4,7 @@ use crate::{
     utils::{
         constants::{SIKE_P434_NKS2, SIKE_P434_NKS3},
         conversion::str_to_u64,
-        shake, strategy,
+        shake,
     },
 };
 
@@ -55,7 +55,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         // 2.
         let pk3 = self
             .isogenies
-            .isogen3(&sk3, &strategy::P434_THREE_TORSION_STRATEGY);
+            .isogen3(&sk3, &self.params.e3_strategy);
 
         // 3.
         (sk3, pk3)
@@ -69,12 +69,12 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         // 5.
         let c0: PublicKey<K> = self
             .isogenies
-            .isogen2(&sk2, &strategy::P434_TWO_TORSION_STRATEGY);
+            .isogen2(&sk2, &self.params.e2_strategy);
 
         // 6.
         let j = self
             .isogenies
-            .isoex2(&sk2, &pk, &strategy::P434_TWO_TORSION_STRATEGY);
+            .isoex2(&sk2, &pk, &self.params.e2_strategy);
 
         // 7.
         let h = self.hash_function_f(j);
@@ -98,7 +98,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
         let j: K = self
             .isogenies
-            .isoex3(sk, c0, &strategy::P434_THREE_TORSION_STRATEGY);
+            .isoex3(sk, c0, &self.params.e3_strategy);
 
         // 11.
         let h = self.hash_function_f(j);
