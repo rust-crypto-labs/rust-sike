@@ -27,10 +27,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
     pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
         let nsk3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk3 = SecretKey::get_random_secret_key(nsk3 as usize);
-        let pk3 = self
-            .pke
-            .isogenies
-            .isogen3(&sk3, &self.params.e3_strategy);
+        let pk3 = self.pke.isogenies.isogen3(&sk3, &self.params.e3_strategy);
         let s = Self::random_string(self.n);
 
         (s, sk3, pk3)
@@ -55,10 +52,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         let c0 = PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
         let rsk = SecretKey::from_bytes(&r);
 
-        let c0p = self
-            .pke
-            .isogenies
-            .isogen2(&rsk, &self.params.e2_strategy);
+        let c0p = self.pke.isogenies.isogen2(&rsk, &self.params.e2_strategy);
 
         let k = if c0p == c0 {
             self.hash_function_h(&m, &c)

@@ -729,66 +729,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         }
     }
 
-    /// Computing public key on the 2-torsion, isogen_2 Algo 21 (p62)
-    /// Input: sk secret key
-    /// Output: public key
-    pub fn isogen2(&self, sk: &SecretKey, strategy: &Option<Vec<usize>>) -> PublicKey<K> {
-        let one = K::one();
-        let two = one.add(&one);
-        let four = two.add(&two);
-        let six = two.add(&four);
-        let eight = four.add(&four);
-
-        // 1.
-        let curve = Curve::from_coeffs(six, one);
-        let curve_plus = Curve::from_coeffs(eight, four);
-
-        // 2.
-        let xp3 = self.params.xp3.clone();
-        let p1 = Point::from_x(xp3);
-        let xq3 = self.params.xq3.clone();
-        let p2 = Point::from_x(xq3);
-        let xr3 = self.params.xr3.clone();
-        let p3 = Point::from_x(xr3);
-
-        // 3.
-        let xp2 = self.params.xp2.clone();
-        let xq2 = self.params.xq2.clone();
-        let xr2 = self.params.xr2.clone();
-        let s = Self::three_pts_ladder(&sk.to_bits(), xp2, xq2, xr2, &curve);
-
-        // 4.
-        let opt = Some((p1, p2, p3));
-
-        // DEBUG
-        let (_, opt_v) =  match strategy {
-            Some(strat) =>  self.two_e_iso(s.clone(), opt.clone(), &curve_plus),
-            None =>  self.two_e_iso_optim(s.clone(), opt.clone(), &curve_plus, &strategy::P434_TWO_TORSION_STRATEGY),
-        };
-        // DEBUG
-
-        let (_, opt) = match strategy {
-            Some(strat) =>  self.two_e_iso_optim(s, opt, &curve_plus, &strat),
-            None => self.two_e_iso(s, opt, &curve_plus)
-        };
-
-        // DEBUG
-        let (q1, _, _) = opt.clone().unwrap();
-        let (q1v, _, _) = opt_v.unwrap();
-        println!("OPT2e = {:?}", q1.x.div(&q1.z));
-        println!("NRM2e = {:?}", q1v.x.div(&q1v.z));
-        // DEBUG
-
-        // 5.
-        let (p1, p2, p3) = opt.unwrap();
-        let x1 = p1.x.div(&p1.z);
-        let x2 = p2.x.div(&p2.z);
-        let x3 = p3.x.div(&p3.z);
-
-        // 6.
-        PublicKey { x1, x2, x3 }
-    }
-
     /// Computing & evaluating 3^e-isogeny, optimised version
     /// Algorithm 20, 3_e_iso, p. 61
     /// Input: S of order 2^(e_2), curve, strategy
@@ -907,6 +847,71 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         (new_curve, opt_output)
     }
 
+    /// Computing public key on the 2-torsion, isogen_2 Algo 21 (p62)
+    /// Input: sk secret key
+    /// Output: public key
+    pub fn isogen2(&self, sk: &SecretKey, strategy: &Option<Vec<usize>>) -> PublicKey<K> {
+        let one = K::one();
+        let two = one.add(&one);
+        let four = two.add(&two);
+        let six = two.add(&four);
+        let eight = four.add(&four);
+
+        // 1.
+        let curve = Curve::from_coeffs(six, one);
+        let curve_plus = Curve::from_coeffs(eight, four);
+
+        // 2.
+        let xp3 = self.params.xp3.clone();
+        let p1 = Point::from_x(xp3);
+        let xq3 = self.params.xq3.clone();
+        let p2 = Point::from_x(xq3);
+        let xr3 = self.params.xr3.clone();
+        let p3 = Point::from_x(xr3);
+
+        // 3.
+        let xp2 = self.params.xp2.clone();
+        let xq2 = self.params.xq2.clone();
+        let xr2 = self.params.xr2.clone();
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp2, xq2, xr2, &curve);
+
+        // 4.
+        let opt = Some((p1, p2, p3));
+
+        // DEBUG
+        let (_, opt_v) = match strategy {
+            Some(strat) => self.two_e_iso(s.clone(), opt.clone(), &curve_plus),
+            None => self.two_e_iso_optim(
+                s.clone(),
+                opt.clone(),
+                &curve_plus,
+                &strategy::P434_TWO_TORSION_STRATEGY,
+            ),
+        };
+        // DEBUG
+
+        let (_, opt) = match strategy {
+            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, &strat),
+            None => self.two_e_iso(s, opt, &curve_plus),
+        };
+
+        // DEBUG
+        let (q1, _, _) = opt.clone().unwrap();
+        let (q1v, _, _) = opt_v.unwrap();
+        println!("OPT2e = {:?}", q1.x.div(&q1.z));
+        println!("NRM2e = {:?}", q1v.x.div(&q1v.z));
+        // DEBUG
+
+        // 5.
+        let (p1, p2, p3) = opt.unwrap();
+        let x1 = p1.x.div(&p1.z);
+        let x2 = p2.x.div(&p2.z);
+        let x3 = p3.x.div(&p3.z);
+
+        // 6.
+        PublicKey { x1, x2, x3 }
+    }
+
     /// Computing public key on the 3-torsion, isogen_3 Algo 22 (p62)
     /// Input: secret key
     /// Output: public key
@@ -943,8 +948,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let opt = Some((p1, p2, p3));
 
         let (_, opt) = match strategy {
-            Some(strat) =>  self.three_e_iso_optim(s, opt, &curve_pm, &strat),
-            None => self.three_e_iso(s, opt, &curve_pm)
+            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, &strat),
+            None => self.three_e_iso(s, opt, &curve_pm),
         };
 
         // 5.
@@ -977,8 +982,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_plus, _) = match strategy {
-            Some(strat) =>  self.two_e_iso_optim(s, None, &curve_plus, &strat),
-            None => self.two_e_iso(s, None, &curve_plus)
+            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat),
+            None => self.two_e_iso(s, None, &curve_plus),
         };
 
         // 5.
@@ -1012,8 +1017,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_pm, _) = match strategy {
-            Some(strat) =>  self.three_e_iso_optim(s, None, &curve_pm, &strat),
-            None => self.three_e_iso(s, None, &curve_pm)
+            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, &strat),
+            None => self.three_e_iso(s, None, &curve_pm),
         };
 
         // 5.
