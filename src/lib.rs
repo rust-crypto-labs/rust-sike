@@ -7,6 +7,33 @@ mod utils;
 #[cfg(test)]
 mod tests {
 
+    use crate::{
+        ff::{ff_p434::PrimeField_p434, FiniteField, QuadraticExtension},
+        isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
+        kem::KEM,
+        pke::{Message, PKE},
+        utils::{constants::*, conversion, shake, strategy},
+    };
+
+    fn sike_p434_params(
+        strat2tor: Option<Vec<usize>>,
+        strat3tor: Option<Vec<usize>>,
+    ) -> PublicParameters<QuadraticExtension<PrimeField_p434>> {
+        PublicParameters {
+            secparam: 128,
+            e2_strategy: strat2tor,
+            e3_strategy: strat3tor,
+            e2: conversion::str_to_u64(SIKE_P434_E2),
+            e3: conversion::str_to_u64(SIKE_P434_E3),
+            xp2: conversion::str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
+            xq2: conversion::str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
+            xr2: conversion::str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
+            xp3: conversion::str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
+            xq3: conversion::str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
+            xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
+        }
+    }
+
     fn compare_arrays<T>(array1: &[T], array2: &[T]) -> bool
     where
         T: PartialEq + std::fmt::Debug,
@@ -28,8 +55,6 @@ mod tests {
 
     //#[test]
     fn test_strategy_2tor() {
-        use crate::utils::strategy;
-
         let n4 = 107;
         let p4 = 5633;
         let q4 = 5461;
@@ -59,8 +84,6 @@ mod tests {
 
     #[test]
     fn test_shake256_0bit() {
-        use crate::utils::shake;
-
         let msg = vec![];
         let output = shake::shake256(&msg, 512);
 
@@ -110,27 +133,9 @@ mod tests {
 
     #[test]
     fn test_pke() {
-        use crate::{
-            isogeny::PublicParameters,
-            pke::{Message, PKE},
-            utils::{constants::*, conversion::*},
-        };
-
         let seclevel = 128;
 
-        let params = PublicParameters {
-            secparam: seclevel,
-            e2_strategy: None,
-            e3_strategy: None,
-            e2: str_to_u64(SIKE_P434_E2),
-            e3: str_to_u64(SIKE_P434_E3),
-            xp2: str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
-            xq2: str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
-            xr2: str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
-            xp3: str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
-            xq3: str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
-            xr3: str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
-        };
+        let params = sike_p434_params(None, None);
 
         let pke = PKE::setup(params);
 
@@ -155,27 +160,9 @@ mod tests {
 
     //#[test]
     fn test_kem() {
-        use crate::{
-            isogeny::PublicParameters,
-            kem::KEM,
-            utils::{constants::*, conversion::*},
-        };
-
         let seclevel = 128;
 
-        let params = PublicParameters {
-            secparam: seclevel,
-            e2_strategy: None,
-            e3_strategy: None,
-            e2: str_to_u64(SIKE_P434_E2),
-            e3: str_to_u64(SIKE_P434_E3),
-            xp2: str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
-            xq2: str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
-            xr2: str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
-            xp3: str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
-            xq3: str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
-            xr3: str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
-        };
+        let params = sike_p434_params(None, None);
 
         let kem = KEM::setup(params, seclevel);
 
@@ -205,11 +192,6 @@ mod tests {
 
     #[test]
     fn test_conversion_ff434_bytes() {
-        use crate::{
-            ff::{ff_p434::PrimeField_p434, FiniteField},
-            utils::constants::*,
-        };
-
         let num = PrimeField_p434::from_string(SIKE_P434_XP20);
 
         let b = num.clone().to_bytes();
@@ -223,11 +205,6 @@ mod tests {
 
     #[test]
     fn test_conversion_quadratic_bytes() {
-        use crate::{
-            ff::{ff_p434::PrimeField_p434, FiniteField, QuadraticExtension},
-            utils::constants::*,
-        };
-
         let num1 = PrimeField_p434::from_string(SIKE_P434_XP20);
         let num2 = PrimeField_p434::from_string(SIKE_P434_XP21);
 
@@ -243,8 +220,6 @@ mod tests {
 
     #[test]
     fn test_conversion_secretkey_bytes() {
-        use crate::isogeny::SecretKey;
-
         let k = SecretKey::get_random_secret_key(256);
         let b = k.clone().to_bytes();
         let k_recovered = SecretKey::from_bytes(&b);
@@ -269,28 +244,11 @@ mod tests {
 
     //#[test]
     fn test_conversion_publickey_bytes() {
-        use crate::{
-            isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
-            utils::{constants::*, conversion, strategy},
-        };
-
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
         let strat = Some(strategy::P434_THREE_TORSION_STRATEGY.to_vec());
 
-        let params = PublicParameters {
-            secparam: 128,
-            e2_strategy: None,
-            e3_strategy: strat.clone(),
-            e2: conversion::str_to_u64(SIKE_P434_E2),
-            e3: conversion::str_to_u64(SIKE_P434_E3),
-            xp2: conversion::str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
-            xq2: conversion::str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
-            xr2: conversion::str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
-            xp3: conversion::str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
-            xq3: conversion::str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
-            xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
-        };
+        let params = sike_p434_params(None, strat.clone());
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen3(&sk, &strat);
         let (b0, b1, b2) = pk.clone().to_bytes();
@@ -302,28 +260,12 @@ mod tests {
 
     #[test]
     fn test_isogen2() {
-        use crate::{
-            isogeny::{CurveIsogenies, PublicParameters, SecretKey},
-            utils::{constants::*, conversion, strategy},
-        };
-
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
         let strat = Some(strategy::P434_TWO_TORSION_STRATEGY.to_vec());
 
-        let params = PublicParameters {
-            secparam: 128,
-            e2_strategy: strat.clone(),
-            e3_strategy: None,
-            e2: conversion::str_to_u64(SIKE_P434_E2),
-            e3: conversion::str_to_u64(SIKE_P434_E3),
-            xp2: conversion::str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
-            xq2: conversion::str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
-            xr2: conversion::str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
-            xp3: conversion::str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
-            xq3: conversion::str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
-            xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
-        };
+        let params = sike_p434_params(strat.clone(), None);
+
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen2(&sk, &strat);
         println!("==========================");
@@ -334,28 +276,12 @@ mod tests {
 
     #[test]
     fn test_isogen3() {
-        use crate::{
-            isogeny::{CurveIsogenies, PublicParameters, SecretKey},
-            utils::{constants::*, conversion, strategy},
-        };
-
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
         let strat = Some(strategy::P434_THREE_TORSION_STRATEGY.to_vec());
 
-        let params = PublicParameters {
-            secparam: 128,
-            e2_strategy: strat.clone(),
-            e3_strategy: None,
-            e2: conversion::str_to_u64(SIKE_P434_E2),
-            e3: conversion::str_to_u64(SIKE_P434_E3),
-            xp2: conversion::str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
-            xq2: conversion::str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
-            xr2: conversion::str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
-            xp3: conversion::str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
-            xq3: conversion::str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
-            xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
-        };
+        let params = sike_p434_params(strat.clone(), None);
+
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen3(&sk, &strat);
         println!("==========================");
@@ -366,8 +292,6 @@ mod tests {
 
     #[test]
     fn test_ff() {
-        use crate::ff::{ff_p434::PrimeField_p434, FiniteField};
-
         let one = PrimeField_p434::one();
         let two = one.add(&one);
         let three = two.add(&one);
@@ -385,8 +309,6 @@ mod tests {
 
     #[test]
     fn test_qff() {
-        use crate::ff::{ff_p434::PrimeField_p434, FiniteField, QuadraticExtension};
-
         let one = PrimeField_p434::one();
         let two = one.add(&one);
         let x = QuadraticExtension::from(two.clone(), two.clone());

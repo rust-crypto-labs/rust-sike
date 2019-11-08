@@ -2,7 +2,7 @@ use bitvec::prelude::*;
 use rand::prelude::*;
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
-use crate::{ff::FiniteField, utils::conversion, utils::strategy};
+use crate::{ff::FiniteField, utils::conversion};
 
 #[derive(Clone, PartialEq)]
 /// Secret key
