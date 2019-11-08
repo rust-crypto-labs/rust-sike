@@ -2,7 +2,7 @@ use bitvec::prelude::*;
 use rand::prelude::*;
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
-use crate::{ff::FiniteField, utils::conversion};
+use crate::{ff::FiniteField, utils::conversion, utils::strategy};
 
 #[derive(Clone, PartialEq)]
 /// Secret key
@@ -226,6 +226,8 @@ impl<K: FiniteField + Clone> Curve<K> {
 #[derive(Clone)]
 pub struct PublicParameters<K> {
     pub secparam: usize,
+    pub e2_strategy: Option<Vec<usize>>,
+    pub e3_strategy: Option<Vec<usize>>,
     pub e2: u64,
     pub e3: u64,
     pub xp2: K,
@@ -314,7 +316,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Coordinate tripling xTPL Algorithm 6 (p55)
     /// Input: P. Output: [3]P
     fn triple(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
-        let a_24_plus = &curve.a;;
+        let a_24_plus = &curve.a;
         let a_24_minus = &curve.c;
 
         let t0 = p.x.sub(&p.z); // 1.
@@ -866,7 +868,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Computing public key on the 2-torsion, isogen_2 Algo 21 (p62)
     /// Input: sk secret key
     /// Output: public key
-    pub fn isogen2(&self, sk: &SecretKey, strategy: &[usize]) -> PublicKey<K> {
+    pub fn isogen2(&self, sk: &SecretKey, strategy: &Option<Vec<usize>>) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -893,13 +895,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let opt = Some((p1, p2, p3));
-        let (_, opt_v) = self.two_e_iso(s.clone(), opt.clone(), &curve_plus);
-        let (_, opt) = self.two_e_iso_optim(s, opt, &curve_plus, strategy);
 
-        let (q1, _, _) = opt.clone().unwrap();
-        let (q1v, _, _) = opt_v.unwrap();
-        println!("OPT2e = {:?}", q1.x.div(&q1.z));
-        println!("NRM2e = {:?}", q1v.x.div(&q1v.z));
+        let (_, opt) = match strategy {
+            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, &strat),
+            None => self.two_e_iso(s, opt, &curve_plus),
+        };
 
         // 5.
         let (p1, p2, p3) = opt.unwrap();
@@ -915,7 +915,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Input: secret key
     /// Output: public key
 
-    pub fn isogen3(&self, sk: &SecretKey, strategy: &[usize]) -> PublicKey<K> {
+    pub fn isogen3(&self, sk: &SecretKey, strategy: &Option<Vec<usize>>) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -945,7 +945,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let opt = Some((p1, p2, p3));
-        let (_, opt) = self.three_e_iso_optim(s, opt, &curve_pm, strategy);
+
+        let (_, opt) = match strategy {
+            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, &strat),
+            None => self.three_e_iso(s, opt, &curve_pm),
+        };
 
         // 5.
         let (p1, p2, p3) = opt.unwrap();
@@ -960,7 +964,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 2-torsion, isoex_2, Algo 23 (p63)
     /// Input; secret key, public key
     /// Output: j-invariant
-    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &[usize]) -> K {
+    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<Vec<usize>>) -> K {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -976,8 +980,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
 
         // 4.
-        let (curve_plus, _) = self.two_e_iso_optim(s, None, &curve_plus, strategy);
-        //let (curve_plus, _) = self.two_e_iso(s, None, &curve_plus);
+        let (curve_plus, _) = match strategy {
+            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat),
+            None => self.two_e_iso(s, None, &curve_plus),
+        };
 
         // 5.
         let curve = Curve::from_coeffs(
@@ -994,7 +1000,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 3-torsion, Algo 24 (p63)
     /// Input: secret key, public key
     /// Output: a j-invariant
-    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &[usize]) -> K {
+    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<Vec<usize>>) -> K {
         let one = K::one();
         let two = one.add(&one);
 
@@ -1009,8 +1015,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
 
         // 4.
-        let (curve_pm, _) = self.three_e_iso_optim(s, None, &curve_pm, strategy);
-        //let (curve_pm, _) = self.three_e_iso(s, None, &curve_pm);
+        let (curve_pm, _) = match strategy {
+            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, &strat),
+            None => self.three_e_iso(s, None, &curve_pm),
+        };
 
         // 5.
         let curve = Curve::from_coeffs(
