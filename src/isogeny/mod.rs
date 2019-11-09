@@ -269,8 +269,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     // Repeated coordinate doubling xDBLe Alg 4 (p55)
     // Input: P, e. Output : [2^e]P
     fn ndouble(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {
+        if e == 0 {
+            return p
+        }
         let mut point = p;
-        for _ in 0..e {
+        for _ in 1..=e {
             point = Self::double(&point, curve);
         }
         point
@@ -350,9 +353,12 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
     /// Repeated point tripling xTPLe Alg 7 (p56)
     /// Input: P, e. Output: [E^e]P
-    fn ntriple(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {
+    fn ntriple(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {        
+        if e == 0 {
+            return p
+        }
         let mut point = p;
-        for _ in 0..e {
+        for _ in 1..=e {
             point = Self::triple(&point, curve);
         }
         point
