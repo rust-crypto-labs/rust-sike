@@ -2,7 +2,7 @@ use bitvec::prelude::*;
 use rand::prelude::*;
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
-use crate::{ff::FiniteField, utils::conversion};
+use crate::{ff::FiniteField, utils::{conversion, strategy}};
 
 #[derive(Clone, PartialEq)]
 /// Secret key
@@ -989,19 +989,33 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 3.
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
 
+        // DEBUG
+        let (curve_plus_test, _) = match strategy {
+            Some(strat) => self.two_e_iso(s.clone(), None, &curve_plus),
+            None => self.two_e_iso_optim(s.clone(), None, &curve_plus, &strategy::P434_TWO_TORSION_STRATEGY),
+        };
+        // DEBUG
+
         // 4.
         let (curve_plus, _) = match strategy {
             Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat),
             None => self.two_e_iso(s, None, &curve_plus),
         };
 
+        // DEBUG
+        println!("STD2 \n === \n {:?} \n\n {:?}", curve_plus.a, curve_plus.c);
+        println!("\n\n ======== \n\n");
+        println!("TEST2 \n === \n {:?} \n\n {:?}", curve_plus_test.a, curve_plus_test.c);
+        println!(" ");
+        println!(" ");
+        println!(" ");
+        // DEBUG
+
         // 5.
         let curve = Curve::from_coeffs(
             curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),
             curve_plus.c,
         );
-
-        println!("OPT jinv = {:?}", curve.j_invariant());
 
         // 6, 7.
         curve.j_invariant()
@@ -1024,6 +1038,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 3.
         let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
 
+        // DEBUG
+        let (curve_pm_test, _) = match strategy {
+            Some(strat) => self.three_e_iso(s.clone(), None, &curve_pm),
+            None => self.three_e_iso_optim(s.clone(), None, &curve_pm, &strategy::P434_THREE_TORSION_STRATEGY),
+        };
+        // DEBUG
+
         // 4.
         let (curve_pm, _) = match strategy {
             Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, &strat),
@@ -1036,7 +1057,14 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             curve_pm.a.sub(&curve_pm.c),
         );
 
-        println!("OPT jinv = {:?}", curve.j_invariant());
+        // DEBUG
+        println!("STD3 \n === \n {:?} \n\n {:?}", curve_pm.a, curve_pm.c);
+        println!("\n\n ======== \n\n");
+        println!("TEST3 \n === \n {:?} \n\n {:?}", curve_pm.a, curve_pm.c);
+        println!(" ");
+        println!(" ");
+        println!(" ");
+        // DEBUG
 
         // 6, 7.
         curve.j_invariant()
