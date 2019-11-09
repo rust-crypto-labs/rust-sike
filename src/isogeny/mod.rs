@@ -258,7 +258,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Evaluate the four-isogeny at a point 4_iso_eval Algo 14 (p58)
     /// Input: (k1, k2, k3), Q
     /// Output: Q' on a 4-isogenous curve
-    fn four_isogeny_eval(k1: &K, k2: &K, k3: &K, q: &Point<K>) -> Point<K> {
+    pub fn four_isogeny_eval(k1: &K, k2: &K, k3: &K, q: &Point<K>) -> Point<K> {
         let t0 = q.x.add(&q.z); // 1.
         let t1 = q.x.sub(&q.z); // 2.
         let x = t0.mul(&k2); // 3.
@@ -313,12 +313,12 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Evaluate the three-isogeny at a point 3_iso_eval Algo 16 (p58)
     /// Input: k1, k2, Q
     /// Output: Q' on the 3-isogenous curve
-    fn three_isogeny_eval(q: &Point<K>, k1: &K, k2: &K) -> Point<K> {
+    pub fn three_isogeny_eval(q: &Point<K>, k1: &K, k2: &K) -> Point<K> {
         let t0 = q.x.add(&q.z); // 1.
         let t1 = q.x.sub(&q.z); // 2.
         let t0 = k1.mul(&t0); // 3.
         let t1 = k2.mul(&t1); // 4.
-        let t2 = t0.sub(&t1); // 5.
+        let t2 = t0.add(&t1); // 5.
         let t0 = t1.sub(&t0); // 6.
         let t2 = t2.mul(&t2); // 7.
         let t0 = t0.mul(&t0); // 8.
@@ -745,6 +745,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve);
 
+        println!("{:?}", p1.x.div(&p1.z));
         // 4.
         let opt = Some((p1, p2, p3));
 
@@ -758,6 +759,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
         let x3 = p3.x.div(&p3.z);
+
+        println!("{:?}", x1);
 
         // 6.
         PublicKey { x1, x2, x3 }

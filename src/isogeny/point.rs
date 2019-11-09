@@ -20,3 +20,9 @@ impl<K: FiniteField + Clone> Point<K> {
         Self { x, z: K::one() }
     }
 }
+
+impl<K: FiniteField + Clone> PartialEq<Self> for Point<K> {
+    fn eq(&self, other: &Self) -> bool {
+        self.x.div(&self.z).equals(&other.x.div(&other.z))
+    }
+}

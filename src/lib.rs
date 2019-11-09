@@ -9,7 +9,7 @@ mod tests {
 
     use crate::{
         ff::{ff_p434::PrimeField_p434, FiniteField, QuadraticExtension},
-        isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
+        isogeny::{point::Point, CurveIsogenies, PublicKey, PublicParameters, SecretKey},
         kem::KEM,
         pke::{Message, PKE},
         utils::{constants::*, conversion, shake, strategy},
@@ -130,6 +130,30 @@ mod tests {
     }
 
     #[test]
+    fn test_iso_eval() {
+        let one: QuadraticExtension<PrimeField_p434> = QuadraticExtension::one();
+        let two = one.add(&one);
+        let k1 = two.add(&one).mul(&two);
+        let k2 = two.add(&two).mul(&two);
+        let k3 = two.add(&two);
+
+        let x = one.add(&one).add(&two).add(&two);
+
+        let pt = Point::from_x(x);
+
+        println!("Before {:?}", pt.x.div(&pt.z));
+
+        let pt2 = CurveIsogenies::four_isogeny_eval(&k1, &k2, &k3, &pt);
+
+        let pt3 = CurveIsogenies::three_isogeny_eval(&pt, &k1, &k2);
+
+        println!("After 4isoeval {:?}", pt2.x.div(&pt2.z));
+        println!("After 3isoeval {:?}", pt3.x.div(&pt3.z));
+
+        assert_ne!(pt, pt3)
+    }
+
+    #[test]
     fn test_isoex_isogen() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let nks2 = conversion::str_to_u64(SIKE_P434_NKS2);
@@ -153,7 +177,7 @@ mod tests {
         assert!(j_A.equals(&j_B));
     }
 
-    //#[test]
+    #[test]
     fn test_pke() {
         let params = sike_p434_params(None, None);
 
@@ -178,7 +202,7 @@ mod tests {
         assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
     }
 
-    //#[test]
+    #[test]
     fn test_kem() {
         let seclevel = 128;
 
