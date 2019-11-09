@@ -32,7 +32,10 @@ impl SecretKey {
 
     pub fn to_bits(&self) -> BitVec {
         let mut result = vec![];
-        for byte in self.bytes.iter() {
+        // We reverse the order of the bytes
+        // such that bits are properly ordered
+        //      Ex : [1, 0] -> [00000000, 00000001]
+        for byte in self.bytes.iter().rev() {
             let bits = byte.as_bitslice::<BigEndian>().as_slice();
             result.push(bits);
         }
@@ -381,7 +384,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         let a_24_plus = &curve.a.add(&two).div(&four);
 
-        for m_i in m.iter() {
+        // Start with low weight bits
+        for m_i in m.iter().rev() {
             if m_i {
                 let (p0v, p1v) = Self::double_and_add(&p0, &p1, &p2, a_24_plus);
                 p0 = p0v;
