@@ -1,8 +1,12 @@
+//! Utils for tree traversal strategies
+
+/// Tree traversal strategy for 3-torsion
 pub type Torsion3Strategy = [usize; 136];
+
+/// Tree traversal strategy for 2-torsion
 pub type Torsion2Strategy = [usize; 107];
 
-/// 2-torsion reference strategy
-/// C.1.1.
+/// 2-torsion reference strategy (ref C.1.1.)
 pub const P434_TWO_TORSION_STRATEGY: Torsion2Strategy = [
     48, 28, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2,
     1, 1, 13, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 4, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 21, 12,
@@ -10,8 +14,7 @@ pub const P434_TWO_TORSION_STRATEGY: Torsion2Strategy = [
     1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1,
 ];
 
-/// 3-torsion reference strategy
-/// C.1.2.
+/// 3-torsion reference strategy (ref C.1.2.)
 pub const P434_THREE_TORSION_STRATEGY: Torsion3Strategy = [
     66, 33, 17, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 1, 2, 1,
     1, 4, 2, 1, 1, 2, 1, 1, 16, 8, 4, 2, 1, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2,
@@ -20,10 +23,15 @@ pub const P434_THREE_TORSION_STRATEGY: Torsion3Strategy = [
     1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1,
 ];
 
-/// Computing optimised strategy, compute_strategy, Alg 46 p75
-/// Input: strategy size n, parameters p, q
-/// Output: optimal strategy of size n  
-
+/// Computing optimised strategy (ref `compute_strategy`, Algorithm 46 p. 75).
+///   - Input: strategy size `n`, parameters `p`, `q`
+///   - Output: optimal strategy of size `n`  
+///
+/// # Examples
+/// ```rust
+/// let strat = compute_strategy(12, 13, 14);
+/// println!("{:?}", strat);
+/// ```
 pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
     // 1.
     let mut s = vec![vec![]];

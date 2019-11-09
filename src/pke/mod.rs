@@ -1,3 +1,5 @@
+//! Public key cryptosystem
+
 use crate::{
     ff::FiniteField,
     isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
@@ -10,36 +12,50 @@ use crate::{
 
 use std::fmt::Debug;
 
+/// `Message`
 #[derive(Clone)]
 pub struct Message {
     bytes: Vec<u8>,
 }
 
 impl Message {
+    /// Build a `Message` from a sequence of bytes
     pub fn from_bytes(bytes: Vec<u8>) -> Self {
         Self { bytes }
     }
 
+    /// Obtain bytes from a `Message`
     pub fn to_bytes(self) -> Vec<u8> {
         self.bytes
     }
 }
 
+/// `Ciphertext`
+///
+/// We decompose the ciphertext in subarrays for convenience
 #[derive(Clone)]
 pub struct Ciphertext {
+    /// Ciphertext, part 0, subpart 0
     pub bytes00: Vec<u8>,
+
+    /// Ciphertext, part 0, subpart 1
     pub bytes01: Vec<u8>,
+
+    /// Ciphertext, part 0, subpart 2
     pub bytes02: Vec<u8>,
+
+    /// Ciphertext, part 1
     pub bytes1: Vec<u8>,
 }
 
+/// Public-key cryptosystem (ref Algorithm 1, Section 1.3.9)
 pub struct PKE<K> {
     pub isogenies: CurveIsogenies<K>,
     params: PublicParameters<K>,
 }
 
-/// Algorithm 1, Section 1.3.9
 impl<K: FiniteField + Clone + Debug> PKE<K> {
+    /// Initialise cryptosystem with parameters `params`
     pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             isogenies: CurveIsogenies::init(params.clone()),
@@ -47,6 +63,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         }
     }
 
+    /// Generate a keypair
     pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
         // 1.
         let nks3 = str_to_u64(SIKE_P434_NKS3);
@@ -59,6 +76,11 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         (sk3, pk3)
     }
 
+    /// Encrypt a message
+    ///
+    /// # Panics
+    ///
+    /// The function will panic if the message length is incorrect, of if the public key is incorrect
     pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
         // 4.
         let nks2 = str_to_u64(SIKE_P434_NKS2);
@@ -66,20 +88,9 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
         // 5.
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2, &self.params.e2_strategy);
-        let c0_nostrat: PublicKey<K> = self.isogenies.isogen2(&sk2, &None);
-
-        println!("[TEST] c0 = c0_nostrat");
-        assert_eq!(c0, c0_nostrat);
-
-        println!("c0 = {:?}", c0);
 
         // 6.
         let j = self.isogenies.isoex2(&sk2, &pk, &self.params.e2_strategy);
-        let j_nostrat = self.isogenies.isoex2(&sk2, &pk, &None);
-        println!("[TEST] j = j_nostrat");
-        assert!(j.equals(&j_nostrat));
-
-        println!("j = {:?}", j);
 
         // 7.
         let h = self.hash_function_f(j);
@@ -98,17 +109,16 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         }
     }
 
+    /// Decrypts a message
+    ///
+    /// # Panics
+    ///
+    /// The function will panic if the public key is incorrect
     pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
         // 10.
         let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
 
         let j: K = self.isogenies.isoex3(sk, c0, &self.params.e3_strategy);
-        let j_nostrat: K = self.isogenies.isoex3(sk, c0, &None);
-
-        println!("[TEST] j = j_nostrat");
-        assert!(j.equals(&j_nostrat));
-
-        println!("j = {:?}", j);
 
         // 11.
         let h = self.hash_function_f(j);
@@ -121,10 +131,12 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         Message { bytes: m }
     }
 
+    /// Computes the F function
     fn hash_function_f(&self, j: K) -> Vec<u8> {
         shake::shake256(&j.to_bytes(), self.params.secparam / 8)
     }
 
+    /// Computes the bitwise XOR between two sequences
     fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {
         let mut result = vec![0; input1.len()];
         let couples = input1.iter().zip(input2.iter());

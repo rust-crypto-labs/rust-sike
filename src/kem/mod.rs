@@ -1,3 +1,5 @@
+//! Key encapsulation mechanism
+
 use crate::{
     ff::FiniteField,
     isogeny::{PublicKey, PublicParameters, SecretKey},
@@ -16,14 +18,16 @@ pub struct KEM<K> {
 }
 
 impl<K: FiniteField + Clone + Debug> KEM<K> {
-    pub fn setup(params: PublicParameters<K>, n: usize) -> Self {
+    /// Initialise the KEM
+    pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             pke: PKE::setup(params.clone()),
-            n,
+            n: params.secparam,
             params,
         }
     }
 
+    /// Generate a secret and a keypair
     pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
         let nsk3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk3 = SecretKey::get_random_secret_key(nsk3 as usize);

@@ -1,3 +1,5 @@
+//! Finite fields
+
 use num_bigint::BigInt;
 use std::fmt::Debug;
 

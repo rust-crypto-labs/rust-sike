@@ -1,3 +1,5 @@
+//! Tools for isogeny computations
+
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
 pub mod curve;
@@ -21,7 +23,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         Self { params }
     }
 
-    /// Coordinate doubling Algorithm xDBL 3 p. 54
+    /// Coordinate doubling (ref. `xDBL`, Algorithm 3 p. 54)
     /// Input: P. Output: [2]P
     fn double(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
         let a_24_plus = &curve.a;

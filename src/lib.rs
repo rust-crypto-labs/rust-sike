@@ -1,8 +1,18 @@
-mod ff;
-mod isogeny;
-mod kem;
-mod pke;
-mod utils;
+//! This is documentation for the `rust-sike` crate.
+//!
+//! # Introduction
+//! `rust-sike` is an implementation of the supersingular isogeny primitives for SIKE, a post-quantum
+//! candidate submitted to NIST for standardization.
+//!
+//! This crate provides public-key encryption (`PKE`) and key encapsulation (`KEM`).
+
+#![warn(missing_docs)]
+
+pub mod ff;
+pub mod isogeny;
+pub mod kem;
+pub mod pke;
+pub mod utils;
 
 #[cfg(test)]
 mod tests {
@@ -53,7 +63,7 @@ mod tests {
         true
     }
 
-    //#[test]
+    #[test]
     fn test_strategy_2tor() {
         let n4 = 107;
         let p4 = 5633;
@@ -66,7 +76,7 @@ mod tests {
         ));
     }
 
-    //#[test]
+    #[test]
     fn test_strategy_3tor() {
         let n3 = 136;
         let p3 = 5322;
@@ -80,7 +90,7 @@ mod tests {
         ));
     }
 
-    //#[test]
+    #[test]
     fn test_shake256_0bit() {
         let msg = vec![];
         let output = shake::shake256(&msg, 512);
@@ -204,11 +214,9 @@ mod tests {
 
     #[test]
     fn test_kem() {
-        let seclevel = 128;
-
         let params = sike_p434_params(None, None);
 
-        let kem = KEM::setup(params, seclevel);
+        let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
         let (s, sk3, pk3) = kem.keygen();
@@ -223,7 +231,7 @@ mod tests {
         assert_eq!(k, k_recovered);
     }
 
-    //#[test]
+    #[test]
     fn test_concatenate() {
         let a = vec![1, 2, 3, 4, 5];
         let b = vec![6, 7, 8];
@@ -234,7 +242,7 @@ mod tests {
         assert_eq!(c, d)
     }
 
-    //#[test]
+    #[test]
     fn test_conversion_ff434_bytes() {
         let num = PrimeField_p434::from_string(SIKE_P434_XP20);
 
@@ -247,7 +255,7 @@ mod tests {
         assert!(num.equals(&num_recovered));
     }
 
-    //#[test]
+    #[test]
     fn test_conversion_quadratic_bytes() {
         let num1 = PrimeField_p434::from_string(SIKE_P434_XP20);
         let num2 = PrimeField_p434::from_string(SIKE_P434_XP21);
@@ -262,7 +270,7 @@ mod tests {
         assert!(q.equals(&q_recovered));
     }
 
-    //#[test]
+    #[test]
     fn test_conversion_secretkey_bytes() {
         let k = SecretKey::get_random_secret_key(256);
         let b = k.clone().to_bytes();
@@ -271,7 +279,7 @@ mod tests {
         assert_eq!(k, k_recovered);
     }
 
-    //#[test]
+    #[test]
     fn test_j_invariant() {
         use crate::{
             ff::{ff_p434::PrimeField_p434, QuadraticExtension},
@@ -286,7 +294,7 @@ mod tests {
         assert_eq!(j, j_ref)
     }
 
-    //#[test]
+    #[test]
     fn test_conversion_publickey_bytes() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
@@ -302,7 +310,7 @@ mod tests {
         assert_eq!(pk, pk_recovered)
     }
 
-    //#[test]
+    #[test]
     fn test_isogen2() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
@@ -318,7 +326,7 @@ mod tests {
         assert_eq!(pk, pk_2);
     }
 
-    //#[test]
+    #[test]
     fn test_isogen3() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
@@ -334,7 +342,7 @@ mod tests {
         assert_eq!(pk, pk_2);
     }
 
-    //#[test]
+    #[test]
     fn test_ff() {
         let one = PrimeField_p434::one();
         let two = one.add(&one);
@@ -351,7 +359,7 @@ mod tests {
         println!("four2 = {:?}", four2);
     }
 
-    //#[test]
+    #[test]
     fn test_qff() {
         let one = PrimeField_p434::one();
         let two = one.add(&one);

@@ -1,3 +1,5 @@
+//! Misc utilities
+
 pub mod constants;
 pub mod conversion;
 pub mod shake;
