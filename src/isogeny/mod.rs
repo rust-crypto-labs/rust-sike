@@ -501,35 +501,43 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
         curve: &Curve<K>,
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
-        let opt_input = opt.is_some();
         let mut c = curve.clone();
         let mut s = s;
 
-        if !opt_input {
-            for e in (0..=self.params.e3 - 1).rev() {
-                let t = Self::ntriple(s.clone(), e, &c);
-                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
-                c = new_c;
-                s = Self::three_isogeny_eval(&s, &k1, &k2);
+        let mut opt_output = vec![];
+        if opt.is_some() {
+            let (p1, p2, p3) = opt.unwrap();
+            opt_output.push(p1);
+            opt_output.push(p2);
+            opt_output.push(p3);
+        }
+        let nopt = opt_output.len();
+
+        for e in (0..=self.params.e3 - 1).rev() {
+            // 2.
+            let t = Self::ntriple(s.clone(), e, &c);
+
+            // 3.
+            let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
+            c = new_c;
+
+            // 4.
+            s = Self::three_isogeny_eval(&s, &k1, &k2);
+
+            // 5.
+            for pos in 0..nopt {
+                // 6.
+                opt_output[pos] = Self::three_isogeny_eval(&opt_output[pos], &k1, &k2);
             }
+        }
 
-            (c, None)
-        } else {
-            let (mut p1, mut p2, mut p3) = opt.unwrap();
-            for e in (0..=self.params.e3 - 1).rev() {
-                let t = Self::ntriple(s.clone(), e, &c);
-
-                let (new_c, k1, k2) = Self::three_isogenous_curve(&t);
-
-                c = new_c;
-                s = Self::three_isogeny_eval(&s, &k1, &k2);
-
-                p1 = Self::three_isogeny_eval(&p1, &k1, &k2);
-                p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
-                p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
-            }
-
+        if nopt > 0 {
+            let p3 = opt_output.pop().unwrap();
+            let p2 = opt_output.pop().unwrap();
+            let p1 = opt_output.pop().unwrap();
             (c, Some((p1, p2, p3)))
+        } else {
+            (c, None)
         }
     }
 
