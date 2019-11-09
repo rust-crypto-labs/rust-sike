@@ -372,7 +372,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let mut p1 = Point::from_x(x_p);
         let mut p2 = Point::from_x(x_qmp);
 
-        let a_24_plus = &curve.a;
+        let one = K::one();
+        let two = one.add(&one);
+        let four = two.add(&two);
+
+        let a_24_plus = &curve.a.add(&two).div(&four);
 
         for m_i in m.iter() {
             if m_i {
