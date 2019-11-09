@@ -71,11 +71,15 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         println!("[TEST] c0 = c0_nostrat");
         assert_eq!(c0, c0_nostrat);
 
+        println!("c0 = {:?}", c0);
+
         // 6.
         let j = self.isogenies.isoex2(&sk2, &pk, &self.params.e2_strategy);
         let j_nostrat = self.isogenies.isoex2(&sk2, &pk, &None);
         println!("[TEST] j = j_nostrat");
         assert!(j.equals(&j_nostrat));
+
+        println!("j = {:?}", j);
 
         // 7.
         let h = self.hash_function_f(j);
@@ -103,6 +107,8 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
         println!("[TEST] j = j_nostrat");
         assert!(j.equals(&j_nostrat));
+
+        println!("j = {:?}", j);
 
         // 11.
         let h = self.hash_function_f(j);

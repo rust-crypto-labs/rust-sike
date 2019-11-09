@@ -997,7 +997,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat),
             None => self.two_e_iso(s, None, &curve_plus),
         };
-        
+
         // 5.
         let curve = Curve::from_coeffs(
             curve_plus.a.mul(&four).sub(&curve_plus.c.mul(&two)),
@@ -1024,18 +1024,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 3.
         let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
-
-        // DEBUG
-        let (curve_pm_test, _) = match strategy {
-            Some(strat) => self.three_e_iso(s.clone(), None, &curve_pm),
-            None => self.three_e_iso_optim(
-                s.clone(),
-                None,
-                &curve_pm,
-                &strategy::P434_THREE_TORSION_STRATEGY,
-            ),
-        };
-        // DEBUG
 
         // 4.
         let (curve_pm, _) = match strategy {

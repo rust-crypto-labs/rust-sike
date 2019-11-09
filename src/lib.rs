@@ -130,19 +130,41 @@ mod tests {
     }
 
     #[test]
-    fn test_pke() {
-        let seclevel = 128;
+    fn test_isoex_isogen() {
+        let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
+        let nks2 = conversion::str_to_u64(SIKE_P434_NKS2);
 
         let params = sike_p434_params(None, None);
 
-        let pke = PKE::setup(params);
+        let iso = CurveIsogenies::init(params.clone());
+
+        let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
+        let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
+
+        let pk3 = iso.isogen3(&sk3, &params.e3_strategy);
+        let pk2 = iso.isogen2(&sk2, &params.e2_strategy);
+
+        let j_A = iso.isoex2(&sk2, &pk3, &params.e2_strategy);
+        let j_B = iso.isoex3(&sk3, &pk2, &params.e3_strategy);
+
+        println!("j_A = {:?}", j_A);
+        println!("j_B = {:?}", j_B);
+
+        assert!(j_A.equals(&j_B));
+    }
+
+    //#[test]
+    fn test_pke() {
+        let params = sike_p434_params(None, None);
+
+        let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
         let (sk, pk) = pke.gen();
 
         // Bob writes a message
-        let msg = Message::from_bytes(vec![0; seclevel / 8]);
+        let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
         let ciphertext = pke.enc(&pk, msg.clone());
