@@ -68,8 +68,6 @@ mod tests {
 
     //#[test]
     fn test_strategy_3tor() {
-        use crate::utils::strategy;
-
         let n3 = 136;
         let p3 = 5322;
         let q3 = 5282;

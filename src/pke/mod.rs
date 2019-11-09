@@ -66,9 +66,16 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
         // 5.
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2, &self.params.e2_strategy);
+        let c0_nostrat: PublicKey<K> = self.isogenies.isogen2(&sk2, &None);
+
+        println!("[TEST] c0 = c0_nostrat");
+        assert_eq!(c0, c0_nostrat);
 
         // 6.
         let j = self.isogenies.isoex2(&sk2, &pk, &self.params.e2_strategy);
+        let j_nostrat = self.isogenies.isoex2(&sk2, &pk, &None);
+        println!("[TEST] j = j_nostrat");
+        assert!(j.equals(&j_nostrat));
 
         // 7.
         let h = self.hash_function_f(j);
@@ -90,7 +97,12 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
         // 10.
         let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
+
         let j: K = self.isogenies.isoex3(sk, c0, &self.params.e3_strategy);
+        let j_nostrat: K = self.isogenies.isoex3(sk, c0, &None);
+
+        println!("[TEST] j = j_nostrat");
+        assert!(j.equals(&j_nostrat));
 
         // 11.
         let h = self.hash_function_f(j);
