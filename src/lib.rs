@@ -80,7 +80,7 @@ mod tests {
         ));
     }
 
-    #[test]
+    //#[test]
     fn test_shake256_0bit() {
         let msg = vec![];
         let output = shake::shake256(&msg, 512);
@@ -199,7 +199,7 @@ mod tests {
         assert_eq!(k, k_recovered);
     }
 
-    #[test]
+    //#[test]
     fn test_concatenate() {
         let a = vec![1, 2, 3, 4, 5];
         let b = vec![6, 7, 8];
@@ -210,7 +210,7 @@ mod tests {
         assert_eq!(c, d)
     }
 
-    #[test]
+    //#[test]
     fn test_conversion_ff434_bytes() {
         let num = PrimeField_p434::from_string(SIKE_P434_XP20);
 
@@ -223,7 +223,7 @@ mod tests {
         assert!(num.equals(&num_recovered));
     }
 
-    #[test]
+    //#[test]
     fn test_conversion_quadratic_bytes() {
         let num1 = PrimeField_p434::from_string(SIKE_P434_XP20);
         let num2 = PrimeField_p434::from_string(SIKE_P434_XP21);
@@ -238,7 +238,7 @@ mod tests {
         assert!(q.equals(&q_recovered));
     }
 
-    #[test]
+    //#[test]
     fn test_conversion_secretkey_bytes() {
         let k = SecretKey::get_random_secret_key(256);
         let b = k.clone().to_bytes();
@@ -247,7 +247,7 @@ mod tests {
         assert_eq!(k, k_recovered);
     }
 
-    #[test]
+    //#[test]
     fn test_j_invariant() {
         use crate::{
             ff::{ff_p434::PrimeField_p434, QuadraticExtension},
@@ -278,7 +278,7 @@ mod tests {
         assert_eq!(pk, pk_recovered)
     }
 
-    #[test]
+    //#[test]
     fn test_isogen2() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
@@ -294,7 +294,7 @@ mod tests {
         assert_eq!(pk, pk_2);
     }
 
-    #[test]
+    //#[test]
     fn test_isogen3() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
@@ -310,7 +310,7 @@ mod tests {
         assert_eq!(pk, pk_2);
     }
 
-    #[test]
+    //#[test]
     fn test_ff() {
         let one = PrimeField_p434::one();
         let two = one.add(&one);
@@ -327,7 +327,7 @@ mod tests {
         println!("four2 = {:?}", four2);
     }
 
-    #[test]
+    //#[test]
     fn test_qff() {
         let one = PrimeField_p434::one();
         let two = one.add(&one);
