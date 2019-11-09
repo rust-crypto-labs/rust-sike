@@ -1,248 +1,17 @@
-use bitvec::prelude::*;
-use rand::prelude::*;
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
-use crate::{
-    ff::FiniteField,
-    utils::{conversion, strategy},
+pub mod curve;
+pub mod point;
+pub mod publickey;
+pub mod publicparams;
+pub mod secretkey;
+
+use crate::{ff::FiniteField, isogeny::point::Point, utils::strategy};
+
+pub use crate::isogeny::{
+    curve::Curve, publickey::PublicKey, publicparams::PublicParameters, secretkey::SecretKey,
 };
 
-#[derive(Clone, PartialEq)]
-/// Secret key
-pub struct SecretKey {
-    bytes: Vec<u8>,
-}
-
-impl std::fmt::Debug for SecretKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.bytes)
-    }
-}
-
-impl SecretKey {
-    pub fn get_random_secret_key(size: usize) -> Self {
-        let mut bytes = vec![0; size];
-        rand::rngs::OsRng.fill_bytes(&mut bytes);
-        Self::from_bytes(&bytes)
-    }
-
-    pub fn from_bits(_bits: &BitSlice) -> Self {
-        unimplemented!()
-    }
-
-    pub fn to_bits(&self) -> BitVec {
-        let mut result = vec![];
-        // We reverse the order of the bytes
-        // such that bits are properly ordered
-        //      Ex : [1, 0] -> [00000000, 00000001]
-        for byte in self.bytes.iter().rev() {
-            let bits = byte.as_bitslice::<BigEndian>().as_slice();
-            result.push(bits);
-        }
-
-        conversion::concatenate(&result).into()
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        self.bytes.clone()
-    }
-
-    pub fn from_bytes(bytes: &[u8]) -> Self {
-        Self {
-            bytes: bytes.to_vec(),
-        }
-    }
-}
-
-/// Public key
-#[derive(Clone)]
-pub struct PublicKey<K: FiniteField> {
-    pub x1: K,
-    pub x2: K,
-    pub x3: K,
-}
-
-impl<K: FiniteField + std::fmt::Debug> std::fmt::Debug for PublicKey<K> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}, {:?}, {:?}", self.x1, self.x2, self.x3)
-    }
-}
-
-impl<K: FiniteField> PublicKey<K> {
-    pub fn to_bits(self) -> Vec<bool> {
-        unimplemented!()
-    }
-
-    pub fn to_bytes(self) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
-        (self.x1.to_bytes(), self.x2.to_bytes(), self.x3.to_bytes())
-    }
-
-    pub fn from_bits(_bits: &BitSlice) -> Self {
-        unimplemented!()
-    }
-
-    pub fn from_bytes(part1: &[u8], part2: &[u8], part3: &[u8]) -> Self {
-        Self {
-            x1: K::from_bytes(part1),
-            x2: K::from_bytes(part2),
-            x3: K::from_bytes(part3),
-        }
-    }
-}
-
-impl<K: FiniteField> std::cmp::PartialEq for PublicKey<K> {
-    fn eq(&self, other: &Self) -> bool {
-        self.x1.equals(&other.x1) && self.x2.equals(&other.x2) && self.x3.equals(&other.x3)
-    }
-}
-
-/// Point defined by (X: Z) in projective coordinates
-#[derive(Clone)]
-struct Point<K: FiniteField + Clone> {
-    x: K,
-    z: K,
-}
-
-impl<K: FiniteField + Clone + Debug> Debug for Point<K> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({:?}:{:?})", self.x, self.z)
-    }
-}
-
-impl<K: FiniteField + Clone> Point<K> {
-    /// Returns the points (x : 1)
-    pub fn from_x(x: K) -> Self {
-        Self { x, z: K::one() }
-    }
-}
-
-/// Montgomery M_{A,1} Curve defined by (A : C) in projective cooridnates
-pub struct Curve<K> {
-    a: K,
-    c: K,
-}
-
-impl<K: FiniteField + Clone> Curve<K> {
-    pub fn clone(&self) -> Self {
-        Self {
-            a: self.a.clone(),
-            c: self.c.clone(),
-        }
-    }
-
-    pub fn from_coeffs(a: K, c: K) -> Self {
-        Self { a, c }
-    }
-
-    /// Starting curve 1.3.2
-    /// Curve with equation y² = x³ + 6x² + x
-    pub fn starting_curve() -> Curve<K> {
-        let one = K::one();
-        let two = one.add(&one);
-        let three = two.add(&one);
-        let six = two.mul(&three);
-
-        Curve::from_coeffs(six, one)
-    }
-
-    // Montgomery j-invariant Algo 9 (p56)
-    pub fn j_invariant(&self) -> K {
-        let j = self.a.mul(&self.a); // 1.
-        let t1 = self.c.mul(&self.c); //2.
-        let t0 = t1.add(&t1); // 3.
-        let t0 = j.sub(&t0); // 4.
-        let t0 = t0.sub(&t1); //5.
-
-        let j = t0.sub(&t1); // 6.
-        let t1 = t1.mul(&t1); //7.
-        let j = j.mul(&t1); // 8.
-        let t0 = t0.add(&t0); // 9.
-        let t0 = t0.add(&t0); // 10.
-
-        let t1 = t0.mul(&t0); // 11.
-        let t0 = t0.mul(&t1); // 12.
-        let t0 = t0.add(&t0); // 13.
-        let t0 = t0.add(&t0); // 14.
-        let j = j.inv(); // 15.
-        let j = t0.mul(&j);
-
-        j
-    }
-
-    // Montgomery j-invariant Algo 31 (p66)
-    pub fn j_invariant_ref(&self) -> K {
-        let one = K::one();
-        let two = one.add(&one);
-        let three = two.add(&one);
-        let four = two.add(&two);
-
-        let a = self.a.div(&self.c);
-
-        let t0 = a.mul(&a); // 1.
-        let j = three; // 2.
-        let j = t0.sub(&j); // 3.
-        let t1 = j.mul(&j); // 4.
-        let j = j.mul(&t1); // 5.
-        let j = j.add(&j); // 6.
-        let j = j.add(&j); // 7.
-        let j = j.add(&j); // 8.
-        let j = j.add(&j); // 9.
-        let j = j.add(&j); // 10.
-        let j = j.add(&j); // 11.
-        let j = j.add(&j); // 12.
-        let j = j.add(&j); // 13.
-        let t1 = four; // 14.
-        let t0 = t0.sub(&t1); // 15.
-        let t0 = t0.inv(); // 16.
-        let j = j.mul(&t0); // 17.
-
-        j
-    }
-
-    /// Algorithm 1.2.1 "cfpk"
-    /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
-    fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
-        let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
-
-        // 1.
-        if x_p.is_zero() || x_q.is_zero() || x_r.is_zero() {
-            return None;
-        }
-
-        // 2.
-        let one = K::one();
-        let two = one.add(&one);
-        let four = two.add(&two);
-
-        let num = K::one()
-            .sub(&x_p.mul(&x_q))
-            .sub(&x_p.mul(&x_r))
-            .sub(&x_q.mul(&x_r));
-        let num = num.mul(&num);
-        let denom = four.mul(&x_p).mul(&x_q).mul(&x_r);
-        let frac = num.div(&denom);
-        let a = frac.sub(&x_p).sub(&x_q).sub(&x_r);
-        let c = one;
-
-        // 3, 4.
-        Some(Curve::from_coeffs(a, c))
-    }
-}
-
-#[derive(Clone)]
-pub struct PublicParameters<K> {
-    pub secparam: usize,
-    pub e2_strategy: Option<strategy::Torsion2Strategy>,
-    pub e3_strategy: Option<strategy::Torsion3Strategy>,
-    pub e2: u64,
-    pub e3: u64,
-    pub xp2: K,
-    pub xq2: K,
-    pub xr2: K,
-    pub xp3: K,
-    pub xq3: K,
-    pub xr3: K,
-}
 pub struct CurveIsogenies<K> {
     params: PublicParameters<K>,
 }
@@ -373,7 +142,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Three point ladder Ladder3pt Alg 8 (p56)
     /// Input: m (binary), x_p, x_q, x_(Q-P)
     /// Output: P + [m]Q
-    fn three_pts_ladder(m: &BitSlice, x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
+    fn three_pts_ladder(m: &[bool], x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
         let mut p0 = Point::from_x(x_q);
         let mut p1 = Point::from_x(x_p);
         let mut p2 = Point::from_x(x_qmp);
@@ -385,7 +154,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let a_24_plus = &curve.a.add(&two).div(&four);
 
         // Start with low weight bits
-        for m_i in m.iter().rev() {
+        for &m_i in m.iter().rev() {
             if m_i {
                 let (p0v, p1v) = Self::double_and_add(&p0, &p1, &p2, a_24_plus);
                 p0 = p0v;
@@ -885,7 +654,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Computing public key on the 2-torsion, isogen_2 Algo 21 (p62)
     /// Input: sk secret key
     /// Output: public key
-    pub fn isogen2(&self, sk: &SecretKey, strategy: &Option<strategy::Torsion2Strategy>) -> PublicKey<K> {
+    pub fn isogen2(
+        &self,
+        sk: &SecretKey,
+        strategy: &Option<strategy::Torsion2Strategy>,
+    ) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -932,7 +705,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Input: secret key
     /// Output: public key
 
-    pub fn isogen3(&self, sk: &SecretKey, strategy: &Option<strategy::Torsion3Strategy>) -> PublicKey<K> {
+    pub fn isogen3(
+        &self,
+        sk: &SecretKey,
+        strategy: &Option<strategy::Torsion3Strategy>,
+    ) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -981,7 +758,12 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 2-torsion, isoex_2, Algo 23 (p63)
     /// Input; secret key, public key
     /// Output: j-invariant
-    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<strategy::Torsion2Strategy>) -> K {
+    pub fn isoex2(
+        &self,
+        sk: &SecretKey,
+        pk: &PublicKey<K>,
+        strategy: &Option<strategy::Torsion2Strategy>,
+    ) -> K {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -1015,7 +797,12 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 3-torsion, Algo 24 (p63)
     /// Input: secret key, public key
     /// Output: a j-invariant
-    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<strategy::Torsion3Strategy>) -> K {
+    pub fn isoex3(
+        &self,
+        sk: &SecretKey,
+        pk: &PublicKey<K>,
+        strategy: &Option<strategy::Torsion3Strategy>,
+    ) -> K {
         let one = K::one();
         let two = one.add(&one);
 
