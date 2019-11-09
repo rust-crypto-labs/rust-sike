@@ -21,10 +21,6 @@ impl SecretKey {
         Self::from_bytes(&bytes)
     }
 
-    pub fn from_bits(_bits: &BitSlice) -> Self {
-        unimplemented!()
-    }
-
     pub fn to_bits(&self) -> Vec<bool> {
         let mut result = vec![];
         // We reverse the order of the bytes
