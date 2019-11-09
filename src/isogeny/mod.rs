@@ -2,7 +2,7 @@ use bitvec::prelude::*;
 use rand::prelude::*;
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
-use crate::{ff::FiniteField, utils::conversion, utils::strategy};
+use crate::{ff::FiniteField, utils::conversion};
 
 #[derive(Clone, PartialEq)]
 /// Secret key
@@ -459,6 +459,22 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         (Curve::from_coeffs(a, c), k1, k2, k3)
     }
 
+    fn four_isogenous_curve_ref(x: K, b: K) -> Curve<K> {
+        let t1 = x.mul(&x);
+        let a = t1.mul(&t1);
+        let a = a.add(&a);
+        let a = a.add(&a);
+        let t2 = K::one().add(&K::one());
+        let a = a.sub(&t2);
+        let t1 = t1.add(&x);
+        let t1 = t1.mul(&b);
+        let t2 = t2.inv();
+        let t2 = t2.neg();
+        let b = t2.mul(&t1);
+
+        Curve::from_coeffs(a, b)
+    }
+
     /// Evaluate the four-isogeny at a point 4_iso_eval Algo 14 (p58)
     /// Input: (k1, k2, k3), Q
     /// Output: Q' on a 4-isogenous curve
@@ -578,9 +594,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 7.
         if nopt > 0 {
-            let p1 = opt_output.remove(0);
-            let p2 = opt_output.remove(0);
-            let p3 = opt_output.remove(0);
+            let p3 = opt_output.pop().unwrap();
+            let p2 = opt_output.pop().unwrap();
+            let p1 = opt_output.pop().unwrap();
             (c, Some((p1, p2, p3)))
         } else {
             (c, None)
@@ -601,6 +617,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         curve_plus: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
+        assert_eq!(self.params.e2 as usize / 2 - 1, strategy.len());
+
         let mut curve = curve_plus.clone();
 
         let mut opt_output = vec![];
@@ -681,9 +699,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 23.
         if nopt > 0 {
-            let p1 = opt_output.remove(0);
-            let p2 = opt_output.remove(0);
-            let p3 = opt_output.remove(0);
+            let p3 = opt_output.pop().unwrap();
+            let p2 = opt_output.pop().unwrap();
+            let p1 = opt_output.pop().unwrap();
             (curve, Some((p1, p2, p3)))
         } else {
             (curve, None)
@@ -884,29 +902,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 4.
         let opt = Some((p1, p2, p3));
 
-        // DEBUG
-        let (_, opt_v) = match strategy {
-            Some(strat) => self.two_e_iso(s.clone(), opt.clone(), &curve_plus),
-            None => self.two_e_iso_optim(
-                s.clone(),
-                opt.clone(),
-                &curve_plus,
-                &strategy::P434_TWO_TORSION_STRATEGY,
-            ),
-        };
-        // DEBUG
-
         let (_, opt) = match strategy {
             Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, &strat),
             None => self.two_e_iso(s, opt, &curve_plus),
         };
-
-        // DEBUG
-        let (q1, _, _) = opt.clone().unwrap();
-        let (q1v, _, _) = opt_v.unwrap();
-        println!("OPT2e = {:?}", q1.x.div(&q1.z));
-        println!("NRM2e = {:?}", q1v.x.div(&q1v.z));
-        // DEBUG
 
         // 5.
         let (p1, p2, p3) = opt.unwrap();
