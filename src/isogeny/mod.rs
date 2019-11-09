@@ -229,8 +229,8 @@ impl<K: FiniteField + Clone> Curve<K> {
 #[derive(Clone)]
 pub struct PublicParameters<K> {
     pub secparam: usize,
-    pub e2_strategy: Option<Vec<usize>>,
-    pub e3_strategy: Option<Vec<usize>>,
+    pub e2_strategy: Option<strategy::Torsion2Strategy>,
+    pub e3_strategy: Option<strategy::Torsion3Strategy>,
     pub e2: u64,
     pub e3: u64,
     pub xp2: K,
@@ -881,7 +881,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Computing public key on the 2-torsion, isogen_2 Algo 21 (p62)
     /// Input: sk secret key
     /// Output: public key
-    pub fn isogen2(&self, sk: &SecretKey, strategy: &Option<Vec<usize>>) -> PublicKey<K> {
+    pub fn isogen2(&self, sk: &SecretKey, strategy: &Option<strategy::Torsion2Strategy>) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -910,7 +910,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let opt = Some((p1, p2, p3));
 
         let (_, opt) = match strategy {
-            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, &strat),
+            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, strat),
             None => self.two_e_iso(s, opt, &curve_plus),
         };
 
@@ -928,7 +928,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Input: secret key
     /// Output: public key
 
-    pub fn isogen3(&self, sk: &SecretKey, strategy: &Option<Vec<usize>>) -> PublicKey<K> {
+    pub fn isogen3(&self, sk: &SecretKey, strategy: &Option<strategy::Torsion3Strategy>) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -960,7 +960,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let opt = Some((p1, p2, p3));
 
         let (_, opt) = match strategy {
-            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, &strat),
+            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, strat),
             None => self.three_e_iso(s, opt, &curve_pm),
         };
 
@@ -977,7 +977,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 2-torsion, isoex_2, Algo 23 (p63)
     /// Input; secret key, public key
     /// Output: j-invariant
-    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<Vec<usize>>) -> K {
+    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<strategy::Torsion2Strategy>) -> K {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -994,7 +994,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_plus, _) = match strategy {
-            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat),
+            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, strat),
             None => self.two_e_iso(s, None, &curve_plus),
         };
 
@@ -1011,7 +1011,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 3-torsion, Algo 24 (p63)
     /// Input: secret key, public key
     /// Output: a j-invariant
-    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<Vec<usize>>) -> K {
+    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>, strategy: &Option<strategy::Torsion3Strategy>) -> K {
         let one = K::one();
         let two = one.add(&one);
 
@@ -1027,7 +1027,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_pm, _) = match strategy {
-            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, &strat),
+            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, strat),
             None => self.three_e_iso(s, None, &curve_pm),
         };
 

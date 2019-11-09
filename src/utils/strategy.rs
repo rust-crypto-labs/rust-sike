@@ -1,6 +1,9 @@
+pub type Torsion3Strategy = [usize; 136];
+pub type Torsion2Strategy = [usize; 107];
+
 /// 2-torsion reference strategy
 /// C.1.1.
-pub const P434_TWO_TORSION_STRATEGY: [usize; 107] = [
+pub const P434_TWO_TORSION_STRATEGY: Torsion2Strategy = [
     48, 28, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2,
     1, 1, 13, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 4, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 21, 12,
     7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1,
@@ -9,7 +12,7 @@ pub const P434_TWO_TORSION_STRATEGY: [usize; 107] = [
 
 /// 3-torsion reference strategy
 /// C.1.2.
-pub const P434_THREE_TORSION_STRATEGY: [usize; 136] = [
+pub const P434_THREE_TORSION_STRATEGY: Torsion3Strategy = [
     66, 33, 17, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 1, 2, 1,
     1, 4, 2, 1, 1, 2, 1, 1, 16, 8, 4, 2, 1, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2,
     1, 1, 4, 2, 1, 1, 2, 1, 1, 32, 16, 8, 4, 3, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2,

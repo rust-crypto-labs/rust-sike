@@ -16,8 +16,8 @@ mod tests {
     };
 
     fn sike_p434_params(
-        strat2tor: Option<Vec<usize>>,
-        strat3tor: Option<Vec<usize>>,
+        strat2tor: Option<strategy::Torsion2Strategy>,
+        strat3tor: Option<strategy::Torsion3Strategy>,
     ) -> PublicParameters<QuadraticExtension<PrimeField_p434>> {
         PublicParameters {
             secparam: 128,
@@ -266,7 +266,7 @@ mod tests {
     fn test_conversion_publickey_bytes() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
-        let strat = Some(strategy::P434_THREE_TORSION_STRATEGY.to_vec());
+        let strat = Some(strategy::P434_THREE_TORSION_STRATEGY);
 
         let params = sike_p434_params(None, strat.clone());
         let iso = CurveIsogenies::init(params);
@@ -282,7 +282,7 @@ mod tests {
     fn test_isogen2() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
-        let strat = Some(strategy::P434_TWO_TORSION_STRATEGY.to_vec());
+        let strat = Some(strategy::P434_TWO_TORSION_STRATEGY);
 
         let params = sike_p434_params(strat.clone(), None);
 
@@ -298,9 +298,9 @@ mod tests {
     fn test_isogen3() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
-        let strat = Some(strategy::P434_THREE_TORSION_STRATEGY.to_vec());
+        let strat = Some(strategy::P434_THREE_TORSION_STRATEGY);
 
-        let params = sike_p434_params(strat.clone(), None);
+        let params = sike_p434_params(None, strat.clone());
 
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen3(&sk, &strat);
