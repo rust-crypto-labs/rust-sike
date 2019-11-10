@@ -747,7 +747,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve);
 
-        println!("{:?}", p1.x.div(&p1.z));
         // 4.
         let opt = Some((p1, p2, p3));
 
@@ -761,8 +760,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
         let x3 = p3.x.div(&p3.z);
-
-        println!("{:?}", x1);
 
         // 6.
         PublicKey { x1, x2, x3 }

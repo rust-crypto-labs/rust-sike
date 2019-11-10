@@ -320,7 +320,6 @@ mod tests {
 
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen2(&sk, &strat);
-        println!("==========================");
         let pk_2 = iso.isogen2(&sk, &None);
 
         assert_eq!(pk, pk_2);
@@ -336,7 +335,6 @@ mod tests {
 
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen3(&sk, &strat);
-        println!("==========================");
         let pk_2 = iso.isogen3(&sk, &None);
 
         assert_eq!(pk, pk_2);
