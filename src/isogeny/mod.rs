@@ -26,7 +26,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Coordinate doubling (ref. `xDBL`, Algorithm 3 p. 54)
-    /// Input: P. Output: [2]P
+    ///  * Input: P. Output: [2]P
     fn double(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
         let a_24_plus = &curve.a;
         let c_24 = &curve.c;
@@ -59,7 +59,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Combined coordinate doubling and differential addition (ref `xDBLADD` Algorithm 5 p.55)
-    /// Input: P, Q, Q - P, a_24_plus. Output: 2P, P+Q.
+    ///  * Input: P, Q, Q - P, a_24_plus. Output: 2P, P+Q.
     fn double_and_add(
         p: &Point<K>,
         q: &Point<K>,
@@ -95,7 +95,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Coordinate tripling (ref `xTPL` Algorithm 6 p.55)
-    /// Input: P. Output: [3]P
+    ///  * Input: P. Output: [3]P
     fn triple(p: &Point<K>, curve: &Curve<K>) -> Point<K> {
         let a_24_plus = &curve.a;
         let a_24_minus = &curve.c;
@@ -130,7 +130,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Repeated point tripling (ref `xTPLe` Algorithm 7 p.56)
-    /// Input: P, e. Output: [E^e]P
+    ///  * Input: P, e. Output: [E^e]P
     fn ntriple(p: Point<K>, e: u64, curve: &Curve<K>) -> Point<K> {
         if e == 0 {
             return p;
@@ -143,8 +143,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Three point ladder (ref `Ladder3pt` Algorithm 8 p.56)
-    /// Input: m (binary), x_p, x_q, x_(Q-P)
-    /// Output: P + [m]Q
+    ///  * Input: m (binary), x_p, x_q, x_(Q-P)
+    ///  * Output: P + [m]Q
     fn three_pts_ladder(m: &[bool], x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
         let mut p0 = Point::from_x(x_q);
         let mut p1 = Point::from_x(x_p);
@@ -173,8 +173,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Recovering Montgomery curve coefficient (ref `get_A`, Algorithm 10 p. 57)
-    /// Input: x_p, x_q, x_(Q-P)
-    /// Output: A
+    ///  * Input: x_p, x_q, x_(Q-P)
+    ///  * Output: A
     fn from_points(x_p: K, x_q: K, x_qmp: K) -> Curve<K> {
         let t1 = x_p.add(&x_q); //1.
         let t0 = x_p.mul(&x_q); //2.
@@ -197,8 +197,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing the two-isogenous curve (ref `2_iso_curve` Algorithm 11 p.57)
-    /// Input: P of order 2 on the curve
-    /// Output: E/<P>
+    ///  * Input: P of order 2 on the curve
+    ///  * Output: E/<P>
     fn two_isogenous_curve(&self, p: &Point<K>) -> Curve<K> {
         let a = p.x.mul(&p.x); // 1.
         let c = p.z.mul(&p.z); // 2.
@@ -208,8 +208,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Evaluate the two-isogeny at a point (ref `2_iso_eval` Algorithm 12 p.57)
-    /// Input: P of order 2, Q, both on the curve
-    /// Output: Q' on a 2-iso curve
+    ///  * Input: P of order 2, Q, both on the curve
+    ///  * Output: Q' on a 2-iso curve
     fn two_isogeny_eval(p: &Point<K>, q: &Point<K>) -> Point<K> {
         let t0 = p.x.add(&p.z); // 1.
         let t1 = p.x.sub(&p.z); // 2.
@@ -226,8 +226,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing the four-isogenous curve (ref `4_iso_curve` Algorithm 13 p.57)
-    /// Input: P of order 4.  
-    /// Output: E/<P> and constants k1, k2, k3
+    ///  * Input: P of order 4.  
+    ///  * Output: E/<P> and constants k1, k2, k3
     fn four_isogenous_curve(p: &Point<K>) -> (Curve<K>, K, K, K) {
         let k2 = p.x.sub(&p.z); // 1.
         let k3 = p.x.add(&p.z); // 2.
@@ -243,8 +243,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Evaluate the four-isogeny at a point (ref `4_iso_eval` Algorithm 14 p. 58)
-    /// Input: (k1, k2, k3), Q
-    /// Output: Q' on a 4-isogenous curve
+    ///  * Input: (k1, k2, k3), Q
+    ///  * Output: Q' on a 4-isogenous curve
     pub fn four_isogeny_eval(k1: &K, k2: &K, k3: &K, q: &Point<K>) -> Point<K> {
         let t0 = q.x.add(&q.z); // 1.
         let t1 = q.x.sub(&q.z); // 2.
@@ -298,8 +298,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         (Curve::from_coeffs(a, c), k1, k2)
     }
     /// Evaluate the three-isogeny at a point (ref `3_iso_eval` Algorithm 16 p.58)
-    /// Input: k1, k2, Q
-    /// Output: Q' on the 3-isogenous curve
+    ///  * Input: k1, k2, Q
+    ///  * Output: Q' on the 3-isogenous curve
     pub fn three_isogeny_eval(q: &Point<K>, k1: &K, k2: &K) -> Point<K> {
         let t0 = q.x.add(&q.z); // 1.
         let t1 = q.x.sub(&q.z); // 2.
@@ -316,9 +316,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing and evaluating the 2^e isogeny, simple version (ref `2_e_iso` Algorithm 17 p.59)
-    /// Input: S of order 2^(e_2)
+    ///  * Input: S of order 2^(e_2)
     /// Optional input: three points on the curve
-    /// Output: E/<S>
+    ///  * Output: E/<S>
     /// Optional output: three points on the new curve
 
     fn two_e_iso(
@@ -370,9 +370,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing & evaluating 2^e-isogeny, optimised version (ref `2_e_iso` Algorithm 19 p. 60)
-    /// Input: S of order 2^(e_2), curve, strategy
+    ///  * Input: S of order 2^(e_2), curve, strategy
     /// Optional input: three points on the curve
-    /// Output: E/<S>
+    ///  * Output: E/<S>
     /// Optional output: three points on the new curve
 
     fn two_e_iso_optim(
@@ -474,9 +474,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing and evaluating the 3^e isogeny, simple version (ref `3_e_iso` Algorithm 18 p.59)
-    /// Input: S of order 3^(e_3) on the curve
+    ///  * Input: S of order 3^(e_3) on the curve
     /// Optional input : three points on the curve
-    /// Output: E/<S>
+    ///  * Output: E/<S>
     /// Optional output: three points on the new curve
 
     fn three_e_iso(
@@ -526,9 +526,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing & evaluating 3^e-isogeny, optimised version (ref `3_e_iso` Algorithm 20 p. 61)
-    /// Input: S of order 2^(e_2), curve, strategy
+    ///  * Input: S of order 2^(e_2), curve, strategy
     /// Optional input: three points on the curve
-    /// Output: E/<S>
+    ///  * Output: E/<S>
     /// Optional output: three points on the new curve
 
     fn three_e_iso_optim(
@@ -643,8 +643,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing public key on the 2-torsion (ref `isogen_2` Algo 21 p.62)
-    /// Input: secret key, [tree traversal strategy]
-    /// Output: public key
+    ///  * Input: secret key, [tree traversal strategy]
+    ///  * Output: public key
     ///
     pub fn isogen2(
         &self,
@@ -694,8 +694,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Computing public key on the 3-torsion (ref `isogen_3` Algorithm 22 p.62)
-    /// Input: secret key
-    /// Output: public key
+    ///  * Input: secret key
+    ///  * Output: public key
     pub fn isogen3(
         &self,
         sk: &SecretKey,
@@ -747,8 +747,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Establishing shared keys on the 2-torsion, (ref `isoex_2` Algorithm 23 p.63)
-    /// Input: secret key, public key, [tree traversal strategy]
-    /// Output: j-invariant
+    ///  * Input: secret key, public key, [tree traversal strategy]
+    ///  * Output: j-invariant
     pub fn isoex2(
         &self,
         sk: &SecretKey,
@@ -786,8 +786,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     }
 
     /// Establishing shared keys on the 3-torsion (ref `isoex_3` Algorithm 24 p.63)
-    /// Input: secret key, public key, [tree traversal strategy]
-    /// Output: a j-invariant
+    ///  * Input: secret key, public key, [tree traversal strategy]
+    ///  * Output: a j-invariant
     pub fn isoex3(
         &self,
         sk: &SecretKey,

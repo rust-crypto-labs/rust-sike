@@ -3,8 +3,8 @@
 use tiny_keccak::Keccak;
 
 /// SHAKE-256 wrapper
-///   - Input: `input` string and `len`gth of the desired output
-///   - Output: an array of length `len`.
+///   * Input: `input` string and `len`gth of the desired output
+///   * Output: an array of length `len`.
 ///
 /// # Examples
 /// ```rust

@@ -24,8 +24,8 @@ pub const P434_THREE_TORSION_STRATEGY: Torsion3Strategy = [
 ];
 
 /// Computing optimised strategy (ref `compute_strategy`, Algorithm 46 p. 75).
-///   - Input: strategy size `n`, parameters `p`, `q`
-///   - Output: optimal strategy of size `n`  
+///   * Input: strategy size `n`, parameters `p`, `q`
+///   * Output: optimal strategy of size `n`  
 ///
 /// # Examples
 /// ```rust
