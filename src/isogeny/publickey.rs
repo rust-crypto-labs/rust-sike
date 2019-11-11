@@ -3,8 +3,13 @@ use crate::ff::FiniteField;
 /// Public key
 #[derive(Clone)]
 pub struct PublicKey<K: FiniteField> {
+    /// First point
     pub x1: K,
+
+    /// Second point
     pub x2: K,
+
+    /// Third point
     pub x3: K,
 }
 
@@ -15,14 +20,12 @@ impl<K: FiniteField + std::fmt::Debug> std::fmt::Debug for PublicKey<K> {
 }
 
 impl<K: FiniteField> PublicKey<K> {
-    pub fn to_bits(self) -> Vec<bool> {
-        unimplemented!()
-    }
-
+    /// Converts the public key to a sequence of bytes (for each point)
     pub fn to_bytes(self) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
         (self.x1.to_bytes(), self.x2.to_bytes(), self.x3.to_bytes())
     }
 
+    /// Creates a new public key for given three points (represented as bytes)
     pub fn from_bytes(part1: &[u8], part2: &[u8], part3: &[u8]) -> Self {
         Self {
             x1: K::from_bytes(part1),
