@@ -1,9 +1,9 @@
 //! Public parameters
 
-use crate::constants::{cs_p434::*, cs_p503::*};
+use crate::constants::{cs_p434::*, cs_p503::*, cs_p751::*};
 use crate::ff::{
     QuadraticExtension,
-    {ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503},
+    {ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p751::PrimeFieldP751},
 };
 use crate::utils::{conversion::*, strategy};
 
@@ -88,5 +88,24 @@ pub fn sike_p503_params() -> PublicParameters<QuadraticExtension<PrimeFieldP503>
         xp3: str_to_p503(SIKE_P503_XP30, SIKE_P503_XP31),
         xq3: str_to_p503(SIKE_P503_XQ30, SIKE_P503_XQ31),
         xr3: str_to_p503(SIKE_P503_XR30, SIKE_P503_XR31),
+    }
+}
+
+/// Load params for SIKE_p751
+pub fn sike_p751_params() -> PublicParameters<QuadraticExtension<PrimeFieldP751>> {
+    PublicParameters {
+        secparam: 128,
+        keyspace2: str_to_u64(SIKE_P751_NKS2),
+        keyspace3: str_to_u64(SIKE_P751_NKS3),
+        e2_strategy: None,
+        e3_strategy: None,
+        e2: str_to_u64(SIKE_P751_E2),
+        e3: str_to_u64(SIKE_P751_E3),
+        xp2: str_to_p751(SIKE_P751_XP20, SIKE_P751_XP21),
+        xq2: str_to_p751(SIKE_P751_XQ20, SIKE_P751_XQ21),
+        xr2: str_to_p751(SIKE_P751_XR20, SIKE_P751_XR21),
+        xp3: str_to_p751(SIKE_P751_XP30, SIKE_P751_XP31),
+        xq3: str_to_p751(SIKE_P751_XQ30, SIKE_P751_XQ31),
+        xr3: str_to_p751(SIKE_P751_XR30, SIKE_P751_XR31),
     }
 }
