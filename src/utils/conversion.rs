@@ -1,6 +1,6 @@
 //! Utils for conversions
 
-use crate::ff::{ff_p434::PrimeField_p434, QuadraticExtension};
+use crate::ff::{ff_p434::PrimeFieldP434, QuadraticExtension};
 use num_bigint::{BigInt, Sign};
 
 /// String to `u64` conversion
@@ -9,10 +9,10 @@ pub fn str_to_u64(s: &str) -> u64 {
 }
 
 /// String to an element of the quadratic extension field conversion
-pub fn str_to_p434(s0: &str, s1: &str) -> QuadraticExtension<PrimeField_p434> {
+pub fn str_to_p434(s0: &str, s1: &str) -> QuadraticExtension<PrimeFieldP434> {
     QuadraticExtension::from(
-        PrimeField_p434::from_string(s0),
-        PrimeField_p434::from_string(s1),
+        PrimeFieldP434::from_string(s0),
+        PrimeFieldP434::from_string(s1),
     )
 }
 

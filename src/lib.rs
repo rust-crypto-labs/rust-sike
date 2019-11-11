@@ -18,7 +18,7 @@ pub mod utils;
 mod tests {
 
     use crate::{
-        ff::{ff_p434::PrimeField_p434, FiniteField, QuadraticExtension},
+        ff::{ff_p434::PrimeFieldP434, FiniteField, QuadraticExtension},
         isogeny::{point::Point, CurveIsogenies, PublicKey, PublicParameters, SecretKey},
         kem::KEM,
         pke::{Message, PKE},
@@ -28,7 +28,7 @@ mod tests {
     fn sike_p434_params(
         strat2tor: Option<strategy::Torsion2Strategy>,
         strat3tor: Option<strategy::Torsion3Strategy>,
-    ) -> PublicParameters<QuadraticExtension<PrimeField_p434>> {
+    ) -> PublicParameters<QuadraticExtension<PrimeFieldP434>> {
         PublicParameters {
             secparam: 128,
             e2_strategy: strat2tor,
@@ -141,7 +141,7 @@ mod tests {
 
     #[test]
     fn test_iso_eval() {
-        let one: QuadraticExtension<PrimeField_p434> = QuadraticExtension::one();
+        let one: QuadraticExtension<PrimeFieldP434> = QuadraticExtension::one();
         let two = one.add(&one);
         let k1 = two.add(&one).mul(&two);
         let k2 = two.add(&two).mul(&two);
@@ -244,10 +244,10 @@ mod tests {
 
     #[test]
     fn test_conversion_ff434_bytes() {
-        let num = PrimeField_p434::from_string(SIKE_P434_XP20);
+        let num = PrimeFieldP434::from_string(SIKE_P434_XP20);
 
         let b = num.clone().to_bytes();
-        let num_recovered = PrimeField_p434::from_bytes(&b);
+        let num_recovered = PrimeFieldP434::from_bytes(&b);
 
         println!("{:?}", num);
         println!("{:?}", num_recovered);
@@ -257,8 +257,8 @@ mod tests {
 
     #[test]
     fn test_conversion_quadratic_bytes() {
-        let num1 = PrimeField_p434::from_string(SIKE_P434_XP20);
-        let num2 = PrimeField_p434::from_string(SIKE_P434_XP21);
+        let num1 = PrimeFieldP434::from_string(SIKE_P434_XP20);
+        let num2 = PrimeFieldP434::from_string(SIKE_P434_XP21);
 
         let q = QuadraticExtension::from(num1, num2);
         let b = q.clone().to_bytes();
@@ -282,13 +282,13 @@ mod tests {
     #[test]
     fn test_j_invariant() {
         use crate::{
-            ff::{ff_p434::PrimeField_p434, QuadraticExtension},
+            ff::{ff_p434::PrimeFieldP434, QuadraticExtension},
             isogeny::Curve,
         };
         let curve = Curve::starting_curve();
 
-        let j: QuadraticExtension<PrimeField_p434> = curve.j_invariant();
-        let j_ref: QuadraticExtension<PrimeField_p434> = curve.j_invariant_ref();
+        let j: QuadraticExtension<PrimeFieldP434> = curve.j_invariant();
+        let j_ref: QuadraticExtension<PrimeFieldP434> = curve.j_invariant_ref();
 
         // 287496 + 0i
         assert_eq!(j, j_ref)
@@ -342,7 +342,7 @@ mod tests {
 
     #[test]
     fn test_ff() {
-        let one = PrimeField_p434::one();
+        let one = PrimeFieldP434::one();
         let two = one.add(&one);
         let three = two.add(&one);
         let four1 = two.add(&two);
@@ -359,7 +359,7 @@ mod tests {
 
     #[test]
     fn test_qff() {
-        let one = PrimeField_p434::one();
+        let one = PrimeFieldP434::one();
         let two = one.add(&one);
         let x = QuadraticExtension::from(two.clone(), two.clone());
 

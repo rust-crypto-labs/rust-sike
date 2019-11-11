@@ -18,11 +18,11 @@ static P434_PRIME: Lazy<BigInt> = Lazy::new(|| conversion::str_to_bigint(SIKE_P4
 
 /// Finite field defined by the prime number SIKE_P434_P
 #[derive(Clone, PartialEq)]
-pub struct PrimeField_p434 {
+pub struct PrimeFieldP434 {
     val: BigInt,
 }
 
-impl PrimeField_p434 {
+impl PrimeFieldP434 {
 
     /// Parse a string into and element of the finite field
     pub fn from_string(s: &str) -> Self {
@@ -32,14 +32,14 @@ impl PrimeField_p434 {
     }
 }
 
-impl Debug for PrimeField_p434 {
+impl Debug for PrimeFieldP434 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (_, bytes) = self.val.to_bytes_be();
         write!(f, "{:?}", bytes)
     }
 }
 
-impl FiniteField for PrimeField_p434 {
+impl FiniteField for PrimeFieldP434 {
     fn is_zero(&self) -> bool {
         self.val == BigInt::zero()
     }
