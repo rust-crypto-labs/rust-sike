@@ -6,7 +6,9 @@ use std::fmt::{Debug, Formatter, Result};
 /// Point defined by (X: Z) in projective coordinates
 #[derive(Clone)]
 pub struct Point<K: FiniteField + Clone> {
+    /// X coordinate in projective space
     pub x: K,
+    /// Z coordinate in projective space
     pub z: K,
 }
 
