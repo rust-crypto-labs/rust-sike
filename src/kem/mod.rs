@@ -11,6 +11,7 @@ use rand::prelude::*;
 
 use std::{convert::TryInto, fmt::Debug};
 
+/// Key-encapsulation mechanism (ref Algorithm 2, Section 1.3.10)
 pub struct KEM<K> {
     params: PublicParameters<K>,
     pke: PKE<K>,
@@ -37,6 +38,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         (s, sk3, pk3)
     }
 
+    /// Encapsulate the shared secret using the PKE encryption
     pub fn encaps(&self, pk: &PublicKey<K>) -> (Ciphertext, Vec<u8>) {
         let m = Message::from_bytes(Self::random_string(self.n));
         let r = self.hash_function_g(&m.clone(), &pk);
@@ -48,6 +50,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         (c, k)
     }
 
+    /// Decapsulate the shared secret using the PKE decryption
     pub fn decaps(&self, s: &[u8], sk: &SecretKey, pk: &PublicKey<K>, c: Ciphertext) -> Vec<u8> {
         let m = self.pke.dec(&sk, c.clone());
         let s = Message::from_bytes(s.to_vec());
