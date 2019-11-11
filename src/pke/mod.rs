@@ -3,11 +3,7 @@
 use crate::{
     ff::FiniteField,
     isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
-    utils::{
-        constants::{SIKE_P434_NKS2, SIKE_P434_NKS3},
-        conversion::str_to_u64,
-        shake,
-    },
+    utils::shake
 };
 
 use std::fmt::Debug;
@@ -67,8 +63,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     /// Generate a keypair
     pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
         // 1.
-        let nks3 = str_to_u64(SIKE_P434_NKS3);
-        let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
+        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize);
 
         // 2.
         let pk3 = self.isogenies.isogen3(&sk3, &self.params.e3_strategy);
@@ -84,8 +79,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     /// The function will panic if the message length is incorrect, of if the public key is incorrect
     pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
         // 4.
-        let nks2 = str_to_u64(SIKE_P434_NKS2);
-        let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
+        let sk2 = SecretKey::get_random_secret_key(self.params.keyspace2 as usize);
 
         // 5.
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2, &self.params.e2_strategy);

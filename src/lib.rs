@@ -12,6 +12,7 @@ pub mod ff;
 pub mod isogeny;
 pub mod kem;
 pub mod pke;
+pub mod constants;
 pub mod utils;
 
 #[cfg(test)]
@@ -22,7 +23,8 @@ mod tests {
         isogeny::{point::Point, CurveIsogenies, PublicKey, PublicParameters, SecretKey},
         kem::KEM,
         pke::{Message, PKE},
-        utils::{constants::*, conversion, shake, strategy},
+        constants::cs_p434::*,
+        utils::{conversion, shake, strategy},
     };
 
     fn sike_p434_params(
@@ -31,6 +33,8 @@ mod tests {
     ) -> PublicParameters<QuadraticExtension<PrimeFieldP434>> {
         PublicParameters {
             secparam: 128,
+            keyspace2: conversion::str_to_u64(SIKE_P434_NKS2),
+            keyspace3: conversion::str_to_u64(SIKE_P434_NKS3),
             e2_strategy: strat2tor,
             e3_strategy: strat3tor,
             e2: conversion::str_to_u64(SIKE_P434_E2),

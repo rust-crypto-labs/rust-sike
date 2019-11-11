@@ -8,6 +8,12 @@ pub struct PublicParameters<K> {
     /// Security parameter (curve-dependent)
     pub secparam: usize,
 
+    /// Size of K_2 keyspace for sk2 generation;
+    pub keyspace2: u64,
+
+    /// Size of K_3 keyspace fir sk3 generation;
+    pub keyspace3: u64,
+
     /// Tree-traversal strategy for the 2-torsion
     pub e2_strategy: Option<strategy::Torsion2Strategy>,
 

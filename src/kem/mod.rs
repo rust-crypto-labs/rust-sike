@@ -4,7 +4,7 @@ use crate::{
     ff::FiniteField,
     isogeny::{PublicKey, PublicParameters, SecretKey},
     pke::{Ciphertext, Message, PKE},
-    utils::{constants::SIKE_P434_NKS3, conversion, shake},
+    utils::{conversion, shake},
 };
 
 use rand::prelude::*;
@@ -30,8 +30,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
     /// Generate a secret and a keypair
     pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
-        let nsk3 = conversion::str_to_u64(SIKE_P434_NKS3);
-        let sk3 = SecretKey::get_random_secret_key(nsk3 as usize);
+        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize);
         let pk3 = self.pke.isogenies.isogen3(&sk3, &self.params.e3_strategy);
         let s = Self::random_string(self.n);
 

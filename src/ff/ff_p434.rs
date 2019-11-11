@@ -3,7 +3,8 @@
 //! Implementation of the finite field of order SIKE_P434_P used in SIKEp434
 
 use crate::ff::FiniteField;
-use crate::utils::{constants::SIKE_P434_P, conversion};
+use crate::constants::cs_p434::SIKE_P434_P;
+use crate::utils::conversion;
 
 use num_bigint::{BigInt, Sign};
 use num_integer::Integer;
