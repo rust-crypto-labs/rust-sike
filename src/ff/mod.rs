@@ -1,28 +1,62 @@
 //! Finite fields
+//! 
+//! Provides the standard structure for finite fields and their quadartic extension.
+//! It also includes specific finite fields implementation used for SIKE 
 
 use num_bigint::BigInt;
 use std::fmt::Debug;
 
 pub mod ff_p434;
 
+/// Trait defining properties of a finite field
 pub trait FiniteField {
+
+    /// Check if the element is the additive identity of the field
     fn is_zero(&self) -> bool;
+
+    /// Returns the dimension of the finite field
     fn dimension() -> usize;
+
+    /// Returns the order
     fn order() -> BigInt;
+
+    /// Returns the additive identity of the field
     fn zero() -> Self;
+
+    /// Returns the multiplicative identity of the field
     fn one() -> Self;
+
+    /// Returns the additive inverse of the element
     fn neg(&self) -> Self;
+
+    /// Returns the multiplicative inverse of the element
     fn inv(&self) -> Self;
+
+    /// Defines the addition of two elements
     fn add(&self, other: &Self) -> Self;
+
+    /// Defines the substraction of two elements
     fn sub(&self, other: &Self) -> Self;
+
+    /// Defines the multiplication of two elements
     fn mul(&self, other: &Self) -> Self;
+
+    /// Defines the divison of two elements
     fn div(&self, other: &Self) -> Self;
+
+    /// Checks if two elements are equal
     fn equals(&self, other: &Self) -> bool;
 
+
+    /// Converts the element to a bytes representation
     fn to_bytes(self) -> Vec<u8>;
+
+    /// Converts a bytes representation to an element of the finite field
     fn from_bytes(bytes: &[u8]) -> Self;
 }
 
+/// Given a specific finite field 𝔽ₚ, represents an element of 
+/// it's quadratic extension 𝔽ₚ(i) as x = a + i*b, (i² = -1)
 #[derive(Clone, Copy, PartialEq)]
 pub struct QuadraticExtension<F: FiniteField> {
     a: F,
@@ -36,6 +70,7 @@ impl<F: FiniteField + std::fmt::Debug> std::fmt::Debug for QuadraticExtension<F>
 }
 
 impl<F: FiniteField> QuadraticExtension<F> {
+    /// Generates an element of the quadratic extension given two elements of the base field
     pub fn from(a: F, b: F) -> Self {
         Self { a, b }
     }

@@ -1,3 +1,7 @@
+//! Finite field for SIKEp434
+//! 
+//! Implementation of the finite field of order SIKE_P434_P used in SIKEp434
+
 use crate::ff::FiniteField;
 use crate::utils::{constants::SIKE_P434_P, conversion};
 
@@ -12,12 +16,15 @@ use std::ops::Mul;
 
 static P434_PRIME: Lazy<BigInt> = Lazy::new(|| conversion::str_to_bigint(SIKE_P434_P));
 
+/// Finite field defined by the prime number SIKE_P434_P
 #[derive(Clone, PartialEq)]
 pub struct PrimeField_p434 {
     val: BigInt,
 }
 
 impl PrimeField_p434 {
+
+    /// Parse a string into and element of the finite field
     pub fn from_string(s: &str) -> Self {
         let val = conversion::str_to_bigint(s).mod_floor(&P434_PRIME.clone());
 
