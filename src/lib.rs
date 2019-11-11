@@ -178,13 +178,13 @@ mod tests {
         let pk3 = iso.isogen3(&sk3, &params.e3_strategy);
         let pk2 = iso.isogen2(&sk2, &params.e2_strategy);
 
-        let j_A = iso.isoex2(&sk2, &pk3, &params.e2_strategy);
-        let j_B = iso.isoex3(&sk3, &pk2, &params.e3_strategy);
+        let j_a = iso.isoex2(&sk2, &pk3, &params.e2_strategy);
+        let j_b = iso.isoex3(&sk3, &pk2, &params.e3_strategy);
 
-        println!("j_A = {:?}", j_A);
-        println!("j_B = {:?}", j_B);
+        println!("j_A = {:?}", j_a);
+        println!("j_B = {:?}", j_b);
 
-        assert!(j_A.equals(&j_B));
+        assert!(j_a.equals(&j_b));
     }
 
     #[test]
