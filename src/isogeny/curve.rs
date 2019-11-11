@@ -1,3 +1,5 @@
+//! Montgomery curve
+
 use crate::{ff::FiniteField, isogeny::PublicKey};
 
 /// Montgomery M_{A,1} Curve defined by (A : C) in projective cooridnates
@@ -23,8 +25,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         Self { a, c }
     }
 
-    /// Starting curve 1.3.2
-    /// Curve with equation y² = x³ + 6x² + x
+    /// Curve with equation y² = x³ + 6x² + x (ref 1.3.2)
     pub fn starting_curve() -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
@@ -34,7 +35,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         Curve::from_coeffs(six, one)
     }
 
-    /// Montgomery j-invariant (ref Algorithm 9 p56)
+    /// Montgomery j-invariant (ref Algorithm 9 p.56)
     pub fn j_invariant(&self) -> K {
         let j = self.a.mul(&self.a); // 1.
         let t1 = self.c.mul(&self.c); //2.
@@ -58,7 +59,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         j
     }
 
-    /// Montgomery j-invariant (ref Algorithm 31 p66)
+    /// Montgomery j-invariant (ref Algorithm 31 p.66)
     pub fn j_invariant_ref(&self) -> K {
         let one = K::one();
         let two = one.add(&one);
@@ -88,8 +89,8 @@ impl<K: FiniteField + Clone> Curve<K> {
         j
     }
 
-    /// Algorithm 1.2.1 "cfpk"
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
+    /// (ref `cfpk` Algorithm 1.2.1 )
     pub fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
         let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
 

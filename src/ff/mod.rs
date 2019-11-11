@@ -1,6 +1,6 @@
 //! Finite fields
 //!
-//! Provides the standard structure for finite fields and their quadartic extension.
+//! Provides the standard structure for finite fields and their quadratic extensions.
 //! It also includes specific finite fields implementation used for SIKE
 
 use num_bigint::BigInt;
@@ -8,7 +8,7 @@ use std::fmt::Debug;
 
 pub mod ff_p434;
 
-/// Trait defining properties of a finite field
+/// Finite field element
 pub trait FiniteField {
     /// Check if the element is the additive identity of the field
     fn is_zero(&self) -> bool;
@@ -54,21 +54,21 @@ pub trait FiniteField {
 }
 
 /// Given a specific finite field 𝔽ₚ, represents an element of
-/// it's quadratic extension 𝔽ₚ(i) as x = a + i*b, (i² = -1)
+/// its quadratic extension 𝔽ₚ(i) as `x = a + ib`, (`i² = -1`)
 #[derive(Clone, Copy, PartialEq)]
 pub struct QuadraticExtension<F: FiniteField> {
     a: F,
     b: F,
 }
 
-impl<F: FiniteField + std::fmt::Debug> std::fmt::Debug for QuadraticExtension<F> {
+impl<F: FiniteField + Debug> Debug for QuadraticExtension<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?} + i {:?}", self.a, self.b)
     }
 }
 
 impl<F: FiniteField> QuadraticExtension<F> {
-    /// Generates an element of the quadratic extension given two elements of the base field
+    /// Generates an element of the quadratic extension given two elements of the base field: `z = a + i b`.
     pub fn from(a: F, b: F) -> Self {
         Self { a, b }
     }
@@ -168,7 +168,7 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
         concatenate(&[&pad1, &part1, &pad2, &part2])
     }
 
-    /// Algorithm 1.2.4. ostofp2
+    /// Element from byte representation (ref `ostofp2` Algorithm 1.2.4.)
     fn from_bytes(bytes: &[u8]) -> Self {
         let n = bytes.len() / 2;
         let a = F::from_bytes(&bytes[..n]);

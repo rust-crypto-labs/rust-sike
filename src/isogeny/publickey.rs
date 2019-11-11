@@ -1,3 +1,5 @@
+//! Public key material
+
 use crate::ff::FiniteField;
 
 /// Public key

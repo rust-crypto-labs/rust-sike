@@ -1,4 +1,4 @@
-//! Public key cryptosystem
+//! Public-key cryptosystem: a `Message` is encrypted using the public key, and decrypted using the corresponding private key.
 
 use crate::{
     ff::FiniteField,
