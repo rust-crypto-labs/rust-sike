@@ -3,7 +3,6 @@
 use num_bigint::BigInt;
 use std::fmt::Debug;
 
-pub mod ff_17;
 pub mod ff_p434;
 
 pub trait FiniteField {
