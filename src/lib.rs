@@ -23,7 +23,7 @@ mod tests {
         ff::{ff_p434::PrimeFieldP434, FiniteField, QuadraticExtension},
         isogeny::{
             point::Point,
-            publicparams::{sike_p434_params, sike_p503_params, sike_p751_params},
+            publicparams::{sike_p434_params, sike_p503_params, sike_p751_params, sike_p610_params},
             CurveIsogenies, PublicKey, SecretKey,
         },
         kem::KEM,
@@ -225,6 +225,31 @@ mod tests {
     }
 
     #[test]
+    fn test_pke_p610() {
+        let params = sike_p610_params();
+
+        let pke = PKE::setup(params.clone());
+
+        // Alice generates a keypair, she published her pk
+        println!("[Debug] Key generation");
+        let (sk, pk) = pke.gen();
+
+        // Bob writes a message
+        let msg = Message::from_bytes(vec![0; params.secparam / 8]);
+        // Bob encrypts the message using Alice's pk
+        println!("[Debug] Encryption");
+        let ciphertext = pke.enc(&pk, msg.clone());
+
+        // Bob sends the ciphertext to Alice
+        // Alice decrypts the message using her sk
+        println!("[Debug] Decryption");
+        let msg_recovered = pke.dec(&sk, ciphertext);
+
+        // Alice should correctly recover Bob's plaintext message
+        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+    }
+
+    #[test]
     fn test_pke_p751() {
         let params = sike_p751_params();
 
@@ -271,6 +296,25 @@ mod tests {
     #[test]
     fn test_kem_p503() {
         let params = sike_p503_params();
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_p610() {
+        let params = sike_p610_params();
 
         let kem = KEM::setup(params);
 

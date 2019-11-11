@@ -8,6 +8,7 @@ use std::fmt::Debug;
 
 pub mod ff_p434;
 pub mod ff_p503;
+pub mod ff_p610;
 pub mod ff_p751;
 
 /// Trait defining properties of a finite field
