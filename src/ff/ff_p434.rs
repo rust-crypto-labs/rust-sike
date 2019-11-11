@@ -1,5 +1,5 @@
 //! Finite field for SIKEp434
-//! 
+//!
 //! Implementation of the finite field of order SIKE_P434_P used in SIKEp434
 
 use crate::ff::FiniteField;
@@ -23,7 +23,6 @@ pub struct PrimeFieldP434 {
 }
 
 impl PrimeFieldP434 {
-
     /// Parse a string into and element of the finite field
     pub fn from_string(s: &str) -> Self {
         let val = conversion::str_to_bigint(s).mod_floor(&P434_PRIME.clone());

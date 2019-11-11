@@ -50,7 +50,6 @@ pub struct Ciphertext {
 
 /// Public-key cryptosystem (ref Algorithm 1, Section 1.3.9)
 pub struct PKE<K> {
-
     /// Instance of the SIKE problem for this PKE
     pub isogenies: CurveIsogenies<K>,
     params: PublicParameters<K>,

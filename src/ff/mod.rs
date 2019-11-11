@@ -1,7 +1,7 @@
 //! Finite fields
-//! 
+//!
 //! Provides the standard structure for finite fields and their quadartic extension.
-//! It also includes specific finite fields implementation used for SIKE 
+//! It also includes specific finite fields implementation used for SIKE
 
 use num_bigint::BigInt;
 use std::fmt::Debug;
@@ -10,7 +10,6 @@ pub mod ff_p434;
 
 /// Trait defining properties of a finite field
 pub trait FiniteField {
-
     /// Check if the element is the additive identity of the field
     fn is_zero(&self) -> bool;
 
@@ -47,7 +46,6 @@ pub trait FiniteField {
     /// Checks if two elements are equal
     fn equals(&self, other: &Self) -> bool;
 
-
     /// Converts the element to a bytes representation
     fn to_bytes(self) -> Vec<u8>;
 
@@ -55,7 +53,7 @@ pub trait FiniteField {
     fn from_bytes(bytes: &[u8]) -> Self;
 }
 
-/// Given a specific finite field 𝔽ₚ, represents an element of 
+/// Given a specific finite field 𝔽ₚ, represents an element of
 /// it's quadratic extension 𝔽ₚ(i) as x = a + i*b, (i² = -1)
 #[derive(Clone, Copy, PartialEq)]
 pub struct QuadraticExtension<F: FiniteField> {

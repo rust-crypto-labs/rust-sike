@@ -4,7 +4,7 @@ use crate::{ff::FiniteField, isogeny::PublicKey};
 pub struct Curve<K> {
     /// Coefficient A
     pub a: K,
-    
+
     /// Coefficient C
     pub c: K,
 }
