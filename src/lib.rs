@@ -20,33 +20,12 @@ mod tests {
 
     use crate::{
         ff::{ff_p434::PrimeFieldP434, FiniteField, QuadraticExtension},
-        isogeny::{point::Point, CurveIsogenies, PublicKey, PublicParameters, SecretKey},
+        isogeny::{point::Point, CurveIsogenies, PublicKey, publicparams::sike_p434_params, SecretKey},
         kem::KEM,
         pke::{Message, PKE},
         constants::cs_p434::*,
         utils::{conversion, shake, strategy},
     };
-
-    fn sike_p434_params(
-        strat2tor: Option<strategy::Torsion2Strategy>,
-        strat3tor: Option<strategy::Torsion3Strategy>,
-    ) -> PublicParameters<QuadraticExtension<PrimeFieldP434>> {
-        PublicParameters {
-            secparam: 128,
-            keyspace2: conversion::str_to_u64(SIKE_P434_NKS2),
-            keyspace3: conversion::str_to_u64(SIKE_P434_NKS3),
-            e2_strategy: strat2tor,
-            e3_strategy: strat3tor,
-            e2: conversion::str_to_u64(SIKE_P434_E2),
-            e3: conversion::str_to_u64(SIKE_P434_E3),
-            xp2: conversion::str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
-            xq2: conversion::str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
-            xr2: conversion::str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
-            xp3: conversion::str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
-            xq3: conversion::str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
-            xr3: conversion::str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
-        }
-    }
 
     fn compare_arrays<T>(array1: &[T], array2: &[T]) -> bool
     where

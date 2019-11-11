@@ -1,6 +1,8 @@
 //! Public parameters
 
-use crate::utils::strategy;
+use crate::utils::{strategy, conversion::*};
+use crate::constants::cs_p434::*;
+use crate::ff::{QuadraticExtension, ff_p434::PrimeFieldP434};
 
 /// Public parameters
 #[derive(Clone)]
@@ -43,4 +45,26 @@ pub struct PublicParameters<K> {
 
     /// x-coordinate of the point R3
     pub xr3: K,
+}
+
+/// Load params for SIKE_p434
+pub fn sike_p434_params(
+    strat2tor: Option<strategy::Torsion2Strategy>,
+    strat3tor: Option<strategy::Torsion3Strategy>,
+) -> PublicParameters<QuadraticExtension<PrimeFieldP434>> {
+    PublicParameters {
+        secparam: 128,
+        keyspace2: str_to_u64(SIKE_P434_NKS2),
+        keyspace3: str_to_u64(SIKE_P434_NKS3),
+        e2_strategy: strat2tor,
+        e3_strategy: strat3tor,
+        e2: str_to_u64(SIKE_P434_E2),
+        e3: str_to_u64(SIKE_P434_E3),
+        xp2: str_to_p434(SIKE_P434_XP20, SIKE_P434_XP21),
+        xq2: str_to_p434(SIKE_P434_XQ20, SIKE_P434_XQ21),
+        xr2: str_to_p434(SIKE_P434_XR20, SIKE_P434_XR21),
+        xp3: str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
+        xq3: str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
+        xr3: str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
+    }
 }
