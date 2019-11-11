@@ -3,7 +3,7 @@
 use crate::{
     ff::FiniteField,
     isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
-    utils::shake
+    utils::shake,
 };
 
 use std::fmt::Debug;

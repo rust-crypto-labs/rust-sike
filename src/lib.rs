@@ -8,22 +8,26 @@
 
 #![warn(missing_docs)]
 
+pub mod constants;
 pub mod ff;
 pub mod isogeny;
 pub mod kem;
 pub mod pke;
-pub mod constants;
 pub mod utils;
 
 #[cfg(test)]
 mod tests {
 
     use crate::{
+        constants::cs_p434::*,
         ff::{ff_p434::PrimeFieldP434, FiniteField, QuadraticExtension},
-        isogeny::{point::Point, CurveIsogenies, PublicKey, publicparams::sike_p434_params, SecretKey},
+        isogeny::{
+            point::Point,
+            publicparams::{sike_p434_params, sike_p503_params},
+            CurveIsogenies, PublicKey, SecretKey,
+        },
         kem::KEM,
         pke::{Message, PKE},
-        constants::cs_p434::*,
         utils::{conversion, shake, strategy},
     };
 
@@ -171,7 +175,7 @@ mod tests {
     }
 
     #[test]
-    fn test_pke() {
+    fn test_pke_p434() {
         let params = sike_p434_params(None, None);
 
         let pke = PKE::setup(params.clone());
@@ -196,8 +200,52 @@ mod tests {
     }
 
     #[test]
-    fn test_kem() {
+    fn test_pke_p503() {
+        let params = sike_p503_params();
+
+        let pke = PKE::setup(params.clone());
+
+        // Alice generates a keypair, she published her pk
+        println!("[Debug] Key generation");
+        let (sk, pk) = pke.gen();
+
+        // Bob writes a message
+        let msg = Message::from_bytes(vec![0; params.secparam / 8]);
+        // Bob encrypts the message using Alice's pk
+        println!("[Debug] Encryption");
+        let ciphertext = pke.enc(&pk, msg.clone());
+
+        // Bob sends the ciphertext to Alice
+        // Alice decrypts the message using her sk
+        println!("[Debug] Decryption");
+        let msg_recovered = pke.dec(&sk, ciphertext);
+
+        // Alice should correctly recover Bob's plaintext message
+        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+    }
+
+    #[test]
+    fn test_kem_p434() {
         let params = sike_p434_params(None, None);
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_p503() {
+        let params = sike_p503_params();
 
         let kem = KEM::setup(params);
 

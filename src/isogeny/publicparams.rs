@@ -1,8 +1,11 @@
 //! Public parameters
 
-use crate::utils::{strategy, conversion::*};
-use crate::constants::cs_p434::*;
-use crate::ff::{QuadraticExtension, ff_p434::PrimeFieldP434};
+use crate::constants::{cs_p434::*, cs_p503::*};
+use crate::ff::{
+    QuadraticExtension,
+    {ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503},
+};
+use crate::utils::{conversion::*, strategy};
 
 /// Public parameters
 #[derive(Clone)]
@@ -66,5 +69,24 @@ pub fn sike_p434_params(
         xp3: str_to_p434(SIKE_P434_XP30, SIKE_P434_XP31),
         xq3: str_to_p434(SIKE_P434_XQ30, SIKE_P434_XQ31),
         xr3: str_to_p434(SIKE_P434_XR30, SIKE_P434_XR31),
+    }
+}
+
+/// Load params for SIKE_p503
+pub fn sike_p503_params() -> PublicParameters<QuadraticExtension<PrimeFieldP503>> {
+    PublicParameters {
+        secparam: 128,
+        keyspace2: str_to_u64(SIKE_P503_NKS2),
+        keyspace3: str_to_u64(SIKE_P503_NKS3),
+        e2_strategy: None,
+        e3_strategy: None,
+        e2: str_to_u64(SIKE_P503_E2),
+        e3: str_to_u64(SIKE_P503_E3),
+        xp2: str_to_p503(SIKE_P503_XP20, SIKE_P503_XP21),
+        xq2: str_to_p503(SIKE_P503_XQ20, SIKE_P503_XQ21),
+        xr2: str_to_p503(SIKE_P503_XR20, SIKE_P503_XR21),
+        xp3: str_to_p503(SIKE_P503_XP30, SIKE_P503_XP31),
+        xq3: str_to_p503(SIKE_P503_XQ30, SIKE_P503_XQ31),
+        xr3: str_to_p503(SIKE_P503_XR30, SIKE_P503_XR31),
     }
 }

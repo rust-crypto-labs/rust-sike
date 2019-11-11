@@ -7,6 +7,7 @@ use num_bigint::BigInt;
 use std::fmt::Debug;
 
 pub mod ff_p434;
+pub mod ff_p503;
 
 /// Trait defining properties of a finite field
 pub trait FiniteField {
