@@ -358,7 +358,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         }
 
         // 1.
-        for e in (0..=e2-2).rev().step_by(2) {
+        for e in (0..=e2 - 2).rev().step_by(2) {
             // 2.
             let t = Self::ndouble(s.clone(), e, &c);
 

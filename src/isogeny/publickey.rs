@@ -3,9 +3,9 @@
 use crate::ff::FiniteField;
 
 /// Public key
-/// 
+///
 /// The public key is a curve, but can be represented as a triple of points, of which only
-/// the x-coordinate is stored. 
+/// the x-coordinate is stored.
 #[derive(Clone)]
 pub struct PublicKey<K: FiniteField> {
     /// First point
