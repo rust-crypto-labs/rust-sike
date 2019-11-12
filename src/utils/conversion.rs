@@ -1,7 +1,8 @@
 //! Utils for conversions
 
 use crate::ff::{
-    ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p751::PrimeFieldP751, ff_p610::PrimeFieldP610, QuadraticExtension,
+    ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p610::PrimeFieldP610,
+    ff_p751::PrimeFieldP751, QuadraticExtension,
 };
 use num_bigint::{BigInt, Sign};
 

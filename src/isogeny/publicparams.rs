@@ -1,9 +1,12 @@
 //! Public parameters
 
-use crate::constants::{cs_p434::*, cs_p503::*, cs_p751::*, cs_p610::*};
+use crate::constants::{cs_p434::*, cs_p503::*, cs_p610::*, cs_p751::*};
 use crate::ff::{
     QuadraticExtension,
-    {ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p751::PrimeFieldP751, ff_p610::PrimeFieldP610},
+    {
+        ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p610::PrimeFieldP610,
+        ff_p751::PrimeFieldP751,
+    },
 };
 use crate::utils::{conversion::*, strategy};
 

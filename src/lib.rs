@@ -23,7 +23,9 @@ mod tests {
         ff::{ff_p434::PrimeFieldP434, FiniteField, QuadraticExtension},
         isogeny::{
             point::Point,
-            publicparams::{sike_p434_params, sike_p503_params, sike_p751_params, sike_p610_params},
+            publicparams::{
+                sike_p434_params, sike_p503_params, sike_p610_params, sike_p751_params,
+            },
             CurveIsogenies, PublicKey, SecretKey,
         },
         kem::KEM,
