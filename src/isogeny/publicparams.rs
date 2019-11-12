@@ -76,13 +76,16 @@ pub fn sike_p434_params(
 }
 
 /// Load params for SIKE_p503
-pub fn sike_p503_params() -> PublicParameters<QuadraticExtension<PrimeFieldP503>> {
+pub fn sike_p503_params(
+    strat2tor: Option<strategy::Torsion2Strategy>,
+    strat3tor: Option<strategy::Torsion3Strategy>,
+) -> PublicParameters<QuadraticExtension<PrimeFieldP503>> {
     PublicParameters {
         secparam: 128,
         keyspace2: str_to_u64(SIKE_P503_NKS2),
         keyspace3: str_to_u64(SIKE_P503_NKS3),
-        e2_strategy: None,
-        e3_strategy: None,
+        e2_strategy: strat2tor,
+        e3_strategy: strat3tor,
         e2: str_to_u64(SIKE_P503_E2),
         e3: str_to_u64(SIKE_P503_E3),
         xp2: str_to_p503(SIKE_P503_XP20, SIKE_P503_XP21),
@@ -95,13 +98,16 @@ pub fn sike_p503_params() -> PublicParameters<QuadraticExtension<PrimeFieldP503>
 }
 
 /// Load params for SIKE_p610
-pub fn sike_p610_params() -> PublicParameters<QuadraticExtension<PrimeFieldP610>> {
+pub fn sike_p610_params(
+    strat2tor: Option<strategy::Torsion2Strategy>,
+    strat3tor: Option<strategy::Torsion3Strategy>,
+) -> PublicParameters<QuadraticExtension<PrimeFieldP610>> {
     PublicParameters {
         secparam: 128,
         keyspace2: str_to_u64(SIKE_P610_NKS2),
         keyspace3: str_to_u64(SIKE_P610_NKS3),
-        e2_strategy: None,
-        e3_strategy: None,
+        e2_strategy: strat2tor,
+        e3_strategy: strat3tor,
         e2: str_to_u64(SIKE_P610_E2),
         e3: str_to_u64(SIKE_P610_E3),
         xp2: str_to_p610(SIKE_P610_XP20, SIKE_P610_XP21),
@@ -114,13 +120,16 @@ pub fn sike_p610_params() -> PublicParameters<QuadraticExtension<PrimeFieldP610>
 }
 
 /// Load params for SIKE_p751
-pub fn sike_p751_params() -> PublicParameters<QuadraticExtension<PrimeFieldP751>> {
+pub fn sike_p751_params(
+    strat2tor: Option<strategy::Torsion2Strategy>,
+    strat3tor: Option<strategy::Torsion3Strategy>,
+) -> PublicParameters<QuadraticExtension<PrimeFieldP751>> {
     PublicParameters {
         secparam: 128,
         keyspace2: str_to_u64(SIKE_P751_NKS2),
         keyspace3: str_to_u64(SIKE_P751_NKS3),
-        e2_strategy: None,
-        e3_strategy: None,
+        e2_strategy: strat2tor,
+        e3_strategy: strat3tor,
         e2: str_to_u64(SIKE_P751_E2),
         e3: str_to_u64(SIKE_P751_E3),
         xp2: str_to_p751(SIKE_P751_XP20, SIKE_P751_XP21),

@@ -1,5 +1,8 @@
 //! Utils for tree traversal strategies
 
+pub type Torsion2Strategy = Vec<usize>;
+pub type Torsion3Strategy = Vec<usize>;
+
 /// Tree traversal strategy for 3-torsion (SIKEp434)
 pub type Torsion3StrategyP434 = [usize; 136];
 

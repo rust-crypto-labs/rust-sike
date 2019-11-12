@@ -8,7 +8,7 @@ pub mod publickey;
 pub mod publicparams;
 pub mod secretkey;
 
-use crate::{ff::FiniteField, isogeny::point::Point, utils::strategy};
+use crate::{ff::FiniteField, isogeny::point::Point};
 
 pub use crate::isogeny::{
     curve::Curve, publickey::PublicKey, publicparams::PublicParameters, secretkey::SecretKey,

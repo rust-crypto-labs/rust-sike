@@ -30,7 +30,7 @@ mod tests {
         },
         kem::KEM,
         pke::{Message, PKE},
-        utils::{conversion, shake, strategy},
+        utils::{conversion, shake, strategy::*},
     };
 
     fn compare_arrays<T>(array1: &[T], array2: &[T]) -> bool
@@ -58,11 +58,8 @@ mod tests {
         let p4 = 5633;
         let q4 = 5461;
 
-        let p434strat = strategy::compute_strategy(n4, p4, q4);
-        assert!(compare_arrays(
-            &p434strat,
-            &strategy::P434_TWO_TORSION_STRATEGY
-        ));
+        let p434strat = compute_strategy(n4, p4, q4);
+        assert!(compare_arrays(&p434strat, &P434_TWO_TORSION_STRATEGY));
     }
 
     #[test]
@@ -71,12 +68,9 @@ mod tests {
         let p3 = 5322;
         let q3 = 5282;
 
-        let p434strat = strategy::compute_strategy(n3, p3, q3);
+        let p434strat = compute_strategy(n3, p3, q3);
 
-        assert!(compare_arrays(
-            &p434strat,
-            &strategy::P434_THREE_TORSION_STRATEGY
-        ));
+        assert!(compare_arrays(&p434strat, &P434_THREE_TORSION_STRATEGY));
     }
 
     #[test]
@@ -159,21 +153,133 @@ mod tests {
 
         let params = sike_p434_params(None, None);
 
-        let iso = CurveIsogenies::init(params.clone());
+        let iso = CurveIsogenies::init(params);
 
         let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
         let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
 
-        let pk3 = iso.isogen3(&sk3, &params.e3_strategy);
-        let pk2 = iso.isogen2(&sk2, &params.e2_strategy);
+        let pk3 = iso.isogen3(&sk3);
+        let pk2 = iso.isogen2(&sk2);
 
-        let j_a = iso.isoex2(&sk2, &pk3, &params.e2_strategy);
-        let j_b = iso.isoex3(&sk3, &pk2, &params.e3_strategy);
+        let j_a = iso.isoex2(&sk2, &pk3);
+        let j_b = iso.isoex3(&sk3, &pk2);
 
         println!("j_A = {:?}", j_a);
         println!("j_B = {:?}", j_b);
 
         assert!(j_a.equals(&j_b));
+    }
+
+    #[test]
+    fn test_pke_optim_p434() {
+        let params = sike_p434_params(
+            Some(P434_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P434_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let pke = PKE::setup(params.clone());
+
+        // Alice generates a keypair, she published her pk
+        println!("[Debug] Key generation");
+        let (sk, pk) = pke.gen();
+
+        // Bob writes a message
+        let msg = Message::from_bytes(vec![0; params.secparam / 8]);
+        // Bob encrypts the message using Alice's pk
+        println!("[Debug] Encryption");
+        let ciphertext = pke.enc(&pk, msg.clone());
+
+        // Bob sends the ciphertext to Alice
+        // Alice decrypts the message using her sk
+        println!("[Debug] Decryption");
+        let msg_recovered = pke.dec(&sk, ciphertext);
+
+        // Alice should correctly recover Bob's plaintext message
+        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+    }
+
+    #[test]
+    fn test_pke_optim_p503() {
+        let params = sike_p503_params(
+            Some(P503_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P503_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let pke = PKE::setup(params.clone());
+
+        // Alice generates a keypair, she published her pk
+        println!("[Debug] Key generation");
+        let (sk, pk) = pke.gen();
+
+        // Bob writes a message
+        let msg = Message::from_bytes(vec![0; params.secparam / 8]);
+        // Bob encrypts the message using Alice's pk
+        println!("[Debug] Encryption");
+        let ciphertext = pke.enc(&pk, msg.clone());
+
+        // Bob sends the ciphertext to Alice
+        // Alice decrypts the message using her sk
+        println!("[Debug] Decryption");
+        let msg_recovered = pke.dec(&sk, ciphertext);
+
+        // Alice should correctly recover Bob's plaintext message
+        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+    }
+
+    #[test]
+    fn test_pke_optim_p610() {
+        let params = sike_p610_params(
+            Some(P610_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P610_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let pke = PKE::setup(params.clone());
+
+        // Alice generates a keypair, she published her pk
+        println!("[Debug] Key generation");
+        let (sk, pk) = pke.gen();
+
+        // Bob writes a message
+        let msg = Message::from_bytes(vec![0; params.secparam / 8]);
+        // Bob encrypts the message using Alice's pk
+        println!("[Debug] Encryption");
+        let ciphertext = pke.enc(&pk, msg.clone());
+
+        // Bob sends the ciphertext to Alice
+        // Alice decrypts the message using her sk
+        println!("[Debug] Decryption");
+        let msg_recovered = pke.dec(&sk, ciphertext);
+
+        // Alice should correctly recover Bob's plaintext message
+        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+    }
+
+    #[test]
+    fn test_pke_optim_p751() {
+        let params = sike_p751_params(
+            Some(P751_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P751_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let pke = PKE::setup(params.clone());
+
+        // Alice generates a keypair, she published her pk
+        println!("[Debug] Key generation");
+        let (sk, pk) = pke.gen();
+
+        // Bob writes a message
+        let msg = Message::from_bytes(vec![0; params.secparam / 8]);
+        // Bob encrypts the message using Alice's pk
+        println!("[Debug] Encryption");
+        let ciphertext = pke.enc(&pk, msg.clone());
+
+        // Bob sends the ciphertext to Alice
+        // Alice decrypts the message using her sk
+        println!("[Debug] Decryption");
+        let msg_recovered = pke.dec(&sk, ciphertext);
+
+        // Alice should correctly recover Bob's plaintext message
+        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
     }
 
     #[test]
@@ -203,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_pke_p503() {
-        let params = sike_p503_params();
+        let params = sike_p503_params(None, None);
 
         let pke = PKE::setup(params.clone());
 
@@ -228,7 +334,7 @@ mod tests {
 
     #[test]
     fn test_pke_p610() {
-        let params = sike_p610_params();
+        let params = sike_p610_params(None, None);
 
         let pke = PKE::setup(params.clone());
 
@@ -253,7 +359,7 @@ mod tests {
 
     #[test]
     fn test_pke_p751() {
-        let params = sike_p751_params();
+        let params = sike_p751_params(None, None);
 
         let pke = PKE::setup(params.clone());
 
@@ -297,7 +403,7 @@ mod tests {
 
     #[test]
     fn test_kem_p503() {
-        let params = sike_p503_params();
+        let params = sike_p503_params(None, None);
 
         let kem = KEM::setup(params);
 
@@ -316,7 +422,7 @@ mod tests {
 
     #[test]
     fn test_kem_p610() {
-        let params = sike_p610_params();
+        let params = sike_p610_params(None, None);
 
         let kem = KEM::setup(params);
 
@@ -335,7 +441,7 @@ mod tests {
 
     #[test]
     fn test_kem_p751() {
-        let params = sike_p751_params();
+        let params = sike_p751_params(None, None);
 
         let kem = KEM::setup(params);
 
@@ -419,11 +525,11 @@ mod tests {
     fn test_conversion_publickey_bytes() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
-        let strat = Some(strategy::P434_THREE_TORSION_STRATEGY);
+        let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 
-        let params = sike_p434_params(None, strat.clone());
+        let params = sike_p434_params(None, strat);
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen3(&sk, &strat);
+        let pk = iso.isogen3(&sk);
         let (b0, b1, b2) = pk.clone().to_bytes();
 
         let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2);
@@ -435,13 +541,13 @@ mod tests {
     fn test_isogen2() {
         let nks2 = conversion::str_to_u64(SIKE_P434_NKS2);
         let sk = SecretKey::get_random_secret_key(nks2 as usize);
-        let strat = Some(strategy::P434_TWO_TORSION_STRATEGY);
+        let strat = Some(P434_TWO_TORSION_STRATEGY.to_vec());
 
-        let params = sike_p434_params(strat.clone(), None);
+        let params = sike_p434_params(strat, None);
 
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen2(&sk, &strat);
-        let pk_2 = iso.isogen2(&sk, &None);
+        let pk = iso.isogen2(&sk);
+        let pk_2 = iso.isogen2(&sk);
 
         assert_eq!(pk, pk_2);
     }
@@ -450,13 +556,13 @@ mod tests {
     fn test_isogen3() {
         let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
         let sk = SecretKey::get_random_secret_key(nks3 as usize);
-        let strat = Some(strategy::P434_THREE_TORSION_STRATEGY);
+        let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 
-        let params = sike_p434_params(None, strat.clone());
+        let params = sike_p434_params(None, strat);
 
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen3(&sk, &strat);
-        let pk_2 = iso.isogen3(&sk, &None);
+        let pk = iso.isogen3(&sk);
+        let pk_2 = iso.isogen3(&sk);
 
         assert_eq!(pk, pk_2);
     }
