@@ -412,6 +412,25 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             opt_output.push(p3);
         }
         let nopt = opt_output.len();
+        let mut s = s;
+        let mut e2 = self.params.e2;
+
+        if e2 % 2 == 1 {
+            e2 -= 1;
+            let t = Self::ndouble(s.clone(), e2, &curve);
+
+            // 3.
+            curve = Self::two_isogenous_curve(&t);
+
+            // 4.
+            s = Self::two_isogeny_eval(&t, &s);
+
+            // 5.
+            for pos in 0..nopt {
+                // 6.
+                opt_output[pos] = Self::two_isogeny_eval(&t, &opt_output[pos]);
+            }
+        }
 
         // 1.
         let mut queue = VecDeque::new();
@@ -553,111 +572,98 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         &self,
         s: Point<K>,
         opt: Option<(Point<K>, Point<K>, Point<K>)>,
-        _curve: &Curve<K>,
+        curve_pm: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
-        let mut new_curve = Curve::starting_curve();
-        let mut opt_output = None;
-
         assert_eq!(self.params.e3 as usize - 1, strategy.len());
+
+        let mut curve = curve_pm.clone();
+
+        let mut opt_output = vec![];
+        if opt.is_some() {
+            let (p1, p2, p3) = opt.unwrap();
+            opt_output.push(p1);
+            opt_output.push(p2);
+            opt_output.push(p3);
+        }
+        let nopt = opt_output.len();
 
         // 1.
         let mut queue = VecDeque::new();
 
-        //2.
+        // 2.
         queue.push_back((self.params.e3, s));
 
-        if opt.is_some() {
-            let (mut p1, mut p2, mut p3) = opt.unwrap();
+        // 3.
+        let mut i = 1;
 
-            // 3.
-            let mut i = 1;
+        // 4.
+        while !queue.is_empty() {
+            let s_i = if i <= strategy.len() {
+                strategy[i - 1].try_into().unwrap()
+            } else {
+                1
+            };
 
-            //4.
-            while !queue.is_empty() {
-                let s_i = if i <= strategy.len() {
-                    strategy[i - 1].try_into().unwrap()
-                } else {
-                    1
-                };
+            // 5.
+            let (h, p) = queue.pop_back().unwrap();
 
-                // 5.
-                let (h, p) = queue.pop_back().unwrap();
+            // 6.
+            if h == 1 {
+                // 7.
+                let (new_curve, k1, k2) = Self::three_isogenous_curve(&p);
+                curve = new_curve;
 
-                // 6.
-                if h == 1 {
-                    // 7.
-                    let (curve_pm, k1, k2) = Self::three_isogenous_curve(&p);
-                    new_curve = curve_pm;
+                // 8.
+                let mut tmp_queue = VecDeque::new();
 
-                    // 8.
-                    let mut tmp_queue = VecDeque::new();
+                // 9.
+                while !queue.is_empty() {
+                    // 10.
+                    let (h_prime, p_prime) = queue.pop_front().unwrap();
 
-                    // 9.
-                    while !queue.is_empty() {
-                        let (h, p) = queue.pop_front().unwrap();
-                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
-                        tmp_queue.push_back((h - 1, p));
-                    }
-                    queue = tmp_queue;
+                    // 11.
+                    let p_prime = Self::three_isogeny_eval(&p_prime, &k1, &k2);
 
-                    p1 = Self::three_isogeny_eval(&p1, &k1, &k2);
-                    p2 = Self::three_isogeny_eval(&p2, &k1, &k2);
-                    p3 = Self::three_isogeny_eval(&p3, &k1, &k2);
-                } else if h > s_i {
-                    queue.push_back((h, p.clone()));
-                    let p = Self::ntriple(p, s_i, &new_curve);
-                    queue.push_back((h - s_i, p));
-                    i += 1;
-                } else {
-                    panic!("Invalid strategy!")
+                    // 12.
+                    tmp_queue.push_back((h_prime - 1, p_prime));
                 }
-            }
 
-            opt_output = Some((p1, p2, p3));
-        } else {
-            // 3.
-            let mut i = 1;
+                // 13.
+                queue = tmp_queue;
 
-            //4.
-            while !queue.is_empty() {
-                let s_i = if i <= strategy.len() {
-                    strategy[i - 1].try_into().unwrap()
-                } else {
-                    1
-                };
-
-                // 5.
-                let (h, p) = queue.pop_back().unwrap();
-
-                // 6.
-                if h == 1 {
-                    // 7.
-                    let (curve_pm, k1, k2) = Self::three_isogenous_curve(&p);
-                    new_curve = curve_pm;
-
-                    // 8.
-                    let mut tmp_queue = VecDeque::new();
-
-                    // 9.
-                    while !queue.is_empty() {
-                        let (h, p) = queue.pop_front().unwrap();
-                        let p = Self::three_isogeny_eval(&p, &k1, &k2);
-                        tmp_queue.push_back((h - 1, p));
-                    }
-                    queue = tmp_queue;
-                } else if h > s_i {
-                    queue.push_back((h, p.clone()));
-                    let p = Self::ntriple(p, s_i, &new_curve);
-                    queue.push_back((h - s_i, p));
-                    i += 1;
-                } else {
-                    panic!("Invalid strategy!")
+                // 14.
+                for pos in 0..nopt {
+                    // 15.
+                    opt_output[pos] = Self::three_isogeny_eval(&opt_output[pos], &k1, &k2);
                 }
+            } else if h > s_i {
+                // 17.
+                queue.push_back((h, p.clone()));
+
+                // 18.
+                let p_prime = Self::ntriple(p, s_i, &curve);
+
+                // 19.
+                queue.push_back((h - s_i, p_prime));
+
+                // 20.
+                i += 1;
+            } else {
+                // 22.
+                panic!("Invalid strategy!")
             }
         }
 
-        (new_curve, opt_output)
+        // 23.
+        if nopt > 0 {
+            let p3 = opt_output.pop().unwrap();
+            let p2 = opt_output.pop().unwrap();
+            let p1 = opt_output.pop().unwrap();
+            (curve, Some((p1, p2, p3)))
+        } else {
+            (curve, None)
+        }
     }
 
     /// Computing public key on the 2-torsion (ref `isogen_2` Algo 21 p.62)
