@@ -11,7 +11,7 @@ use std::fmt::Debug;
 /// `Message`
 #[derive(Clone)]
 pub struct Message {
-    bytes: Vec<u8>,
+    pub bytes: Vec<u8>,
 }
 
 impl Message {
@@ -127,12 +127,12 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     }
 
     /// Computes the F function
-    fn hash_function_f(&self, j: K) -> Vec<u8> {
+    pub fn hash_function_f(&self, j: K) -> Vec<u8> {
         shake::shake256(&j.to_bytes(), self.params.secparam / 8)
     }
 
     /// Computes the bitwise XOR between two sequences
-    fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {
+    pub fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {
         let mut result = vec![0; input1.len()];
         let couples = input1.iter().zip(input2.iter());
 

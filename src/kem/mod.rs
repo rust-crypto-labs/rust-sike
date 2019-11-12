@@ -39,11 +39,27 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
     /// Encapsulate the shared secret using the PKE encryption
     pub fn encaps(&self, pk: &PublicKey<K>) -> (Ciphertext, Vec<u8>) {
-        let m = Message::from_bytes(Self::random_string(self.n));
+        let m = Message::from_bytes(Self::random_string(self.n / 8));
         let r = self.hash_function_g(&m.clone(), &pk);
+        let det_sk = SecretKey::from_bytes(&r);
 
-        // Algorithm 2, Encaps, Line 7: is it m, r, or some combination!?
-        let c = self.pke.enc(&pk, Message::from_bytes(r));
+        let c0: PublicKey<K> = self.pke.isogenies.isogen2(&det_sk);
+
+        let j = self.pke.isogenies.isoex2(&det_sk, &pk);
+        println!("{:?}", j);
+        let h = self.pke.hash_function_f(j);
+        println!("{:?}", h);
+
+        assert_eq!(h.len(), m.bytes.len());
+        let c1_bytes = PKE::<K>::xor(&m.bytes, &h);
+
+        let (part1, part2, part3) = c0.to_bytes();
+        let c = Ciphertext {
+            bytes00: part1,
+            bytes01: part2,
+            bytes02: part3,
+            bytes1: c1_bytes,
+        };
 
         let k = self.hash_function_h(&m.clone(), &c);
         (c, k)
