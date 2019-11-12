@@ -664,11 +664,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Input: secret key, [tree traversal strategy]
     ///  * Output: public key
     ///
-    pub fn isogen2(
-        &self,
-        sk: &SecretKey,
-        strategy: &Option<strategy::Torsion2Strategy>,
-    ) -> PublicKey<K> {
+    pub fn isogen2(&self, sk: &SecretKey) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -696,8 +692,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 4.
         let opt = Some((p1, p2, p3));
 
-        let (_, opt) = match strategy {
-            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, strat),
+        let (_, opt) = match &self.params.e2_strategy {
+            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, &strat),
             None => self.two_e_iso(s, opt, &curve_plus),
         };
 
@@ -714,11 +710,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Computing public key on the 3-torsion (ref `isogen_3` Algorithm 22 p.62)
     ///  * Input: secret key
     ///  * Output: public key
-    pub fn isogen3(
-        &self,
-        sk: &SecretKey,
-        strategy: &Option<strategy::Torsion3Strategy>,
-    ) -> PublicKey<K> {
+    pub fn isogen3(&self, sk: &SecretKey) -> PublicKey<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -749,8 +741,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 4.
         let opt = Some((p1, p2, p3));
 
-        let (_, opt) = match strategy {
-            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, strat),
+        let (_, opt) = match &self.params.e3_strategy {
+            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, &strat),
             None => self.three_e_iso(s, opt, &curve_pm),
         };
 
@@ -767,12 +759,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 2-torsion, (ref `isoex_2` Algorithm 23 p.63)
     ///  * Input: secret key, public key, [tree traversal strategy]
     ///  * Output: j-invariant
-    pub fn isoex2(
-        &self,
-        sk: &SecretKey,
-        pk: &PublicKey<K>,
-        strategy: &Option<strategy::Torsion2Strategy>,
-    ) -> K {
+    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
@@ -788,8 +775,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
 
         // 4.
-        let (curve_plus, _) = match strategy {
-            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, strat),
+        let (curve_plus, _) = match &self.params.e2_strategy {
+            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat),
             None => self.two_e_iso(s, None, &curve_plus),
         };
 
@@ -806,12 +793,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Establishing shared keys on the 3-torsion (ref `isoex_3` Algorithm 24 p.63)
     ///  * Input: secret key, public key, [tree traversal strategy]
     ///  * Output: a j-invariant
-    pub fn isoex3(
-        &self,
-        sk: &SecretKey,
-        pk: &PublicKey<K>,
-        strategy: &Option<strategy::Torsion3Strategy>,
-    ) -> K {
+    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
         let one = K::one();
         let two = one.add(&one);
 
@@ -826,8 +808,8 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
 
         // 4.
-        let (curve_pm, _) = match strategy {
-            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, strat),
+        let (curve_pm, _) = match &self.params.e3_strategy {
+            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, &strat),
             None => self.three_e_iso(s, None, &curve_pm),
         };
 
