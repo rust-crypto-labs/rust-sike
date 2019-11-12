@@ -312,8 +312,8 @@ mod tests {
 
     #[test]
     fn test_isogen2() {
-        let nks3 = conversion::str_to_u64(SIKE_P434_NKS3);
-        let sk = SecretKey::get_random_secret_key(nks3 as usize);
+        let nks2 = conversion::str_to_u64(SIKE_P434_NKS2);
+        let sk = SecretKey::get_random_secret_key(nks2 as usize);
         let strat = Some(strategy::P434_TWO_TORSION_STRATEGY);
 
         let params = sike_p434_params(strat.clone(), None);

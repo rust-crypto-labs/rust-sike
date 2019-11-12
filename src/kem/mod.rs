@@ -81,7 +81,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         let msg_bytes = m.clone().to_bytes();
         let input = conversion::concatenate(&[&msg_bytes, &part1, &part2, &part3]);
 
-        let n: usize = self.params.e2.try_into().unwrap();
+        let n: usize =  self.params.secparam; //self.params.e2.try_into().unwrap();
 
         shake::shake256(&input, n / 8)
     }
