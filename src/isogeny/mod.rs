@@ -199,10 +199,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Computing the two-isogenous curve (ref `2_iso_curve` Algorithm 11 p.57)
     ///  * Input: P of order 2 on the curve
     ///  * Output: E/<P>
-    fn two_isogenous_curve(&self, p: &Point<K>) -> Curve<K> {
+    fn two_isogenous_curve(p: &Point<K>) -> Curve<K> {
         let a = p.x.mul(&p.x); // 1.
         let c = p.z.mul(&p.z); // 2.
-        let a = a.sub(&c); //3.
+        let a = c.sub(&a); //3.
 
         Curve::from_coeffs(a, c)
     }
@@ -329,6 +329,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ) -> (Curve<K>, Option<(Point<K>, Point<K>, Point<K>)>) {
         let mut c = curve.clone();
         let mut s = s;
+        let mut e2 = self.params.e2;
 
         let mut opt_output = vec![];
         if opt.is_some() {
@@ -339,8 +340,25 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         }
         let nopt = opt_output.len();
 
+        if e2 % 2 == 1 {
+            e2 -= 1;
+            let t = Self::ndouble(s.clone(), e2, &c);
+
+            // 3.
+            c = Self::two_isogenous_curve(&t);
+
+            // 4.
+            s = Self::two_isogeny_eval(&t, &s);
+
+            // 5.
+            for pos in 0..nopt {
+                // 6.
+                opt_output[pos] = Self::two_isogeny_eval(&t, &opt_output[pos]);
+            }
+        }
+
         // 1.
-        for e in (0..=self.params.e2 - 2).rev().step_by(2) {
+        for e in (0..=e2-2).rev().step_by(2) {
             // 2.
             let t = Self::ndouble(s.clone(), e, &c);
 

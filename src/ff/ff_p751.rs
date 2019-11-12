@@ -1,8 +1,8 @@
-//! Finite field for SIKEp434
+//! Finite field for SIKEp751
 //!
-//! Implementation of the finite field of order SIKE_P434_P used in SIKEp434
+//! Implementation of the finite field of order SIKE_P751_P used in SIKEp751
 
-use crate::constants::cs_p434::SIKE_P434_P;
+use crate::constants::cs_p751::SIKE_P751_P;
 use crate::ff::FiniteField;
 use crate::utils::conversion;
 
@@ -15,31 +15,31 @@ use once_cell::sync::Lazy;
 use std::fmt::Debug;
 use std::ops::Mul;
 
-static P434_PRIME: Lazy<BigInt> = Lazy::new(|| conversion::str_to_bigint(SIKE_P434_P));
+static P751_PRIME: Lazy<BigInt> = Lazy::new(|| conversion::str_to_bigint(SIKE_P751_P));
 
-/// Finite field defined by the prime number SIKE_P434_P
+/// Finite field defined by the prime number SIKE_P751_P
 #[derive(Clone, PartialEq)]
-pub struct PrimeFieldP434 {
+pub struct PrimeFieldP751 {
     val: BigInt,
 }
 
-impl PrimeFieldP434 {
+impl PrimeFieldP751 {
     /// Parse a string into and element of the finite field
     pub fn from_string(s: &str) -> Self {
-        let val = conversion::str_to_bigint(s).mod_floor(&P434_PRIME.clone());
+        let val = conversion::str_to_bigint(s).mod_floor(&P751_PRIME.clone());
 
         Self { val }
     }
 }
 
-impl Debug for PrimeFieldP434 {
+impl Debug for PrimeFieldP751 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (_, bytes) = self.val.to_bytes_be();
         write!(f, "{:?}", bytes)
     }
 }
 
-impl FiniteField for PrimeFieldP434 {
+impl FiniteField for PrimeFieldP751 {
     fn is_zero(&self) -> bool {
         self.val == BigInt::zero()
     }
@@ -49,7 +49,7 @@ impl FiniteField for PrimeFieldP434 {
     }
 
     fn order() -> BigInt {
-        P434_PRIME.clone()
+        P751_PRIME.clone()
     }
 
     fn zero() -> Self {
@@ -64,13 +64,13 @@ impl FiniteField for PrimeFieldP434 {
 
     fn neg(&self) -> Self {
         Self {
-            val: &P434_PRIME.clone() - &self.val,
+            val: &P751_PRIME.clone() - &self.val,
         }
     }
 
     fn inv(&self) -> Self {
         let two = BigInt::one() + BigInt::one();
-        let p = &P434_PRIME.clone();
+        let p = &P751_PRIME.clone();
         Self {
             val: self.val.modpow(&(p - two), p),
         }
@@ -79,7 +79,7 @@ impl FiniteField for PrimeFieldP434 {
     fn add(&self, other: &Self) -> Self {
         let sum = &self.val + &other.val;
         Self {
-            val: sum.mod_floor(&P434_PRIME.clone()),
+            val: sum.mod_floor(&P751_PRIME.clone()),
         }
     }
 
@@ -91,7 +91,7 @@ impl FiniteField for PrimeFieldP434 {
         let prod = self.val.clone().mul(&other.val);
 
         Self {
-            val: prod.mod_floor(&P434_PRIME.clone()),
+            val: prod.mod_floor(&P751_PRIME.clone()),
         }
     }
 
@@ -109,7 +109,7 @@ impl FiniteField for PrimeFieldP434 {
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        let val = BigInt::from_bytes_be(Sign::Plus, bytes).mod_floor(&P434_PRIME.clone());
+        let val = BigInt::from_bytes_be(Sign::Plus, bytes).mod_floor(&P751_PRIME.clone());
         Self { val }
     }
 }

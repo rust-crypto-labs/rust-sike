@@ -7,6 +7,9 @@ use num_bigint::BigInt;
 use std::fmt::Debug;
 
 pub mod ff_p434;
+pub mod ff_p503;
+pub mod ff_p610;
+pub mod ff_p751;
 
 /// Finite field element
 pub trait FiniteField {
