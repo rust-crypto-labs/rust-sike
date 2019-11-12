@@ -46,9 +46,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         let c0: PublicKey<K> = self.pke.isogenies.isogen2(&det_sk);
 
         let j = self.pke.isogenies.isoex2(&det_sk, &pk);
-        println!("{:?}", j);
         let h = self.pke.hash_function_f(j);
-        println!("{:?}", h);
 
         assert_eq!(h.len(), m.bytes.len());
         let c1_bytes = PKE::<K>::xor(&m.bytes, &h);
