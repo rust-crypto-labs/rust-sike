@@ -14,3 +14,8 @@ num-integer="0.1"
 rand="0.7"
 once_cell="1.2"
 bitvec="0.15"
+criterion = "0.3"
+
+[[bench]]
+name = "sike-bench"
+harness = false
