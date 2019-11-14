@@ -6,7 +6,7 @@ use crate::constants::cs_p503::SIKE_P503_P;
 use crate::ff::FiniteField;
 use crate::utils::conversion;
 
-use num_bigint::{BigUint, };
+use num_bigint::BigUint;
 use num_integer::Integer;
 use num_traits::cast::FromPrimitive;
 use num_traits::{One, Zero};
