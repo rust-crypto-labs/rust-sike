@@ -1,21 +1,18 @@
 extern crate criterion;
 extern crate rust_sike;
 
-use criterion::{criterion_main, criterion_group};
+use criterion::{criterion_group, criterion_main};
 
 mod benchmarks {
     use criterion::Criterion;
 
     use rust_sike::{
-        utils::strategy::*,
         isogeny::publicparams::{
-            sike_p434_params,
-            sike_p503_params,
-            sike_p610_params,
-            sike_p751_params
+            sike_p434_params, sike_p503_params, sike_p610_params, sike_p751_params,
         },
-        pke::{PKE, Message},
         kem::KEM,
+        pke::{Message, PKE},
+        utils::strategy::*,
     };
 
     pub fn bench_p434_pke_std(c: &mut Criterion) {
@@ -30,9 +27,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
+
         group.finish();
     }
 
@@ -51,9 +49,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
+
         group.finish();
     }
 
@@ -68,9 +67,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
 
@@ -87,12 +87,12 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
-
 
     pub fn bench_p503_pke_std(c: &mut Criterion) {
         let params = sike_p503_params(None, None);
@@ -106,11 +106,11 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
-        group.finish();
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
 
+        group.finish();
     }
 
     pub fn bench_p503_pke_optim(c: &mut Criterion) {
@@ -128,9 +128,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
+
         group.finish();
     }
 
@@ -145,9 +146,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
 
@@ -165,9 +167,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
 
@@ -183,9 +186,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
+
         group.finish();
     }
 
@@ -204,9 +208,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
+
         group.finish();
     }
 
@@ -221,9 +226,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
 
@@ -241,9 +247,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
 
@@ -259,9 +266,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
+
         group.finish();
     }
 
@@ -280,9 +288,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
-        group.bench_function("Decryption", |b| b.iter(|| pke.dec(&sk, ciphertext.clone())));
-        
-        
+        group.bench_function("Decryption", |b| {
+            b.iter(|| pke.dec(&sk, ciphertext.clone()))
+        });
+
         group.finish();
     }
 
@@ -297,9 +306,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
 
@@ -317,9 +327,10 @@ mod benchmarks {
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
-        group.bench_function("Decapsulation", |b| b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone())));
-        
-        
+        group.bench_function("Decapsulation", |b| {
+            b.iter(|| kem.decaps(&s, &sk3, &pk3, c.clone()))
+        });
+
         group.finish();
     }
 
