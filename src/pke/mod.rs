@@ -11,6 +11,7 @@ use std::fmt::Debug;
 /// `Message`
 #[derive(Clone)]
 pub struct Message {
+    /// Contents of the message
     pub bytes: Vec<u8>,
 }
 
@@ -53,6 +54,7 @@ pub struct PKE<K> {
 
 impl<K: FiniteField + Clone + Debug> PKE<K> {
     /// Initialise cryptosystem with parameters `params`
+    #[inline]
     pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             isogenies: CurveIsogenies::init(params.clone()),
@@ -61,6 +63,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     }
 
     /// Generate a keypair
+    #[inline]
     pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
         // 1.
         let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize);
@@ -77,6 +80,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     /// # Panics
     ///
     /// The function will panic if the message length is incorrect, of if the public key is incorrect
+    #[inline]
     pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
         // 4.
         let sk2 = SecretKey::get_random_secret_key(self.params.keyspace2 as usize);
@@ -109,6 +113,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     /// # Panics
     ///
     /// The function will panic if the public key is incorrect
+    #[inline]
     pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
         // 10.
         let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);

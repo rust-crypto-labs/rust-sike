@@ -21,11 +21,13 @@ impl<K: FiniteField + Clone> Curve<K> {
     }
 
     /// Build a curve from coefficients
+    #[inline]
     pub fn from_coeffs(a: K, c: K) -> Self {
         Self { a, c }
     }
 
     /// Curve with equation y² = x³ + 6x² + x (ref 1.3.2)
+    #[inline]
     pub fn starting_curve() -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
@@ -36,6 +38,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     }
 
     /// Montgomery j-invariant (ref Algorithm 9 p.56)
+    #[inline]
     pub fn j_invariant(&self) -> K {
         let j = self.a.mul(&self.a); // 1.
         let t1 = self.c.mul(&self.c); //2.
@@ -60,6 +63,7 @@ impl<K: FiniteField + Clone> Curve<K> {
     }
 
     /// Montgomery j-invariant (ref Algorithm 31 p.66)
+    #[inline]
     pub fn j_invariant_ref(&self) -> K {
         let one = K::one();
         let two = one.add(&one);
@@ -91,6 +95,7 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
     /// (ref `cfpk` Algorithm 1.2.1 )
+    #[inline]
     pub fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
         let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
 

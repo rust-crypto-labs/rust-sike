@@ -1,9 +1,9 @@
 //! Utils for SHAKE
 
-use tiny_keccak::Keccak;
+use tiny_keccak::{Hasher, Shake};
 
 /// SHAKE-256 wrapper
-///   * Input: `input` string and `len`gth of the desired output
+///   * Input: `input` string and `length` of the desired output
 ///   * Output: an array of length `len`.
 ///
 /// # Examples
@@ -11,8 +11,11 @@ use tiny_keccak::Keccak;
 /// let result = shake256(&[1, 2, 3, 4, 5], 32);
 /// println!("{:?}", result);
 /// ```
+#[inline]
 pub fn shake256(input: &[u8], len: usize) -> Vec<u8> {
     let mut buffer = vec![0; len];
-    Keccak::shake256(input, &mut buffer);
-    buffer.to_vec()
+    let mut shake = Shake::v256();
+    shake.update(input);
+    shake.finalize(&mut buffer);
+    buffer
 }

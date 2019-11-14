@@ -3,7 +3,6 @@
 //! Provides the standard structure for finite fields and their quadratic extensions.
 //! It also includes specific finite fields implementation used for SIKE
 
-use num_bigint::BigInt;
 use std::fmt::Debug;
 
 pub mod ff_p434;
@@ -18,9 +17,6 @@ pub trait FiniteField {
 
     /// Returns the dimension of the finite field
     fn dimension() -> usize;
-
-    /// Returns the order
-    fn order() -> BigInt;
 
     /// Returns the additive identity of the field
     fn zero() -> Self;
@@ -84,10 +80,6 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
 
     fn dimension() -> usize {
         2 * F::dimension()
-    }
-
-    fn order() -> BigInt {
-        F::order() * F::order()
     }
 
     fn zero() -> Self {

@@ -4,7 +4,7 @@ use crate::ff::{
     ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p610::PrimeFieldP610,
     ff_p751::PrimeFieldP751, QuadraticExtension,
 };
-use num_bigint::{BigInt, Sign};
+use num_bigint::{BigUint, };
 
 /// String to `u64` conversion
 pub fn str_to_u64(s: &str) -> u64 {
@@ -43,14 +43,14 @@ pub fn str_to_p610(s0: &str, s1: &str) -> QuadraticExtension<PrimeFieldP610> {
     )
 }
 
-/// String to `BigInt` conversion
-pub fn str_to_bigint(s: &str) -> BigInt {
-    BigInt::parse_bytes(s.as_bytes(), 16).expect(&format!("Cannot convert to integer: {:?}", s))
+/// String to `BigUint` conversion
+pub fn str_to_bigint(s: &str) -> BigUint {
+    BigUint::parse_bytes(s.as_bytes(), 16).expect(&format!("Cannot convert to integer: {:?}", s))
 }
 
-/// Bytes to `BigInt` conversion
-pub fn bytes_to_bigint(b: &[u8]) -> BigInt {
-    BigInt::from_bytes_be(Sign::Plus, b)
+/// Bytes to `BigUint` conversion
+pub fn bytes_to_bigint(b: &[u8]) -> BigUint {
+    BigUint::from_bytes_be(b)
 }
 
 /// Concatenates a list of arrays into one array

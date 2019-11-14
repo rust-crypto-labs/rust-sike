@@ -6,21 +6,21 @@ use crate::constants::cs_p503::SIKE_P503_P;
 use crate::ff::FiniteField;
 use crate::utils::conversion;
 
-use num_bigint::{BigInt, Sign};
+use num_bigint::{BigUint, };
 use num_integer::Integer;
+use num_traits::cast::FromPrimitive;
 use num_traits::{One, Zero};
 
 use once_cell::sync::Lazy;
 
 use std::fmt::Debug;
-use std::ops::Mul;
 
-static P503_PRIME: Lazy<BigInt> = Lazy::new(|| conversion::str_to_bigint(SIKE_P503_P));
+static P503_PRIME: Lazy<BigUint> = Lazy::new(|| conversion::str_to_bigint(SIKE_P503_P));
 
 /// Finite field defined by the prime number SIKE_P503_P
 #[derive(Clone, PartialEq)]
 pub struct PrimeFieldP503 {
-    val: BigInt,
+    val: BigUint,
 }
 
 impl PrimeFieldP503 {
@@ -34,82 +34,94 @@ impl PrimeFieldP503 {
 
 impl Debug for PrimeFieldP503 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (_, bytes) = self.val.to_bytes_be();
+        let bytes = self.val.to_bytes_be();
         write!(f, "{:?}", bytes)
     }
 }
 
+impl PrimeFieldP503 {
+    #[inline]
+    fn order() -> &'static BigUint {
+        &*P503_PRIME
+    }
+}
+
 impl FiniteField for PrimeFieldP503 {
+    #[inline]
     fn is_zero(&self) -> bool {
-        self.val == BigInt::zero()
+        self.val == BigUint::zero()
     }
 
+    #[inline]
     fn dimension() -> usize {
         1
     }
 
-    fn order() -> BigInt {
-        P503_PRIME.clone()
-    }
-
+    #[inline]
     fn zero() -> Self {
         Self {
-            val: BigInt::zero(),
+            val: BigUint::zero(),
         }
     }
 
+    #[inline]
     fn one() -> Self {
-        Self { val: BigInt::one() }
+        Self {
+            val: BigUint::one(),
+        }
     }
 
+    #[inline]
     fn neg(&self) -> Self {
         Self {
-            val: &P503_PRIME.clone() - &self.val,
+            val: Self::order() - &self.val,
         }
     }
 
+    #[inline]
     fn inv(&self) -> Self {
-        let two = BigInt::one() + BigInt::one();
-        let p = &P503_PRIME.clone();
+        let two = BigUint::from_u8(2).unwrap();
         Self {
-            val: self.val.modpow(&(p - two), p),
+            val: self.val.modpow(&(Self::order() - two), Self::order()),
         }
     }
 
+    #[inline]
     fn add(&self, other: &Self) -> Self {
-        let sum = &self.val + &other.val;
         Self {
-            val: sum.mod_floor(&P503_PRIME.clone()),
+            val: (&self.val + &other.val).mod_floor(Self::order()),
         }
     }
 
+    #[inline]
     fn sub(&self, other: &Self) -> Self {
         self.add(&other.neg())
     }
 
+    #[inline]
     fn mul(&self, other: &Self) -> Self {
-        let prod = self.val.clone().mul(&other.val);
-
         Self {
-            val: prod.mod_floor(&P503_PRIME.clone()),
+            val: (&self.val * &other.val).mod_floor(Self::order()),
         }
     }
 
+    #[inline]
     fn div(&self, other: &Self) -> Self {
         self.mul(&other.inv())
     }
 
+    #[inline]
     fn equals(&self, other: &Self) -> bool {
         self.sub(&other).is_zero()
     }
 
     fn to_bytes(self) -> Vec<u8> {
-        let (_, bytes) = self.val.to_bytes_be();
-        bytes
+        self.val.to_bytes_be()
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        let val = BigInt::from_bytes_be(Sign::Plus, bytes).mod_floor(&P503_PRIME.clone());
-        Self { val }
+        Self {
+            val: BigUint::from_bytes_be(bytes).mod_floor(Self::order()),
+        }
     }
 }

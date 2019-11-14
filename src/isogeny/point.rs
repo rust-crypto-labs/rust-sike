@@ -21,6 +21,7 @@ impl<K: FiniteField + Clone + Debug> Debug for Point<K> {
 
 impl<K: FiniteField + Clone> Point<K> {
     /// Returns the points (x : 1)
+    #[inline]
     pub fn from_x(x: K) -> Self {
         Self { x, z: K::one() }
     }
