@@ -344,6 +344,7 @@ criterion_group! {
     config = benchmarks::config();
     targets = benchmarks::bench_p434_pke_std, benchmarks::bench_p434_pke_optim, benchmarks::bench_p434_kem_std, benchmarks::bench_p434_kem_optim
 }
+
 criterion_group! {
     name = p503;
     config = benchmarks::config();
@@ -360,4 +361,4 @@ criterion_group! {
     targets = benchmarks::bench_p751_pke_std, benchmarks::bench_p751_pke_optim, benchmarks::bench_p751_kem_std, benchmarks::bench_p751_kem_optim
 }
 
-criterion_main!(p434, p503, p610, p751);
+criterion_main!(p434);

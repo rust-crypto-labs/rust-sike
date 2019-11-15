@@ -20,6 +20,7 @@ pub struct KEM<K> {
 
 impl<K: FiniteField + Clone + Debug> KEM<K> {
     /// Initialise the KEM
+    #[inline]
     pub fn setup(params: PublicParameters<K>) -> Self {
         Self {
             pke: PKE::setup(params.clone()),
@@ -29,6 +30,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
     }
 
     /// Generate a secret and a keypair
+    #[inline]
     pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
         let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize);
         let pk3 = self.pke.isogenies.isogen3(&sk3);
@@ -38,6 +40,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
     }
 
     /// Encapsulate the shared secret using the PKE encryption
+    #[inline]
     pub fn encaps(&self, pk: &PublicKey<K>) -> (Ciphertext, Vec<u8>) {
         let m = Message::from_bytes(Self::random_string(self.n / 8));
         let r = self.hash_function_g(&m.clone(), &pk);
@@ -64,6 +67,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
     }
 
     /// Decapsulate the shared secret using the PKE decryption
+    #[inline]
     pub fn decaps(&self, s: &[u8], sk: &SecretKey, pk: &PublicKey<K>, c: Ciphertext) -> Vec<u8> {
         let m = self.pke.dec(&sk, c.clone());
         let s = Message::from_bytes(s.to_vec());
