@@ -6,32 +6,8 @@ pub type Torsion2Strategy = Vec<usize>;
 /// 3-torsion tree-traversal strategy
 pub type Torsion3Strategy = Vec<usize>;
 
-/// Tree traversal strategy for 3-torsion (SIKEp434)
-pub type Torsion3StrategyP434 = [usize; 136];
-
-/// Tree traversal strategy for 2-torsion (SIKEp434)
-pub type Torsion2StrategyP434 = [usize; 107];
-
-/// Tree traversal strategy for 3-torsion (SIKEp503)
-pub type Torsion3StrategyP503 = [usize; 158];
-
-/// Tree traversal strategy for 2-torsion (SIKEp503)
-pub type Torsion2StrategyP503 = [usize; 124];
-
-/// Tree traversal strategy for 3-torsion (SIKEp610)
-pub type Torsion3StrategyP610 = [usize; 191];
-
-/// Tree traversal strategy for 2-torsion (SIKEp610)
-pub type Torsion2StrategyP610 = [usize; 151];
-
-/// Tree traversal strategy for 3-torsion (SIKEp751)
-pub type Torsion3StrategyP751 = [usize; 238];
-
-/// Tree traversal strategy for 2-torsion (SIKEp751)
-pub type Torsion2StrategyP751 = [usize; 185];
-
 /// 2-torsion reference strategy for SIKEp434 (ref C.1.1.)
-pub const P434_TWO_TORSION_STRATEGY: Torsion2StrategyP434 = [
+pub const P434_TWO_TORSION_STRATEGY: [usize; 107] = [
     48, 28, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2,
     1, 1, 13, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 4, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 21, 12,
     7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1,
@@ -39,7 +15,7 @@ pub const P434_TWO_TORSION_STRATEGY: Torsion2StrategyP434 = [
 ];
 
 /// 3-torsion reference strategy for SIKEp434 (ref C.1.2.)
-pub const P434_THREE_TORSION_STRATEGY: Torsion3StrategyP434 = [
+pub const P434_THREE_TORSION_STRATEGY: [usize; 136] = [
     66, 33, 17, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 1, 2, 1,
     1, 4, 2, 1, 1, 2, 1, 1, 16, 8, 4, 2, 1, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2,
     1, 1, 4, 2, 1, 1, 2, 1, 1, 32, 16, 8, 4, 3, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2,
@@ -48,7 +24,7 @@ pub const P434_THREE_TORSION_STRATEGY: Torsion3StrategyP434 = [
 ];
 
 /// 2-torsion reference strategy for SIKEp503 (ref C.2.1.)
-pub const P503_TWO_TORSION_STRATEGY: Torsion2StrategyP503 = [
+pub const P503_TWO_TORSION_STRATEGY: [usize; 124] = [
     61, 32, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2,
     1, 1, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2,
     1, 1, 29, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1,
@@ -56,7 +32,7 @@ pub const P503_TWO_TORSION_STRATEGY: Torsion2StrategyP503 = [
 ];
 
 /// 3-torsion reference strategy for SIKEp503 (ref C.2.2.)
-pub const P503_THREE_TORSION_STRATEGY: Torsion3StrategyP503 = [
+pub const P503_THREE_TORSION_STRATEGY: [usize; 158] = [
     71, 38, 21, 13, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 5, 4, 2, 1, 1, 2, 1, 1, 2, 1, 1,
     1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 17, 9, 5, 3, 2, 1, 1, 1, 1, 2,
     1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 33, 17, 9, 5,
@@ -66,7 +42,7 @@ pub const P503_THREE_TORSION_STRATEGY: Torsion3StrategyP503 = [
 ];
 
 /// 2-torsion reference strategy for SIKEp610 (ref C.3.1.)
-pub const P610_TWO_TORSION_STRATEGY: Torsion2StrategyP610 = [
+pub const P610_TWO_TORSION_STRATEGY: [usize; 151] = [
     67, 37, 21, 12, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9,
     5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1,
     1, 4, 2, 1, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 33, 16, 8, 5, 2, 1, 1,
@@ -75,7 +51,7 @@ pub const P610_TWO_TORSION_STRATEGY: Torsion2StrategyP610 = [
 ];
 
 /// 3-torsion reference strategy for SIKEp610 (ref C.3.2.)
-pub const P610_THREE_TORSION_STRATEGY: Torsion3StrategyP610 = [
+pub const P610_THREE_TORSION_STRATEGY: [usize; 191] = [
     86, 48, 27, 15, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1,
     1, 1, 1, 12, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 21, 12,
     7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1,
@@ -86,7 +62,7 @@ pub const P610_THREE_TORSION_STRATEGY: Torsion3StrategyP610 = [
 ];
 
 /// 2-torsion reference strategy for SIKEp751 (ref C.4.1.)
-pub const P751_TWO_TORSION_STRATEGY: Torsion2StrategyP751 = [
+pub const P751_TWO_TORSION_STRATEGY: [usize; 185] = [
     80, 48, 27, 15, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1,
     1, 1, 1, 12, 7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 21, 12,
     7, 4, 2, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1,
@@ -96,7 +72,7 @@ pub const P751_TWO_TORSION_STRATEGY: Torsion2StrategyP751 = [
 ];
 
 /// 3-torsion reference strategy for SIKEp751 (ref C.4.2.)
-pub const P751_THREE_TORSION_STRATEGY: Torsion3StrategyP751 = [
+pub const P751_THREE_TORSION_STRATEGY:[usize; 238] = [
     112, 63, 32, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1,
     1, 2, 1, 1, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1,
     1, 2, 1, 1, 31, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2,
