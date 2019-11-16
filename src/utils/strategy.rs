@@ -97,10 +97,10 @@ pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
     let mut s = vec![vec![]];
 
     // 2.
-    let mut c = vec![0; 2];
+    let mut c = vec![0];
 
     let eval =
-        |c: &Vec<u64>, i: u64, b: u64| c[(i - b) as usize] + c[b as usize] + b * p + (i - b) * q;
+        |c: &Vec<u64>, i: u64, b: u64| c[(i - b) as usize - 1] + c[b as usize - 1] + b * p + (i - b) * q;
 
     // 3.
     for i in 2..=(n as u64 + 1) {
