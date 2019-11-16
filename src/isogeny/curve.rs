@@ -32,10 +32,36 @@ impl<K: FiniteField + Clone> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
         let three = two.add(&one);
-        let six = two.mul(&three);
+        let six = three.add(&three);
 
         Curve::from_coeffs(six, one)
     }
+
+    /// Convert a curve (A : C) to (A' : C') ~ (A + 2C : 4C)
+    #[inline]
+    pub fn curve_plus(&self) -> Curve<K> {
+        let one = K::one();
+        let two = one.add(&one);
+        let four = two.add(&two);
+        
+        let a = two.mul(&self.c).add(&self.a);
+        let c = four.mul(&self.c);
+
+        Curve::from_coeffs(a, c)
+    }
+
+    /// Given convert a curve (A : C) to (A' : C') ~ (A + 2C : A - 2C)
+    #[inline]
+    pub fn curve_plus_minus(&self) -> Curve<K> {
+        let one = K::one();
+        let two = one.add(&one);
+        
+        let a = two.mul(&self.c).add(&self.a);
+        let c = self.a.sub(&two.mul(&self.c));
+
+        Curve::from_coeffs(a, c)
+    }
+
 
     /// Montgomery j-invariant (ref Algorithm 9 p.56)
     #[inline]
@@ -58,37 +84,6 @@ impl<K: FiniteField + Clone> Curve<K> {
         let t0 = t0.add(&t0); // 14.
         let j = j.inv(); // 15.
         let j = t0.mul(&j);
-
-        j
-    }
-
-    /// Montgomery j-invariant (ref Algorithm 31 p.66)
-    #[inline]
-    pub fn j_invariant_ref(&self) -> K {
-        let one = K::one();
-        let two = one.add(&one);
-        let three = two.add(&one);
-        let four = two.add(&two);
-
-        let a = self.a.div(&self.c);
-
-        let t0 = a.mul(&a); // 1.
-        let j = three; // 2.
-        let j = t0.sub(&j); // 3.
-        let t1 = j.mul(&j); // 4.
-        let j = j.mul(&t1); // 5.
-        let j = j.add(&j); // 6.
-        let j = j.add(&j); // 7.
-        let j = j.add(&j); // 8.
-        let j = j.add(&j); // 9.
-        let j = j.add(&j); // 10.
-        let j = j.add(&j); // 11.
-        let j = j.add(&j); // 12.
-        let j = j.add(&j); // 13.
-        let t1 = four; // 14.
-        let t0 = t0.sub(&t1); // 15.
-        let t0 = t0.inv(); // 16.
-        let j = j.mul(&t0); // 17.
 
         j
     }

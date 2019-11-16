@@ -684,15 +684,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///
     #[inline]
     pub fn isogen2(&self, sk: &SecretKey) -> PublicKey<K> {
-        let one = K::one();
-        let two = one.add(&one);
-        let four = two.add(&two);
-        let six = two.add(&four);
-        let eight = four.add(&four);
 
         // 1.
-        let curve = Curve::from_coeffs(six, one);
-        let curve_plus = Curve::from_coeffs(eight, four);
+        let curve = Curve::starting_curve();
+        let curve_plus = curve.curve_plus();
 
         // 2.
         let xp3 = self.params.xp3.clone();
@@ -731,15 +726,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Output: public key
     #[inline]
     pub fn isogen3(&self, sk: &SecretKey) -> PublicKey<K> {
-        let one = K::one();
-        let two = one.add(&one);
-        let four = two.add(&two);
-        let six = two.add(&four);
-        let eight = four.add(&four);
 
         // 1.
-        let curve = Curve::from_coeffs(six, one);
-        let curve_pm = Curve::from_coeffs(eight, four);
+        let curve = Curve::starting_curve();
+        let curve_pm = curve.curve_plus_minus();
 
         // 2.
         let xp2 = self.params.xp2.clone();
