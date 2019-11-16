@@ -10,7 +10,7 @@ use once_cell::sync::Lazy;
 
 use std::fmt::Debug;
 
-use rug::Integer;
+use rug::{Integer, integer::Order::MsfBe};
 
 static P434_PRIME: Lazy<Integer> = Lazy::new(|| Integer::from_str_radix(SIKE_P434_P, 16).unwrap());
 
@@ -112,7 +112,7 @@ impl FiniteField for PrimeFieldP434 {
     }
 
     fn to_bytes(self) -> Vec<u8> {
-        self.val.to_string().as_bytes().to_vec()
+        self.val.to_digits::<u8>(MsfBe)
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
