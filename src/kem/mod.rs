@@ -117,3 +117,176 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         shake::shake256(&input, n / 8)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        isogeny::{sike_p434_params, sike_p503_params, sike_p610_params, sike_p751_params},
+        utils::strategy::*,
+    };
+
+    #[test]
+    fn test_kem_p434() {
+        let params = sike_p434_params(None, None);
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_p503() {
+        let params = sike_p503_params(None, None);
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_p610() {
+        let params = sike_p610_params(None, None);
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_p751() {
+        let params = sike_p751_params(None, None);
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_optim_p434() {
+        let params = sike_p434_params(
+            Some(P434_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P434_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_optim_p503() {
+        let params = sike_p503_params(
+            Some(P503_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P503_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_optim_p610() {
+        let params = sike_p610_params(
+            Some(P610_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P610_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_kem_optim_p751() {
+        let params = sike_p751_params(
+            Some(P751_TWO_TORSION_STRATEGY.to_vec()),
+            Some(P751_THREE_TORSION_STRATEGY.to_vec()),
+        );
+
+        let kem = KEM::setup(params);
+
+        // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+        let (s, sk3, pk3) = kem.keygen();
+
+        // Bob uses pk3 to derive a key k and encapsulation c
+        let (c, k) = kem.encaps(&pk3);
+
+        // Bob sends c to Alice
+        // Alice uses s, c, sk3 and pk3 to recover k
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+
+        assert_eq!(k, k_recovered);
+    }
+}

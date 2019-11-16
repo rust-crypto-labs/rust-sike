@@ -7,12 +7,10 @@ mod benchmarks {
     use criterion::Criterion;
 
     use rust_sike::{
-        isogeny::publicparams::{
-            sike_p434_params, sike_p503_params, sike_p610_params, sike_p751_params,
-        },
         kem::KEM,
         pke::{Message, PKE},
-        utils::strategy::*,
+        sike_p434_params, sike_p503_params, sike_p610_params, sike_p751_params,
+        strategy::*,
     };
 
     pub fn bench_p434_pke_std(c: &mut Criterion) {

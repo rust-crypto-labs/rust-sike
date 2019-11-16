@@ -10,6 +10,11 @@ pub mod ff_p503;
 pub mod ff_p610;
 pub mod ff_p751;
 
+pub use crate::ff::{
+    ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p610::PrimeFieldP610,
+    ff_p751::PrimeFieldP751,
+};
+
 /// Finite field element
 pub trait FiniteField {
     /// Check if the element is the additive identity of the field
@@ -169,5 +174,74 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
         let a = F::from_bytes(&bytes[..n]);
         let b = F::from_bytes(&bytes[n..]);
         Self::from(a, b)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use crate::constants::cs_p434::{SIKE_P434_XP20, SIKE_P434_XP21};
+
+    #[test]
+    fn test_conversion_ff434_bytes() {
+        let num = PrimeFieldP434::from_string(SIKE_P434_XP20);
+
+        let b = num.clone().to_bytes();
+        let num_recovered = PrimeFieldP434::from_bytes(&b);
+
+        println!("{:?}", num);
+        println!("{:?}", num_recovered);
+
+        assert!(num.equals(&num_recovered));
+    }
+
+    #[test]
+    fn test_conversion_quadratic_bytes() {
+        let num1 = PrimeFieldP434::from_string(SIKE_P434_XP20);
+        let num2 = PrimeFieldP434::from_string(SIKE_P434_XP21);
+
+        let q = QuadraticExtension::from(num1, num2);
+        let b = q.clone().to_bytes();
+        let q_recovered = QuadraticExtension::from_bytes(&b);
+
+        println!("{:?}", q);
+        println!("{:?}", q_recovered);
+
+        assert!(q.equals(&q_recovered));
+    }
+
+    #[test]
+    fn test_ff() {
+        let one = PrimeFieldP434::one();
+        let two = one.add(&one);
+        let three = two.add(&one);
+        let four1 = two.add(&two);
+        let four2 = two.mul(&two);
+        let zero = one.sub(&one);
+
+        println!("zero = {:?}", zero);
+        println!("one = {:?}", one);
+        println!("two = {:?}", two);
+        println!("three = {:?}", three);
+        println!("four1 = {:?}", four1);
+        println!("four2 = {:?}", four2);
+    }
+
+    #[test]
+    fn test_qff() {
+        let one = PrimeFieldP434::one();
+        let two = one.add(&one);
+        let x = QuadraticExtension::from(two.clone(), two.clone());
+
+        let eight_i = x.mul(&x);
+
+        println!("eight_i = {:?}", eight_i);
+
+        let two_plus_two_i = eight_i.div(&x);
+
+        println!("two_plus_two_i = {:?}", two_plus_two_i);
+
+        assert_eq!(two_plus_two_i, x)
     }
 }

@@ -2,16 +2,16 @@
 
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
 
-pub mod curve;
-pub mod point;
-pub mod publickey;
-pub mod publicparams;
-pub mod secretkey;
+mod curve;
+mod point;
+mod publickey;
+mod publicparams;
+mod secretkey;
 
 use crate::{ff::FiniteField, isogeny::point::Point};
 
 pub use crate::isogeny::{
-    curve::Curve, publickey::PublicKey, publicparams::PublicParameters, secretkey::SecretKey,
+    curve::Curve, publickey::PublicKey, publicparams::*, secretkey::SecretKey,
 };
 
 /// SIKE structure for computing isogenies
@@ -691,7 +691,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let eight = four.add(&four);
 
         // 1.
-        let curve = Curve::from_coeffs(six, one);
+        let curve = Curve::start(six, one);
         let curve_plus = Curve::from_coeffs(eight, four);
 
         // 2.
@@ -843,5 +843,138 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 6, 7.
         curve.j_invariant()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        constants::cs_p434::{SIKE_P434_NKS2, SIKE_P434_NKS3},
+        ff::{PrimeFieldP434, QuadraticExtension},
+        isogeny::publicparams::sike_p434_params,
+        utils::{
+            conversion::str_to_u64,
+            strategy::{P434_THREE_TORSION_STRATEGY, P434_TWO_TORSION_STRATEGY},
+        },
+    };
+
+    use super::*;
+
+    #[test]
+    fn test_iso_eval() {
+        let one: QuadraticExtension<PrimeFieldP434> = QuadraticExtension::one();
+        let two = one.add(&one);
+        let k1 = two.add(&one).mul(&two);
+        let k2 = two.add(&two).mul(&two);
+        let k3 = two.add(&two);
+
+        let x = one.add(&one).add(&two).add(&two);
+
+        let pt = Point::from_x(x);
+
+        println!("Before {:?}", pt.x.div(&pt.z));
+
+        let pt2 = CurveIsogenies::four_isogeny_eval(&k1, &k2, &k3, &pt);
+
+        let pt3 = CurveIsogenies::three_isogeny_eval(&pt, &k1, &k2);
+
+        println!("After 4isoeval {:?}", pt2.x.div(&pt2.z));
+        println!("After 3isoeval {:?}", pt3.x.div(&pt3.z));
+
+        assert_ne!(pt, pt3)
+    }
+
+    #[test]
+    fn test_isoex_isogen() {
+        let nks3 = str_to_u64(SIKE_P434_NKS3);
+        let nks2 = str_to_u64(SIKE_P434_NKS2);
+
+        let params = sike_p434_params(None, None);
+
+        let iso = CurveIsogenies::init(params);
+
+        let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
+        let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
+
+        let pk3 = iso.isogen3(&sk3);
+        let pk2 = iso.isogen2(&sk2);
+
+        let j_a = iso.isoex2(&sk2, &pk3);
+        let j_b = iso.isoex3(&sk3, &pk2);
+
+        println!("j_A = {:?}", j_a);
+        println!("j_B = {:?}", j_b);
+
+        assert!(j_a.equals(&j_b));
+    }
+
+    #[test]
+    fn test_isogen2() {
+        let nks2 = str_to_u64(SIKE_P434_NKS2);
+        let sk = SecretKey::get_random_secret_key(nks2 as usize);
+        let strat = Some(P434_TWO_TORSION_STRATEGY.to_vec());
+
+        let params = sike_p434_params(strat, None);
+
+        let iso = CurveIsogenies::init(params);
+        let pk = iso.isogen2(&sk);
+        let pk_2 = iso.isogen2(&sk);
+
+        assert_eq!(pk, pk_2);
+    }
+
+    #[test]
+    fn test_isogen3() {
+        let nks3 = str_to_u64(SIKE_P434_NKS3);
+        let sk = SecretKey::get_random_secret_key(nks3 as usize);
+        let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
+
+        let params = sike_p434_params(None, strat);
+
+        let iso = CurveIsogenies::init(params);
+        let pk = iso.isogen3(&sk);
+        let pk_2 = iso.isogen3(&sk);
+
+        assert_eq!(pk, pk_2);
+    }
+
+    #[test]
+    fn test_conversion_secretkey_bytes() {
+        let k = SecretKey::get_random_secret_key(256);
+        let b = k.clone().to_bytes();
+        let k_recovered = SecretKey::from_bytes(&b);
+
+        assert_eq!(k, k_recovered);
+    }
+
+    #[test]
+    fn test_conversion_publickey_bytes() {
+        let nks3 = str_to_u64(SIKE_P434_NKS3);
+        let sk = SecretKey::get_random_secret_key(nks3 as usize);
+        let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
+
+        let params = sike_p434_params(None, strat);
+        let iso = CurveIsogenies::init(params);
+        let pk = iso.isogen3(&sk);
+        let (b0, b1, b2) = pk.clone().to_bytes();
+
+        let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2);
+
+        assert_eq!(pk, pk_recovered)
+    }
+
+    #[test]
+    fn test_j_invariant() {
+        use crate::{
+            ff::{ff_p434::PrimeFieldP434, QuadraticExtension},
+            isogeny::Curve,
+        };
+        let curve = Curve::starting_curve();
+
+        let j: QuadraticExtension<PrimeFieldP434> = curve.j_invariant();
+        let j_ref: QuadraticExtension<PrimeFieldP434> = curve.j_invariant_ref();
+
+        // 287496 + 0i
+        assert_eq!(j, j_ref)
     }
 }

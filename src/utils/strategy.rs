@@ -72,7 +72,7 @@ pub const P751_TWO_TORSION_STRATEGY: [usize; 185] = [
 ];
 
 /// 3-torsion reference strategy for SIKEp751 (ref C.4.2.)
-pub const P751_THREE_TORSION_STRATEGY:[usize; 238] = [
+pub const P751_THREE_TORSION_STRATEGY: [usize; 238] = [
     112, 63, 32, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1,
     1, 2, 1, 1, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1,
     1, 2, 1, 1, 31, 16, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2, 1, 1, 2, 1, 1, 8, 4, 2, 1, 1, 2, 1, 1, 4, 2,
@@ -99,8 +99,9 @@ pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
     // 2.
     let mut c = vec![0];
 
-    let eval =
-        |c: &Vec<u64>, i: u64, b: u64| c[(i - b) as usize - 1] + c[b as usize - 1] + b * p + (i - b) * q;
+    let eval = |c: &Vec<u64>, i: u64, b: u64| {
+        c[(i - b) as usize - 1] + c[b as usize - 1] + b * p + (i - b) * q
+    };
 
     // 3.
     for i in 2..=(n as u64 + 1) {

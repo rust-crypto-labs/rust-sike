@@ -1,8 +1,7 @@
 //! Utils for conversions
 
 use crate::ff::{
-    ff_p434::PrimeFieldP434, ff_p503::PrimeFieldP503, ff_p610::PrimeFieldP610,
-    ff_p751::PrimeFieldP751, QuadraticExtension,
+    PrimeFieldP434, PrimeFieldP503, PrimeFieldP610, PrimeFieldP751, QuadraticExtension,
 };
 
 /// String to `u64` conversion
