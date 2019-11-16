@@ -691,7 +691,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let eight = four.add(&four);
 
         // 1.
-        let curve = Curve::start(six, one);
+        let curve = Curve::from_coeffs(six, one);
         let curve_plus = Curve::from_coeffs(eight, four);
 
         // 2.
@@ -853,7 +853,7 @@ mod tests {
         ff::{PrimeFieldP434, QuadraticExtension},
         isogeny::publicparams::sike_p434_params,
         utils::{
-            conversion::str_to_u64,
+            conversion::{str_to_u64,str_to_p434},
             strategy::{P434_THREE_TORSION_STRATEGY, P434_TWO_TORSION_STRATEGY},
         },
     };
@@ -972,9 +972,8 @@ mod tests {
         let curve = Curve::starting_curve();
 
         let j: QuadraticExtension<PrimeFieldP434> = curve.j_invariant();
-        let j_ref: QuadraticExtension<PrimeFieldP434> = curve.j_invariant_ref();
 
         // 287496 + 0i
-        assert_eq!(j, j_ref)
+        assert_eq!(j, str_to_p434("00046308", "00000000"))
     }
 }
