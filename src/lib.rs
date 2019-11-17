@@ -5,6 +5,27 @@
 //! candidate submitted to NIST for standardization.
 //!
 //! This crate provides public-key encryption (`PKE`) and key encapsulation (`KEM`).
+//!
+//! # Examples
+//!
+//! ```rust
+//! use rust_sike::{self, KEM};
+//! let params = rust_sike::sike_p434_params(None, None);
+//!
+//! let kem = KEM::setup(params);
+//!
+//! // Alice runs keygen, publishes pk3. Values s and sk3 are secret
+//! let (s, sk3, pk3) = kem.keygen();
+//!
+//! // Bob uses pk3 to derive a key k and encapsulation c
+//! let (c, k) = kem.encaps(&pk3);
+//!
+//! // Bob sends c to Alice
+//! // Alice uses s, c, sk3 and pk3 to recover k
+//! let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+//!
+//! assert_eq!(k, k_recovered);
+//! ```
 
 #![warn(missing_docs)]
 
