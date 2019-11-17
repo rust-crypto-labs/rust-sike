@@ -22,7 +22,8 @@ impl SecretKey {
     /// # Examples
     ///
     /// ```rust
-    /// let key = get_random_secret_key(64);
+    /// use rust_sike::pke::SecretKey;
+    /// let key = SecretKey::get_random_secret_key(64);
     /// println!("{:?}", key);
     /// ```
     pub fn get_random_secret_key(size: usize) -> Self {

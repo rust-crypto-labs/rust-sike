@@ -11,9 +11,17 @@
 mod constants;
 mod ff;
 mod isogeny;
+mod utils;
+
 pub mod kem;
 pub mod pke;
-mod utils;
+pub use {kem::KEM, pke::PKE};
+
+pub use utils::strategy::{
+    compute_strategy, P434_THREE_TORSION_STRATEGY, P434_TWO_TORSION_STRATEGY,
+    P503_THREE_TORSION_STRATEGY, P503_TWO_TORSION_STRATEGY, P610_THREE_TORSION_STRATEGY,
+    P610_TWO_TORSION_STRATEGY, P751_THREE_TORSION_STRATEGY, P751_TWO_TORSION_STRATEGY,
+};
 
 pub use crate::{
     isogeny::{sike_p434_params, sike_p503_params, sike_p610_params, sike_p751_params},

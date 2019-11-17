@@ -89,6 +89,7 @@ pub const P751_THREE_TORSION_STRATEGY: [usize; 238] = [
 ///
 /// # Examples
 /// ```rust
+/// use rust_sike::compute_strategy;
 /// let strat = compute_strategy(12, 13, 14);
 /// println!("{:?}", strat);
 /// ```

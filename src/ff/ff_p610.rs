@@ -10,7 +10,7 @@ use once_cell::sync::Lazy;
 
 use std::fmt::Debug;
 
-use rug::{Integer, integer::Order::MsfBe};
+use rug::{integer::Order::MsfBe, Integer};
 
 static P610_PRIME: Lazy<Integer> = Lazy::new(|| Integer::from_str_radix(SIKE_P610_P, 16).unwrap());
 
