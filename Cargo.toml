@@ -3,6 +3,19 @@ name = "rust-sike"
 version = "0.1.0"
 authors =  ["Rémi Géraud-Stewart <remi.geraud@ens.fr>", "Edmond de Roffignac <edmond.de-roffignac@student.ecp.fr>"]
 edition = "2018"
+description = "Implementation of the key encapsulation mechanism (KEM) and public-key encryption (pke) schemes of the Supersingular Isogeny Key Encapsulation (SIKE) protocol"
+documentation = "https://docs.rs/rust-sike"
+
+readme = "README.md"
+keywords = ["crypto", "isogeny", "elliptic curve", "SIKE", "SIDH", "pke", "kem"]
+categories = ["cryptography", "science"]
+
+# TBD
+license = "===TBD==="
+repository = "===TBD==="
+
+# To remove when ready
+publish = false 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,7 +29,8 @@ rug = {version="1.6", features = ["integer"]}
 hex="0.4"
 
 [profile.release]
-
+opt-level = 3
+debug = false
 lto = true
 
 [[bench]]
