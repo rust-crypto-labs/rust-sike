@@ -81,7 +81,7 @@ pub fn sike_p503_params(
     strat3tor: Option<strategy::Torsion3Strategy>,
 ) -> PublicParameters<QuadraticExtension<PrimeFieldP503>> {
     PublicParameters {
-        secparam: 128,
+        secparam: 192,
         keyspace2: str_to_u64(SIKE_P503_NKS2),
         keyspace3: str_to_u64(SIKE_P503_NKS3),
         e2_strategy: strat2tor,
@@ -103,7 +103,7 @@ pub fn sike_p610_params(
     strat3tor: Option<strategy::Torsion3Strategy>,
 ) -> PublicParameters<QuadraticExtension<PrimeFieldP610>> {
     PublicParameters {
-        secparam: 128,
+        secparam: 192,
         keyspace2: str_to_u64(SIKE_P610_NKS2),
         keyspace3: str_to_u64(SIKE_P610_NKS3),
         e2_strategy: strat2tor,
@@ -125,7 +125,7 @@ pub fn sike_p751_params(
     strat3tor: Option<strategy::Torsion3Strategy>,
 ) -> PublicParameters<QuadraticExtension<PrimeFieldP751>> {
     PublicParameters {
-        secparam: 128,
+        secparam: 256,
         keyspace2: str_to_u64(SIKE_P751_NKS2),
         keyspace3: str_to_u64(SIKE_P751_NKS3),
         e2_strategy: strat2tor,
