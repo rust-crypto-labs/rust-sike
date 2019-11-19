@@ -43,7 +43,7 @@ impl<K: FiniteField + Clone> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
-        
+
         let a = two.mul(&self.c).add(&self.a);
         let c = four.mul(&self.c);
 
@@ -55,13 +55,12 @@ impl<K: FiniteField + Clone> Curve<K> {
     pub fn curve_plus_minus(&self) -> Curve<K> {
         let one = K::one();
         let two = one.add(&one);
-        
+
         let a = two.mul(&self.c).add(&self.a);
         let c = self.a.sub(&two.mul(&self.c));
 
         Curve::from_coeffs(a, c)
     }
-
 
     /// Montgomery j-invariant (ref Algorithm 9 p.56)
     #[inline]

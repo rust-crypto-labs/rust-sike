@@ -42,14 +42,13 @@ pub fn str_to_p610(s0: &str, s1: &str) -> QuadraticExtension<PrimeFieldP610> {
 }
 
 /// Concatenates a list of arrays into one array
-///
-/// # Examples
-/// ```rust
-/// let a = [1, 2];
-/// let b = [3, 4];
-/// let a_and_b = concatenate(&[&a, &b]);
-/// assert_eq!(a_and_b, [1, 2, 3, 4]);
-/// ```
+// Example
+// ```
+// let a = [1, 2];
+// let b = [3, 4];
+// let a_and_b = conversion::concatenate(&[&a, &b]);
+// assert_eq!(a_and_b, [1, 2, 3, 4]);
+// ```
 pub fn concatenate(arrays: &[&[u8]]) -> Vec<u8> {
     let mut result = vec![];
     for &array in arrays {

@@ -1,10 +1,40 @@
-//! Public-key cryptosystem: a `Message` is encrypted using the public key, and decrypted using the corresponding private key.
+//! Public-key cryptosystem:
+//!
+//! A `Message` is encrypted using the public key, and decrypted using the corresponding private key.
+//!
+//! # Examples
+//! ```rust
+//! use rust_sike::{self, pke::{PKE, Message}};
+//! let params = rust_sike::sike_p434_params(
+//!     Some(rust_sike::P434_TWO_TORSION_STRATEGY.to_vec()),
+//!     Some(rust_sike::P434_THREE_TORSION_STRATEGY.to_vec()),
+//! );
+//!
+//! let pke = PKE::setup(params.clone());
+//!
+//! // Alice generates a keypair, she publishes her pk
+//! let (sk, pk) = pke.gen();
+//!
+//! // Bob writes a message
+//! let msg = Message::from_bytes(vec![0; params.secparam / 8]);
+//! // Bob encrypts the message using Alice's pk
+//! let ciphertext = pke.enc(&pk, msg.clone());
+//!
+//! // Bob sends the ciphertext to Alice
+//! // Alice decrypts the message using her sk
+//! let msg_recovered = pke.dec(&sk, ciphertext);
+//!
+//! // Alice should correctly recover Bob's plaintext message
+//! assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+//! ```
 
 use crate::{
     ff::FiniteField,
-    isogeny::{CurveIsogenies, PublicKey, PublicParameters, SecretKey},
+    isogeny::{CurveIsogenies, PublicParameters},
     utils::shake,
 };
+
+pub use crate::isogeny::{PublicKey, SecretKey};
 
 use std::fmt::Debug;
 

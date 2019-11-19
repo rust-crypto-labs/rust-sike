@@ -684,7 +684,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///
     #[inline]
     pub fn isogen2(&self, sk: &SecretKey) -> PublicKey<K> {
-
         // 1.
         let curve = Curve::starting_curve();
         let curve_plus = curve.curve_plus();
@@ -726,7 +725,6 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Output: public key
     #[inline]
     pub fn isogen3(&self, sk: &SecretKey) -> PublicKey<K> {
-
         // 1.
         let curve = Curve::starting_curve();
         let curve_pm = curve.curve_plus_minus();
@@ -843,7 +841,7 @@ mod tests {
         ff::{PrimeFieldP434, QuadraticExtension},
         isogeny::publicparams::sike_p434_params,
         utils::{
-            conversion::{str_to_u64,str_to_p434},
+            conversion::{str_to_p434, str_to_u64},
             strategy::{P434_THREE_TORSION_STRATEGY, P434_TWO_TORSION_STRATEGY},
         },
     };
