@@ -359,4 +359,4 @@ criterion_group! {
     targets = benchmarks::bench_p751_pke_std, benchmarks::bench_p751_pke_optim, benchmarks::bench_p751_kem_std, benchmarks::bench_p751_kem_optim
 }
 
-criterion_main!(p434);
+criterion_main!(p434, p503, p610, p751);
