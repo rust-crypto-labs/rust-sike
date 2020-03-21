@@ -27,7 +27,8 @@
 //! assert_eq!(k, k_recovered);
 //! ```
 
-#![warn(missing_docs)]
+#[warn(missing_docs)]
+#[forbid(unsafe_code)]
 
 mod constants;
 mod ff;
