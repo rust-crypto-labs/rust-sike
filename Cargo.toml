@@ -14,7 +14,7 @@ repository = "https://github.com/rust-crypto-labs/rust-sike"
 tiny-keccak = {version="2.0", features=["shake"]}
 rand="0.7"
 once_cell="1.2"
-bitvec="0.15"
+bitvec="0.17"
 rug = {version="1.6", features = ["integer"], default-features = false}
 hex="0.4"
 

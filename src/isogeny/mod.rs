@@ -1,6 +1,7 @@
 //! Tools for isogeny computations
 
 use std::{collections::VecDeque, convert::TryInto, fmt::Debug};
+use bitvec::prelude::*;
 
 mod curve;
 mod point;
@@ -151,7 +152,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Input: m (binary), x_p, x_q, x_(Q-P)
     ///  * Output: P + [m]Q
     #[inline]
-    fn three_pts_ladder(m: &[bool], x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
+    fn three_pts_ladder(m: &BitSlice<Msb0, u8>, x_p: K, x_q: K, x_qmp: K, curve: &Curve<K>) -> Point<K> {
         let mut p0 = Point::from_x(x_q);
         let mut p1 = Point::from_x(x_p);
         let mut p2 = Point::from_x(x_qmp);
