@@ -62,28 +62,28 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
     /// Encapsulate the shared secret using the PKE encryption
     #[inline]
     pub fn encaps(&self, pk: &PublicKey<K>) -> (Ciphertext, Vec<u8>) {
-        let m = Message::from_bytes(Self::random_string(self.n / 8));
-        let r = self.hash_function_g(&m.clone(), &pk);
+        let message = Message::from_bytes(Self::random_string(self.n / 8));
+        let r = self.hash_function_g(&message.clone(), &pk);
         let det_sk = SecretKey::from_bytes(&r);
 
         let c0: PublicKey<K> = self.pke.isogenies.isogen2(&det_sk);
 
-        let j = self.pke.isogenies.isoex2(&det_sk, &pk);
-        let h = self.pke.hash_function_f(j);
+        let j_inv = self.pke.isogenies.isoex2(&det_sk, &pk);
+        let h = self.pke.hash_function_f(j_inv);
 
-        assert_eq!(h.len(), m.bytes.len());
-        let c1_bytes = PKE::<K>::xor(&m.bytes, &h);
+        assert_eq!(h.len(), message.bytes.len());
+        let c1_bytes = PKE::<K>::xor(&message.bytes, &h);
 
-        let (part1, part2, part3) = c0.to_bytes();
-        let c = Ciphertext {
+        let (part1, part2, part3) = c0.into_bytes();
+        let cipher = Ciphertext {
             bytes00: part1,
             bytes01: part2,
             bytes02: part3,
             bytes1: c1_bytes,
         };
 
-        let k = self.hash_function_h(&m.clone(), &c);
-        (c, k)
+        let k = self.hash_function_h(&message, &cipher);
+        (cipher, k)
     }
 
     /// Decapsulate the shared secret using the PKE decryption
@@ -98,13 +98,11 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
         let c0p = self.pke.isogenies.isogen2(&rsk);
 
-        let k = if c0p == c0 {
+        if c0p == c0 {
             self.hash_function_h(&m, &c)
         } else {
             self.hash_function_h(&s, &c)
-        };
-
-        k
+        }
     }
 
     fn random_string(size: usize) -> Vec<u8> {
@@ -113,9 +111,9 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         result
     }
 
-    fn hash_function_g(&self, m: &Message, r: &PublicKey<K>) -> Vec<u8> {
-        let (part1, part2, part3) = r.clone().to_bytes();
-        let msg_bytes = m.clone().to_bytes();
+    fn hash_function_g(&self, m: &Message, pk: &PublicKey<K>) -> Vec<u8> {
+        let (part1, part2, part3) = pk.clone().into_bytes();
+        let msg_bytes = m.clone().into_bytes();
         let input = conversion::concatenate(&[&msg_bytes, &part1, &part2, &part3]);
 
         let n: usize = self.params.secparam; //self.params.e2.try_into().unwrap();
@@ -125,7 +123,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
     fn hash_function_h(&self, m: &Message, c: &Ciphertext) -> Vec<u8> {
         let input = conversion::concatenate(&[
-            &m.clone().to_bytes(),
+            &m.clone().into_bytes(),
             &c.bytes00,
             &c.bytes01,
             &c.bytes02,

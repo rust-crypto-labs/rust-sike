@@ -95,10 +95,10 @@ pub const P751_THREE_TORSION_STRATEGY: [usize; 238] = [
 /// ```
 pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
     // 1.
-    let mut s = vec![vec![]];
+    let mut strategies = vec![vec![]];
 
     // 2.
-    let mut c = vec![0];
+    let mut cost = vec![0];
 
     let eval = |c: &Vec<u64>, i: u64, b: u64| {
         c[(i - b) as usize - 1] + c[b as usize - 1] + b * p + (i - b) * q
@@ -107,10 +107,10 @@ pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
     // 3.
     for i in 2..=(n as u64 + 1) {
         // 4.
-        let mut min_val = eval(&c, i, 1);
+        let mut min_val = eval(&cost, i, 1);
         let mut b = 1;
         for b_val in 2..i {
-            let c_val = eval(&c, i, b_val);
+            let c_val = eval(&cost, i, b_val);
             if c_val < min_val {
                 min_val = c_val;
                 b = b_val;
@@ -118,15 +118,15 @@ pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
         }
 
         // 5.
-        let mut new_s = vec![b as usize];
-        new_s.extend(&s[(i - b - 1) as usize]);
-        new_s.extend(&s[b as usize - 1]);
-        s.push(new_s);
+        let mut new_strat = vec![b as usize];
+        new_strat.extend(&strategies[(i - b - 1) as usize]);
+        new_strat.extend(&strategies[b as usize - 1]);
+        strategies.push(new_strat);
 
         // 6.
-        c.push(min_val);
+        cost.push(min_val);
     }
 
     // 7.
-    s.last().unwrap().to_vec()
+    strategies.last().unwrap().to_vec()
 }

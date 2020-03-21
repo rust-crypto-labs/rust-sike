@@ -82,9 +82,8 @@ impl<K: FiniteField + Clone> Curve<K> {
         let t0 = t0.add(&t0); // 13.
         let t0 = t0.add(&t0); // 14.
         let j = j.inv(); // 15.
-        let j = t0.mul(&j);
 
-        j
+        t0.mul(&j)
     }
 
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None

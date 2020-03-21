@@ -32,11 +32,7 @@ impl<K: FiniteField + Clone> PartialEq<Self> for Point<K> {
     fn eq(&self, other: &Self) -> bool {
         let other_zero = other.z.is_zero();
         if self.z.is_zero() {
-            if other_zero {
-                true
-            } else {
-                false
-            }
+            other_zero
         } else if other_zero {
             false
         } else {

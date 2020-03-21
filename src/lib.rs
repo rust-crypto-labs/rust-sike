@@ -29,7 +29,6 @@
 
 #[warn(missing_docs)]
 #[forbid(unsafe_code)]
-
 mod constants;
 mod ff;
 mod isogeny;

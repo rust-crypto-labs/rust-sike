@@ -112,7 +112,7 @@ impl FiniteField for PrimeFieldP751 {
         self.sub(&other).is_zero()
     }
 
-    fn to_bytes(self) -> Vec<u8> {
+    fn into_bytes(self) -> Vec<u8> {
         self.val.to_digits::<u8>(MsfBe)
     }
 

@@ -52,7 +52,7 @@ impl Message {
     }
 
     /// Obtain bytes from a `Message`
-    pub fn to_bytes(self) -> Vec<u8> {
+    pub fn into_bytes(self) -> Vec<u8> {
         self.bytes
     }
 }
@@ -129,7 +129,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let c1_bytes = Self::xor(&m.bytes, &h);
 
         // 9.
-        let (part1, part2, part3) = c0.to_bytes();
+        let (part1, part2, part3) = c0.into_bytes();
         Ciphertext {
             bytes00: part1,
             bytes01: part2,
@@ -163,7 +163,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
     /// Computes the F function
     pub fn hash_function_f(&self, j: K) -> Vec<u8> {
-        shake::shake256(&j.to_bytes(), self.params.secparam / 8)
+        shake::shake256(&j.into_bytes(), self.params.secparam / 8)
     }
 
     /// Computes the bitwise XOR between two sequences
@@ -212,7 +212,7 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -268,7 +268,7 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -296,7 +296,7 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -321,7 +321,7 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -346,7 +346,7 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -371,7 +371,7 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -396,6 +396,6 @@ mod tests {
         let msg_recovered = pke.dec(&sk, ciphertext);
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 }

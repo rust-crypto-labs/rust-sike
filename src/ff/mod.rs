@@ -51,7 +51,7 @@ pub trait FiniteField {
     fn equals(&self, other: &Self) -> bool;
 
     /// Converts the element to a bytes representation
-    fn to_bytes(self) -> Vec<u8>;
+    fn into_bytes(self) -> Vec<u8>;
 
     /// Converts a bytes representation to an element of the finite field
     fn from_bytes(bytes: &[u8]) -> Self;
@@ -151,11 +151,11 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
         self.a.equals(&other.a) && self.b.equals(&other.b)
     }
 
-    fn to_bytes(self) -> Vec<u8> {
+    fn into_bytes(self) -> Vec<u8> {
         use crate::utils::conversion::concatenate;
 
-        let part1 = self.a.to_bytes();
-        let part2 = self.b.to_bytes();
+        let part1 = self.a.into_bytes();
+        let part2 = self.b.into_bytes();
 
         // Left padding to the nearest power of 2
         let p21 = part1.len().next_power_of_two();
@@ -187,7 +187,7 @@ mod tests {
     fn test_conversion_ff434_bytes() {
         let num = PrimeFieldP434::from_string(SIKE_P434_XP20);
 
-        let b = num.clone().to_bytes();
+        let b = num.clone().into_bytes();
         let num_recovered = PrimeFieldP434::from_bytes(&b);
 
         println!("{:?}", num);
@@ -202,7 +202,7 @@ mod tests {
         let num2 = PrimeFieldP434::from_string(SIKE_P434_XP21);
 
         let q = QuadraticExtension::from(num1, num2);
-        let b = q.clone().to_bytes();
+        let b = q.clone().into_bytes();
         let q_recovered = QuadraticExtension::from_bytes(&b);
 
         println!("{:?}", q);
