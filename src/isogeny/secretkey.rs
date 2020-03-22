@@ -24,10 +24,12 @@ impl SecretKey {
     /// let key = SecretKey::get_random_secret_key(64);
     /// println!("{:?}", key);
     /// ```
-    pub fn get_random_secret_key(size: usize) -> Self {
+    pub fn get_random_secret_key(size: usize) -> Result<Self, &'static str> {
         let mut bytes = vec![0; size];
-        rand::rngs::OsRng.fill_bytes(&mut bytes);
-        Self::from_bytes(&bytes)
+        if let Err(_e) = rand::rngs::OsRng.try_fill_bytes(&mut bytes) {
+            return Err("RNG Error");
+        };
+        Ok(Self::from_bytes(&bytes))
     }
 
     /// Converts the secret key into a sequence of bits

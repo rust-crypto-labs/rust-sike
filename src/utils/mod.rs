@@ -97,7 +97,7 @@ mod tests {
         let p4 = 5633;
         let q4 = 5461;
 
-        let p434strat = compute_strategy(n4, p4, q4);
+        let p434strat = compute_strategy(n4, p4, q4).unwrap();
         assert!(compare_arrays(&p434strat, &P434_TWO_TORSION_STRATEGY));
     }
 
@@ -107,7 +107,7 @@ mod tests {
         let p3 = 5322;
         let q3 = 5282;
 
-        let p434strat = compute_strategy(n3, p3, q3);
+        let p434strat = compute_strategy(n3, p3, q3).unwrap();
 
         assert!(compare_arrays(&p434strat, &P434_THREE_TORSION_STRATEGY));
     }

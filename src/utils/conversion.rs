@@ -6,7 +6,7 @@ use crate::ff::{
 
 /// String to `u64` conversion
 pub fn str_to_u64(s: &str) -> u64 {
-    u64::from_str_radix(s, 16).expect(&format!("Incorrect value: {}", s))
+    u64::from_str_radix(s, 16).unwrap()
 }
 
 /// String to an element of the quadratic extension field conversion

@@ -93,7 +93,7 @@ pub const P751_THREE_TORSION_STRATEGY: [usize; 238] = [
 /// let strat = compute_strategy(12, 13, 14);
 /// println!("{:?}", strat);
 /// ```
-pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
+pub fn compute_strategy(n: usize, p: u64, q: u64) -> Result<Vec<usize>, &'static str> {
     // 1.
     let mut strategies = vec![vec![]];
 
@@ -128,5 +128,8 @@ pub fn compute_strategy(n: usize, p: u64, q: u64) -> Vec<usize> {
     }
 
     // 7.
-    strategies.last().unwrap().to_vec()
+    match strategies.last() {
+        Some(s) => Ok(s.to_vec()),
+        None => Err("No valid strategy found"),
+    }
 }

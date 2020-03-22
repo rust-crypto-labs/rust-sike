@@ -345,19 +345,12 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     fn two_e_iso(
         &self,
         s: Point<K>,
-        opt: Option<ThreePoints<K>>,
+        mut opt: Option<ThreePoints<K>>,
         curve: &Curve<K>,
     ) -> (Curve<K>, Option<ThreePoints<K>>) {
         let mut c = curve.clone();
         let mut s = s;
         let mut e2 = self.params.e2;
-
-        let mut opt_output: Vec<Point<K>> = match opt {
-            Some((p1, p2, p3)) => vec![p1, p2, p3],
-            None => vec![],
-        };
-
-        let nopt = opt_output.len();
 
         if e2 % 2 == 1 {
             e2 -= 1;
@@ -370,9 +363,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             s = Self::two_isogeny_eval(&t, &s);
 
             // 5 and 6.
-            for opt in opt_output.iter_mut() {
-                *opt = Self::two_isogeny_eval(&t, &opt);
-            }
+            opt = opt.map(|(p1, p2, p3)| {
+                (
+                    Self::two_isogeny_eval(&t, &p1),
+                    Self::two_isogeny_eval(&t, &p2),
+                    Self::two_isogeny_eval(&t, &p3),
+                )
+            });
         }
 
         // 1.
@@ -388,20 +385,17 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             s = Self::four_isogeny_eval(&k1, &k2, &k3, &s);
 
             // 5 and 6.
-            for opt in opt_output.iter_mut() {
-                *opt = Self::four_isogeny_eval(&k1, &k2, &k3, &opt);
-            }
+            opt = opt.map(|(p1, p2, p3)| {
+                (
+                    Self::four_isogeny_eval(&k1, &k2, &k3, &p1),
+                    Self::four_isogeny_eval(&k1, &k2, &k3, &p2),
+                    Self::four_isogeny_eval(&k1, &k2, &k3, &p3),
+                )
+            });
         }
 
         // 7.
-        if nopt > 0 {
-            let p3 = opt_output.pop().unwrap();
-            let p2 = opt_output.pop().unwrap();
-            let p1 = opt_output.pop().unwrap();
-            (c, Some((p1, p2, p3)))
-        } else {
-            (c, None)
-        }
+        (c, opt)
     }
 
     /// Computing & evaluating 2^e-isogeny, optimised version (ref `2_e_iso` Algorithm 19 p. 60)
@@ -413,20 +407,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     fn two_e_iso_optim(
         &self,
         s: Point<K>,
-        opt: Option<ThreePoints<K>>,
+        mut opt: Option<ThreePoints<K>>,
         curve_plus: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<ThreePoints<K>>) {
         assert_eq!(self.params.e2 as usize / 2 - 1, strategy.len());
 
         let mut curve = curve_plus.clone();
-
-        let mut opt_output: Vec<Point<K>> = match opt {
-            Some((p1, p2, p3)) => vec![p1, p2, p3],
-            None => vec![],
-        };
-
-        let nopt = opt_output.len();
         let mut s = s;
         let mut e2 = self.params.e2;
 
@@ -441,9 +428,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             s = Self::two_isogeny_eval(&t, &s);
 
             // 5 and 6.
-            for opt in opt_output.iter_mut() {
-                *opt = Self::two_isogeny_eval(&t, &opt);
-            }
+            opt = opt.map(|(p1, p2, p3)| {
+                (
+                    Self::two_isogeny_eval(&t, &p1),
+                    Self::two_isogeny_eval(&t, &p2),
+                    Self::two_isogeny_eval(&t, &p3),
+                )
+            })
         }
 
         // 1.
@@ -491,9 +482,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 queue = tmp_queue;
 
                 // 14 and 15.
-                for opt in opt_output.iter_mut() {
-                    *opt = Self::four_isogeny_eval(&k1, &k2, &k3, &opt);
-                }
+                opt = opt.map(|(p1, p2, p3)| {
+                    (
+                        Self::four_isogeny_eval(&k1, &k2, &k3, &p1),
+                        Self::four_isogeny_eval(&k1, &k2, &k3, &p2),
+                        Self::four_isogeny_eval(&k1, &k2, &k3, &p3),
+                    )
+                })
             } else if h > s_i {
                 // 17.
                 queue.push_back((h, p.clone()));
@@ -513,14 +508,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         }
 
         // 23.
-        if nopt > 0 {
-            let p3 = opt_output.pop().unwrap();
-            let p2 = opt_output.pop().unwrap();
-            let p1 = opt_output.pop().unwrap();
-            (curve, Some((p1, p2, p3)))
-        } else {
-            (curve, None)
-        }
+        (curve, opt)
     }
 
     /// Computing and evaluating the 3^e isogeny, simple version (ref `3_e_iso` Algorithm 18 p.59)
@@ -532,18 +520,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     fn three_e_iso(
         &self,
         s: Point<K>,
-        opt: Option<ThreePoints<K>>,
+        mut opt: Option<ThreePoints<K>>,
         curve: &Curve<K>,
     ) -> (Curve<K>, Option<ThreePoints<K>>) {
         let mut c = curve.clone();
         let mut s = s;
-
-        let mut opt_output: Vec<Point<K>> = match opt {
-            Some((p1, p2, p3)) => vec![p1, p2, p3],
-            None => vec![],
-        };
-
-        let nopt = opt_output.len();
 
         for e in (0..self.params.e3).rev() {
             // 2.
@@ -557,19 +538,16 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             s = Self::three_isogeny_eval(&s, &k1, &k2);
 
             // 5 and 6.
-            for opt in opt_output.iter_mut() {
-                *opt = Self::three_isogeny_eval(&opt, &k1, &k2);
-            }
+            opt = opt.map(|(p1, p2, p3)| {
+                (
+                    Self::three_isogeny_eval(&p1, &k1, &k2),
+                    Self::three_isogeny_eval(&p2, &k1, &k2),
+                    Self::three_isogeny_eval(&p3, &k1, &k2),
+                )
+            })
         }
 
-        if nopt > 0 {
-            let p3 = opt_output.pop().unwrap();
-            let p2 = opt_output.pop().unwrap();
-            let p1 = opt_output.pop().unwrap();
-            (c, Some((p1, p2, p3)))
-        } else {
-            (c, None)
-        }
+        (c, opt)
     }
 
     /// Computing & evaluating 3^e-isogeny, optimised version (ref `3_e_iso` Algorithm 20 p. 61)
@@ -581,20 +559,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     fn three_e_iso_optim(
         &self,
         s: Point<K>,
-        opt: Option<ThreePoints<K>>,
+        mut opt: Option<ThreePoints<K>>,
         curve_pm: &Curve<K>,
         strategy: &[usize],
     ) -> (Curve<K>, Option<ThreePoints<K>>) {
         assert_eq!(self.params.e3 as usize - 1, strategy.len());
 
         let mut curve = curve_pm.clone();
-
-        let mut opt_output: Vec<Point<K>> = match opt {
-            Some((p1, p2, p3)) => vec![p1, p2, p3],
-            None => vec![],
-        };
-
-        let nopt = opt_output.len();
 
         // 1.
         let mut queue = VecDeque::new();
@@ -641,9 +612,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 queue = tmp_queue;
 
                 // 14 and 15.
-                for opt in opt_output.iter_mut() {
-                    *opt = Self::three_isogeny_eval(&opt, &k1, &k2);
-                }
+                opt = opt.map(|(p1, p2, p3)| {
+                    (
+                        Self::three_isogeny_eval(&p1, &k1, &k2),
+                        Self::three_isogeny_eval(&p2, &k1, &k2),
+                        Self::three_isogeny_eval(&p3, &k1, &k2),
+                    )
+                })
             } else if h > s_i {
                 // 17.
                 queue.push_back((h, p.clone()));
@@ -663,14 +638,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         }
 
         // 23.
-        if nopt > 0 {
-            let p3 = opt_output.pop().unwrap();
-            let p2 = opt_output.pop().unwrap();
-            let p1 = opt_output.pop().unwrap();
-            (curve, Some((p1, p2, p3)))
-        } else {
-            (curve, None)
-        }
+        (curve, opt)
     }
 
     /// Computing public key on the 2-torsion (ref `isogen_2` Algo 21 p.62)
@@ -678,7 +646,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Output: public key
     ///
     #[inline]
-    pub fn isogen2(&self, sk: &SecretKey) -> PublicKey<K> {
+    pub fn isogen2(&self, sk: &SecretKey) -> Result<PublicKey<K>, &str> {
         // 1.
         let curve = Curve::starting_curve();
         let curve_plus = curve.curve_plus();
@@ -706,20 +674,23 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         };
 
         // 5.
-        let (p1, p2, p3) = opt.unwrap();
+        let (p1, p2, p3) = match opt {
+            Some(p) => p,
+            None => return Err("No points where supplied"),
+        };
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
         let x3 = p3.x.div(&p3.z);
 
         // 6.
-        PublicKey { x1, x2, x3 }
+        Ok(PublicKey { x1, x2, x3 })
     }
 
     /// Computing public key on the 3-torsion (ref `isogen_3` Algorithm 22 p.62)
     ///  * Input: secret key
     ///  * Output: public key
     #[inline]
-    pub fn isogen3(&self, sk: &SecretKey) -> PublicKey<K> {
+    pub fn isogen3(&self, sk: &SecretKey) -> Result<PublicKey<K>, &str> {
         // 1.
         let curve = Curve::starting_curve();
         let curve_pm = curve.curve_plus_minus();
@@ -750,13 +721,16 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         };
 
         // 5.
-        let (p1, p2, p3) = opt.unwrap();
+        let (p1, p2, p3) = match opt {
+            Some(p) => p,
+            None => return Err("No points where supplied"),
+        };
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
         let x3 = p3.x.div(&p3.z);
 
         // 6.
-        PublicKey { x1, x2, x3 }
+        Ok(PublicKey { x1, x2, x3 })
     }
 
     /// Establishing shared keys on the 2-torsion, (ref `isoex_2` Algorithm 23 p.63)
@@ -876,11 +850,11 @@ mod tests {
 
         let iso = CurveIsogenies::init(params);
 
-        let sk3 = SecretKey::get_random_secret_key(nks3 as usize);
-        let sk2 = SecretKey::get_random_secret_key(nks2 as usize);
+        let sk3 = SecretKey::get_random_secret_key(nks3 as usize).unwrap();
+        let sk2 = SecretKey::get_random_secret_key(nks2 as usize).unwrap();
 
-        let pk3 = iso.isogen3(&sk3);
-        let pk2 = iso.isogen2(&sk2);
+        let pk3 = iso.isogen3(&sk3).unwrap();
+        let pk2 = iso.isogen2(&sk2).unwrap();
 
         let j_a = iso.isoex2(&sk2, &pk3);
         let j_b = iso.isoex3(&sk3, &pk2);
@@ -894,7 +868,7 @@ mod tests {
     #[test]
     fn test_isogen2() {
         let nks2 = str_to_u64(SIKE_P434_NKS2);
-        let sk = SecretKey::get_random_secret_key(nks2 as usize);
+        let sk = SecretKey::get_random_secret_key(nks2 as usize).unwrap();
         let strat = Some(P434_TWO_TORSION_STRATEGY.to_vec());
 
         let params = sike_p434_params(strat, None);
@@ -909,7 +883,7 @@ mod tests {
     #[test]
     fn test_isogen3() {
         let nks3 = str_to_u64(SIKE_P434_NKS3);
-        let sk = SecretKey::get_random_secret_key(nks3 as usize);
+        let sk = SecretKey::get_random_secret_key(nks3 as usize).unwrap();
         let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 
         let params = sike_p434_params(None, strat);
@@ -923,7 +897,7 @@ mod tests {
 
     #[test]
     fn test_conversion_secretkey_bytes() {
-        let k = SecretKey::get_random_secret_key(256);
+        let k = SecretKey::get_random_secret_key(256).unwrap();
         let b = k.clone().to_bytes();
         let k_recovered = SecretKey::from_bytes(&b);
 
@@ -933,12 +907,12 @@ mod tests {
     #[test]
     fn test_conversion_publickey_bytes() {
         let nks3 = str_to_u64(SIKE_P434_NKS3);
-        let sk = SecretKey::get_random_secret_key(nks3 as usize);
+        let sk = SecretKey::get_random_secret_key(nks3 as usize).unwrap();
         let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 
         let params = sike_p434_params(None, strat);
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen3(&sk);
+        let pk = iso.isogen3(&sk).unwrap();
         let (b0, b1, b2) = pk.clone().into_bytes();
 
         let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2);

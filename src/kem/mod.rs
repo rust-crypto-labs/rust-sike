@@ -51,22 +51,22 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
     /// Generate a secret and a keypair
     #[inline]
-    pub fn keygen(&self) -> (Vec<u8>, SecretKey, PublicKey<K>) {
-        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize);
-        let pk3 = self.pke.isogenies.isogen3(&sk3);
+    pub fn keygen(&self) -> Result<(Vec<u8>, SecretKey, PublicKey<K>), &str> {
+        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize)?;
+        let pk3 = self.pke.isogenies.isogen3(&sk3)?;
         let s = Self::random_string(self.n);
 
-        (s, sk3, pk3)
+        Ok((s, sk3, pk3))
     }
 
     /// Encapsulate the shared secret using the PKE encryption
     #[inline]
-    pub fn encaps(&self, pk: &PublicKey<K>) -> (Ciphertext, Vec<u8>) {
+    pub fn encaps(&self, pk: &PublicKey<K>) -> Result<(Ciphertext, Vec<u8>), &str> {
         let message = Message::from_bytes(Self::random_string(self.n / 8));
         let r = self.hash_function_g(&message.clone(), &pk);
         let det_sk = SecretKey::from_bytes(&r);
 
-        let c0: PublicKey<K> = self.pke.isogenies.isogen2(&det_sk);
+        let c0: PublicKey<K> = self.pke.isogenies.isogen2(&det_sk)?;
 
         let j_inv = self.pke.isogenies.isoex2(&det_sk, &pk);
         let h = self.pke.hash_function_f(j_inv);
@@ -83,12 +83,18 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         };
 
         let k = self.hash_function_h(&message, &cipher);
-        (cipher, k)
+        Ok((cipher, k))
     }
 
     /// Decapsulate the shared secret using the PKE decryption
     #[inline]
-    pub fn decaps(&self, s: &[u8], sk: &SecretKey, pk: &PublicKey<K>, c: Ciphertext) -> Vec<u8> {
+    pub fn decaps(
+        &self,
+        s: &[u8],
+        sk: &SecretKey,
+        pk: &PublicKey<K>,
+        c: Ciphertext,
+    ) -> Result<Vec<u8>, &str> {
         let m = self.pke.dec(&sk, c.clone());
         let s = Message::from_bytes(s.to_vec());
         let r = self.hash_function_g(&m.clone(), &pk);
@@ -96,12 +102,12 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         let c0 = PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
         let rsk = SecretKey::from_bytes(&r);
 
-        let c0p = self.pke.isogenies.isogen2(&rsk);
+        let c0p = self.pke.isogenies.isogen2(&rsk)?;
 
         if c0p == c0 {
-            self.hash_function_h(&m, &c)
+            Ok(self.hash_function_h(&m, &c))
         } else {
-            self.hash_function_h(&s, &c)
+            Ok(self.hash_function_h(&s, &c))
         }
     }
 
@@ -116,7 +122,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         let msg_bytes = m.clone().into_bytes();
         let input = conversion::concatenate(&[&msg_bytes, &part1, &part2, &part3]);
 
-        let n: usize = self.params.secparam; //self.params.e2.try_into().unwrap();
+        let n: usize = self.params.secparam;
 
         shake::shake256(&input, n / 8)
     }
@@ -151,14 +157,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }
@@ -170,14 +176,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }
@@ -189,14 +195,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }
@@ -208,14 +214,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }
@@ -230,14 +236,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }
@@ -252,14 +258,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }
@@ -274,14 +280,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }
@@ -296,14 +302,14 @@ mod tests {
         let kem = KEM::setup(params);
 
         // Alice runs keygen, publishes pk3. Values s and sk3 are secret
-        let (s, sk3, pk3) = kem.keygen();
+        let (s, sk3, pk3) = kem.keygen().unwrap();
 
         // Bob uses pk3 to derive a key k and encapsulation c
-        let (c, k) = kem.encaps(&pk3);
+        let (c, k) = kem.encaps(&pk3).unwrap();
 
         // Bob sends c to Alice
         // Alice uses s, c, sk3 and pk3 to recover k
-        let k_recovered = kem.decaps(&s, &sk3, &pk3, c);
+        let k_recovered = kem.decaps(&s, &sk3, &pk3, c).unwrap();
 
         assert_eq!(k, k_recovered);
     }

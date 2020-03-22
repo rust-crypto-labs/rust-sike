@@ -27,7 +27,8 @@
 //! assert_eq!(k, k_recovered);
 //! ```
 
-#[warn(missing_docs)]
+#![warn(missing_docs)]
+#![deny(clippy::mem_forget)]
 #[forbid(unsafe_code)]
 mod constants;
 mod ff;

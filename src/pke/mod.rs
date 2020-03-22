@@ -94,15 +94,15 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
     /// Generate a keypair
     #[inline]
-    pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
+    pub fn gen(&self) -> Result<(SecretKey, PublicKey<K>), &str> {
         // 1.
-        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize);
+        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize)?;
 
         // 2.
-        let pk3 = self.isogenies.isogen3(&sk3);
+        let pk3 = self.isogenies.isogen3(&sk3)?;
 
         // 3.
-        (sk3, pk3)
+        Ok((sk3, pk3))
     }
 
     /// Encrypt a message
@@ -111,12 +111,12 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     ///
     /// The function will panic if the message length is incorrect, of if the public key is incorrect
     #[inline]
-    pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
+    pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Result<Ciphertext, &str> {
         // 4.
-        let sk2 = SecretKey::get_random_secret_key(self.params.keyspace2 as usize);
+        let sk2 = SecretKey::get_random_secret_key(self.params.keyspace2 as usize)?;
 
         // 5.
-        let c0: PublicKey<K> = self.isogenies.isogen2(&sk2);
+        let c0: PublicKey<K> = self.isogenies.isogen2(&sk2)?;
 
         // 6.
         let j = self.isogenies.isoex2(&sk2, &pk);
@@ -125,17 +125,20 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let h = self.hash_function_f(j);
 
         // 8.
-        assert_eq!(h.len(), m.bytes.len());
+        if h.len() != m.bytes.len() {
+            return Err("Incorrect Hash");
+        }
+
         let c1_bytes = Self::xor(&m.bytes, &h);
 
         // 9.
         let (part1, part2, part3) = c0.into_bytes();
-        Ciphertext {
+        Ok(Ciphertext {
             bytes00: part1,
             bytes01: part2,
             bytes02: part3,
             bytes1: c1_bytes,
-        }
+        })
     }
 
     /// Decrypts a message
@@ -198,13 +201,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
@@ -226,13 +229,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
@@ -254,13 +257,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
@@ -282,13 +285,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
@@ -307,13 +310,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
@@ -332,13 +335,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
@@ -357,13 +360,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
@@ -382,13 +385,13 @@ mod tests {
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
