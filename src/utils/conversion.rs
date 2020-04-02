@@ -5,8 +5,8 @@ use crate::ff::{
 };
 
 /// String to `u64` conversion
-pub fn str_to_u64(s: &str) -> u64 {
-    u64::from_str_radix(s, 16).unwrap()
+pub fn str_to_u64(s: &str) -> Result<u64, String> {
+    u64::from_str_radix(s, 16).or_else(|_| Err(String::from("Cannot parse from string")))
 }
 
 /// String to an element of the quadratic extension field conversion

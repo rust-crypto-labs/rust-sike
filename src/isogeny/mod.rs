@@ -410,8 +410,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         mut opt: Option<ThreePoints<K>>,
         curve_plus: &Curve<K>,
         strategy: &[usize],
-    ) -> (Curve<K>, Option<ThreePoints<K>>) {
-        assert_eq!(self.params.e2 as usize / 2 - 1, strategy.len());
+    ) -> Result<(Curve<K>, Option<ThreePoints<K>>), String> {
+        if self.params.e2 as usize / 2 - 1 != strategy.len() {
+            return Err(String::from("Invalid strategy"));
+        }
 
         let mut curve = curve_plus.clone();
         let mut s = s;
@@ -508,7 +510,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         }
 
         // 23.
-        (curve, opt)
+        Ok((curve, opt))
     }
 
     /// Computing and evaluating the 3^e isogeny, simple version (ref `3_e_iso` Algorithm 18 p.59)
@@ -562,8 +564,10 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         mut opt: Option<ThreePoints<K>>,
         curve_pm: &Curve<K>,
         strategy: &[usize],
-    ) -> (Curve<K>, Option<ThreePoints<K>>) {
-        assert_eq!(self.params.e3 as usize - 1, strategy.len());
+    ) -> Result<(Curve<K>, Option<ThreePoints<K>>), String> {
+        if self.params.e3 as usize - 1 != strategy.len() {
+            return Err(String::from("Invalid strategy"));
+        }
 
         let mut curve = curve_pm.clone();
 
@@ -638,7 +642,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         }
 
         // 23.
-        (curve, opt)
+        Ok((curve, opt))
     }
 
     /// Computing public key on the 2-torsion (ref `isogen_2` Algo 21 p.62)
@@ -669,7 +673,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let opt = Some((p1, p2, p3));
 
         let (_, opt) = match &self.params.e2_strategy {
-            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, &strat),
+            Some(strat) => self.two_e_iso_optim(s, opt, &curve_plus, &strat)?,
             None => self.two_e_iso(s, opt, &curve_plus),
         };
 
@@ -716,7 +720,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let opt = Some((p1, p2, p3));
 
         let (_, opt) = match &self.params.e3_strategy {
-            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, &strat),
+            Some(strat) => self.three_e_iso_optim(s, opt, &curve_pm, &strat)?,
             None => self.three_e_iso(s, opt, &curve_pm),
         };
 
@@ -737,13 +741,16 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Input: secret key, public key, [tree traversal strategy]
     ///  * Output: j-invariant
     #[inline]
-    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
+    pub fn isoex2(&self, sk: &SecretKey, pk: &PublicKey<K>) -> Result<K, String> {
         let one = K::one();
         let two = one.add(&one);
         let four = two.add(&two);
 
         // 1.
-        let curve = Curve::from_public_key(pk).expect("Incorrect public key!");
+        let curve = match Curve::from_public_key(pk) {
+            Some(c) => c,
+            None => return Err(String::from("Incorrect public key!")),
+        };
 
         // 2.
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
@@ -754,7 +761,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_plus, _) = match &self.params.e2_strategy {
-            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat),
+            Some(strat) => self.two_e_iso_optim(s, None, &curve_plus, &strat)?,
             None => self.two_e_iso(s, None, &curve_plus),
         };
 
@@ -765,19 +772,22 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         );
 
         // 6, 7.
-        curve.j_invariant()
+        Ok(curve.j_invariant())
     }
 
     /// Establishing shared keys on the 3-torsion (ref `isoex_3` Algorithm 24 p.63)
     ///  * Input: secret key, public key, [tree traversal strategy]
     ///  * Output: a j-invariant
     #[inline]
-    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>) -> K {
+    pub fn isoex3(&self, sk: &SecretKey, pk: &PublicKey<K>) -> Result<K, String> {
         let one = K::one();
         let two = one.add(&one);
 
         // 1.
-        let curve = Curve::from_public_key(pk).expect("Incorrect public key!");
+        let curve = match Curve::from_public_key(pk) {
+            Some(c) => c,
+            None => return Err(String::from("Incorrect public key!")),
+        };
 
         // 2.
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
@@ -788,7 +798,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         // 4.
         let (curve_pm, _) = match &self.params.e3_strategy {
-            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, &strat),
+            Some(strat) => self.three_e_iso_optim(s, None, &curve_pm, &strat)?,
             None => self.three_e_iso(s, None, &curve_pm),
         };
 
@@ -799,7 +809,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         );
 
         // 6, 7.
-        curve.j_invariant()
+        Ok(curve.j_invariant())
     }
 }
 
@@ -843,8 +853,8 @@ mod tests {
 
     #[test]
     fn test_isoex_isogen() {
-        let nks3 = str_to_u64(SIKE_P434_NKS3);
-        let nks2 = str_to_u64(SIKE_P434_NKS2);
+        let nks3 = str_to_u64(SIKE_P434_NKS3).unwrap();
+        let nks2 = str_to_u64(SIKE_P434_NKS2).unwrap();
 
         let params = sike_p434_params(None, None).unwrap();
 
@@ -856,8 +866,8 @@ mod tests {
         let pk3 = iso.isogen3(&sk3).unwrap();
         let pk2 = iso.isogen2(&sk2).unwrap();
 
-        let j_a = iso.isoex2(&sk2, &pk3);
-        let j_b = iso.isoex3(&sk3, &pk2);
+        let j_a = iso.isoex2(&sk2, &pk3).unwrap();
+        let j_b = iso.isoex3(&sk3, &pk2).unwrap();
 
         println!("j_A = {:?}", j_a);
         println!("j_B = {:?}", j_b);
@@ -867,30 +877,30 @@ mod tests {
 
     #[test]
     fn test_isogen2() {
-        let nks2 = str_to_u64(SIKE_P434_NKS2);
+        let nks2 = str_to_u64(SIKE_P434_NKS2).unwrap();
         let sk = SecretKey::get_random_secret_key(nks2 as usize).unwrap();
         let strat = Some(P434_TWO_TORSION_STRATEGY.to_vec());
 
         let params = sike_p434_params(strat, None).unwrap();
 
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen2(&sk);
-        let pk_2 = iso.isogen2(&sk);
+        let pk = iso.isogen2(&sk).unwrap();
+        let pk_2 = iso.isogen2(&sk).unwrap();
 
         assert_eq!(pk, pk_2);
     }
 
     #[test]
     fn test_isogen3() {
-        let nks3 = str_to_u64(SIKE_P434_NKS3);
+        let nks3 = str_to_u64(SIKE_P434_NKS3).unwrap();
         let sk = SecretKey::get_random_secret_key(nks3 as usize).unwrap();
         let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 
         let params = sike_p434_params(None, strat).unwrap();
 
         let iso = CurveIsogenies::init(params);
-        let pk = iso.isogen3(&sk);
-        let pk_2 = iso.isogen3(&sk);
+        let pk = iso.isogen3(&sk).unwrap();
+        let pk_2 = iso.isogen3(&sk).unwrap();
 
         assert_eq!(pk, pk_2);
     }
@@ -906,7 +916,7 @@ mod tests {
 
     #[test]
     fn test_conversion_publickey_bytes() {
-        let nks3 = str_to_u64(SIKE_P434_NKS3);
+        let nks3 = str_to_u64(SIKE_P434_NKS3).unwrap();
         let sk = SecretKey::get_random_secret_key(nks3 as usize).unwrap();
         let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 

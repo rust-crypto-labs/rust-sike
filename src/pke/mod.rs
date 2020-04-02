@@ -119,7 +119,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let c0: PublicKey<K> = self.isogenies.isogen2(&sk2)?;
 
         // 6.
-        let j = self.isogenies.isoex2(&sk2, &pk);
+        let j = self.isogenies.isoex2(&sk2, &pk)?;
 
         // 7.
         let h = self.hash_function_f(j);
@@ -151,13 +151,16 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         // 10.
         let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02)?;
 
-        let j: K = self.isogenies.isoex3(sk, c0);
+        let j: K = self.isogenies.isoex3(sk, c0)?;
 
         // 11.
         let h = self.hash_function_f(j);
 
         // 12.
-        assert_eq!(h.len(), c.bytes1.len());
+        if h.len() != c.bytes1.len() {
+            return Err(String::from("Incorrect Hash"));
+        }
+
         let m = Self::xor(&h, &c.bytes1);
 
         // 13.

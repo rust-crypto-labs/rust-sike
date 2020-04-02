@@ -68,10 +68,13 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
         let c0: PublicKey<K> = self.pke.isogenies.isogen2(&det_sk)?;
 
-        let j_inv = self.pke.isogenies.isoex2(&det_sk, &pk);
+        let j_inv = self.pke.isogenies.isoex2(&det_sk, &pk)?;
         let h = self.pke.hash_function_f(j_inv);
 
-        assert_eq!(h.len(), message.bytes.len());
+        if h.len() != message.bytes.len() {
+            return Err(String::from("Incorrect Hash"));
+        }
+
         let c1_bytes = PKE::<K>::xor(&message.bytes, &h);
 
         let (part1, part2, part3) = c0.into_bytes();
