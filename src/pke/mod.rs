@@ -171,14 +171,11 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
     /// Computes the bitwise XOR between two sequences
     pub fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {
-        let mut result = vec![0; input1.len()];
-        let couples = input1.iter().zip(input2.iter());
-
-        for (pos, (x, y)) in couples.enumerate() {
-            result[pos] = x ^ y;
-        }
-
-        result
+        input1
+            .iter()
+            .zip(input2.iter())
+            .map(|(x, y)| x ^ y)
+            .collect()
     }
 }
 
