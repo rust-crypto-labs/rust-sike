@@ -10,35 +10,35 @@ pub fn str_to_u64(s: &str) -> u64 {
 }
 
 /// String to an element of the quadratic extension field conversion
-pub fn str_to_p434(s0: &str, s1: &str) -> QuadraticExtension<PrimeFieldP434> {
-    QuadraticExtension::from(
-        PrimeFieldP434::from_string(s0),
-        PrimeFieldP434::from_string(s1),
-    )
+pub fn str_to_p434(s0: &str, s1: &str) -> Result<QuadraticExtension<PrimeFieldP434>, String> {
+    Ok(QuadraticExtension::from(
+        PrimeFieldP434::from_string(s0)?,
+        PrimeFieldP434::from_string(s1)?,
+    ))
 }
 
 /// String to an element of the quadratic extension field conversion
-pub fn str_to_p503(s0: &str, s1: &str) -> QuadraticExtension<PrimeFieldP503> {
-    QuadraticExtension::from(
-        PrimeFieldP503::from_string(s0),
-        PrimeFieldP503::from_string(s1),
-    )
+pub fn str_to_p503(s0: &str, s1: &str) -> Result<QuadraticExtension<PrimeFieldP503>, String> {
+    Ok(QuadraticExtension::from(
+        PrimeFieldP503::from_string(s0)?,
+        PrimeFieldP503::from_string(s1)?,
+    ))
 }
 
 /// String to an element of the quadratic extension field conversion
-pub fn str_to_p751(s0: &str, s1: &str) -> QuadraticExtension<PrimeFieldP751> {
-    QuadraticExtension::from(
-        PrimeFieldP751::from_string(s0),
-        PrimeFieldP751::from_string(s1),
-    )
+pub fn str_to_p751(s0: &str, s1: &str) -> Result<QuadraticExtension<PrimeFieldP751>, String> {
+    Ok(QuadraticExtension::from(
+        PrimeFieldP751::from_string(s0)?,
+        PrimeFieldP751::from_string(s1)?,
+    ))
 }
 
 /// String to an element of the quadratic extension field conversion
-pub fn str_to_p610(s0: &str, s1: &str) -> QuadraticExtension<PrimeFieldP610> {
-    QuadraticExtension::from(
-        PrimeFieldP610::from_string(s0),
-        PrimeFieldP610::from_string(s1),
-    )
+pub fn str_to_p610(s0: &str, s1: &str) -> Result<QuadraticExtension<PrimeFieldP610>, String> {
+    Ok(QuadraticExtension::from(
+        PrimeFieldP610::from_string(s0)?,
+        PrimeFieldP610::from_string(s1)?,
+    ))
 }
 
 /// Concatenates a list of arrays into one array

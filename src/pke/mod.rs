@@ -94,7 +94,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
     /// Generate a keypair
     #[inline]
-    pub fn gen(&self) -> Result<(SecretKey, PublicKey<K>), &str> {
+    pub fn gen(&self) -> Result<(SecretKey, PublicKey<K>), String> {
         // 1.
         let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize)?;
 
@@ -111,7 +111,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     ///
     /// The function will panic if the message length is incorrect, of if the public key is incorrect
     #[inline]
-    pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Result<Ciphertext, &str> {
+    pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Result<Ciphertext, String> {
         // 4.
         let sk2 = SecretKey::get_random_secret_key(self.params.keyspace2 as usize)?;
 
@@ -126,7 +126,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
         // 8.
         if h.len() != m.bytes.len() {
-            return Err("Incorrect Hash");
+            return Err(String::from("Incorrect Hash"));
         }
 
         let c1_bytes = Self::xor(&m.bytes, &h);
@@ -147,9 +147,9 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     ///
     /// The function will panic if the public key is incorrect
     #[inline]
-    pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
+    pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Result<Message, String> {
         // 10.
-        let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
+        let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02)?;
 
         let j: K = self.isogenies.isoex3(sk, c0);
 
@@ -161,7 +161,7 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
         let m = Self::xor(&h, &c.bytes1);
 
         // 13.
-        Message { bytes: m }
+        Ok(Message { bytes: m })
     }
 
     /// Computes the F function
@@ -195,7 +195,8 @@ mod tests {
         let params = sike_p434_params(
             Some(P434_TWO_TORSION_STRATEGY.to_vec()),
             Some(P434_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -212,7 +213,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
@@ -223,7 +224,8 @@ mod tests {
         let params = sike_p503_params(
             Some(P503_TWO_TORSION_STRATEGY.to_vec()),
             Some(P503_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -240,7 +242,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
@@ -251,7 +253,8 @@ mod tests {
         let params = sike_p610_params(
             Some(P610_TWO_TORSION_STRATEGY.to_vec()),
             Some(P610_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -268,7 +271,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
@@ -279,7 +282,8 @@ mod tests {
         let params = sike_p751_params(
             Some(P751_TWO_TORSION_STRATEGY.to_vec()),
             Some(P751_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -296,7 +300,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
@@ -304,7 +308,7 @@ mod tests {
 
     #[test]
     fn test_pke_p434() {
-        let params = sike_p434_params(None, None);
+        let params = sike_p434_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -321,7 +325,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
@@ -329,7 +333,7 @@ mod tests {
 
     #[test]
     fn test_pke_p503() {
-        let params = sike_p503_params(None, None);
+        let params = sike_p503_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -346,7 +350,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
@@ -354,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_pke_p610() {
-        let params = sike_p610_params(None, None);
+        let params = sike_p610_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -371,7 +375,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
@@ -379,7 +383,7 @@ mod tests {
 
     #[test]
     fn test_pke_p751() {
-        let params = sike_p751_params(None, None);
+        let params = sike_p751_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
@@ -396,7 +400,7 @@ mod tests {
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
         assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());

@@ -646,7 +646,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Output: public key
     ///
     #[inline]
-    pub fn isogen2(&self, sk: &SecretKey) -> Result<PublicKey<K>, &str> {
+    pub fn isogen2(&self, sk: &SecretKey) -> Result<PublicKey<K>, String> {
         // 1.
         let curve = Curve::starting_curve();
         let curve_plus = curve.curve_plus();
@@ -676,7 +676,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 5.
         let (p1, p2, p3) = match opt {
             Some(p) => p,
-            None => return Err("No points where supplied"),
+            None => return Err(String::from("No points where supplied")),
         };
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
@@ -690,7 +690,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     ///  * Input: secret key
     ///  * Output: public key
     #[inline]
-    pub fn isogen3(&self, sk: &SecretKey) -> Result<PublicKey<K>, &str> {
+    pub fn isogen3(&self, sk: &SecretKey) -> Result<PublicKey<K>, String> {
         // 1.
         let curve = Curve::starting_curve();
         let curve_pm = curve.curve_plus_minus();
@@ -723,7 +723,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 5.
         let (p1, p2, p3) = match opt {
             Some(p) => p,
-            None => return Err("No points where supplied"),
+            None => return Err(String::from("No points where supplied")),
         };
         let x1 = p1.x.div(&p1.z);
         let x2 = p2.x.div(&p2.z);
@@ -846,7 +846,7 @@ mod tests {
         let nks3 = str_to_u64(SIKE_P434_NKS3);
         let nks2 = str_to_u64(SIKE_P434_NKS2);
 
-        let params = sike_p434_params(None, None);
+        let params = sike_p434_params(None, None).unwrap();
 
         let iso = CurveIsogenies::init(params);
 
@@ -871,7 +871,7 @@ mod tests {
         let sk = SecretKey::get_random_secret_key(nks2 as usize).unwrap();
         let strat = Some(P434_TWO_TORSION_STRATEGY.to_vec());
 
-        let params = sike_p434_params(strat, None);
+        let params = sike_p434_params(strat, None).unwrap();
 
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen2(&sk);
@@ -886,7 +886,7 @@ mod tests {
         let sk = SecretKey::get_random_secret_key(nks3 as usize).unwrap();
         let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 
-        let params = sike_p434_params(None, strat);
+        let params = sike_p434_params(None, strat).unwrap();
 
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen3(&sk);
@@ -910,12 +910,12 @@ mod tests {
         let sk = SecretKey::get_random_secret_key(nks3 as usize).unwrap();
         let strat = Some(P434_THREE_TORSION_STRATEGY.to_vec());
 
-        let params = sike_p434_params(None, strat);
+        let params = sike_p434_params(None, strat).unwrap();
         let iso = CurveIsogenies::init(params);
         let pk = iso.isogen3(&sk).unwrap();
         let (b0, b1, b2) = pk.clone().into_bytes();
 
-        let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2);
+        let pk_recovered = PublicKey::from_bytes(&b0, &b1, &b2).unwrap();
 
         assert_eq!(pk, pk_recovered)
     }
@@ -931,6 +931,6 @@ mod tests {
         let j: QuadraticExtension<PrimeFieldP434> = curve.j_invariant();
 
         // 287496 + 0i
-        assert_eq!(j, str_to_p434("00046308", "00000000"))
+        assert_eq!(j, str_to_p434("00046308", "00000000").unwrap())
     }
 }

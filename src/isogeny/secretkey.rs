@@ -24,10 +24,10 @@ impl SecretKey {
     /// let key = SecretKey::get_random_secret_key(64);
     /// println!("{:?}", key);
     /// ```
-    pub fn get_random_secret_key(size: usize) -> Result<Self, &'static str> {
+    pub fn get_random_secret_key(size: usize) -> Result<Self, String> {
         let mut bytes = vec![0; size];
         if let Err(_e) = rand::rngs::OsRng.try_fill_bytes(&mut bytes) {
-            return Err("RNG Error");
+            return Err(String::from("RNG Error"));
         };
         Ok(Self::from_bytes(&bytes))
     }

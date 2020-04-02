@@ -51,7 +51,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
     /// Generate a secret and a keypair
     #[inline]
-    pub fn keygen(&self) -> Result<(Vec<u8>, SecretKey, PublicKey<K>), &str> {
+    pub fn keygen(&self) -> Result<(Vec<u8>, SecretKey, PublicKey<K>), String> {
         let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize)?;
         let pk3 = self.pke.isogenies.isogen3(&sk3)?;
         let s = Self::random_string(self.n);
@@ -61,7 +61,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
     /// Encapsulate the shared secret using the PKE encryption
     #[inline]
-    pub fn encaps(&self, pk: &PublicKey<K>) -> Result<(Ciphertext, Vec<u8>), &str> {
+    pub fn encaps(&self, pk: &PublicKey<K>) -> Result<(Ciphertext, Vec<u8>), String> {
         let message = Message::from_bytes(Self::random_string(self.n / 8));
         let r = self.hash_function_g(&message.clone(), &pk);
         let det_sk = SecretKey::from_bytes(&r);
@@ -94,12 +94,12 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
         sk: &SecretKey,
         pk: &PublicKey<K>,
         c: Ciphertext,
-    ) -> Result<Vec<u8>, &str> {
-        let m = self.pke.dec(&sk, c.clone());
+    ) -> Result<Vec<u8>, String> {
+        let m = self.pke.dec(&sk, c.clone())?;
         let s = Message::from_bytes(s.to_vec());
         let r = self.hash_function_g(&m.clone(), &pk);
 
-        let c0 = PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
+        let c0 = PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02)?;
         let rsk = SecretKey::from_bytes(&r);
 
         let c0p = self.pke.isogenies.isogen2(&rsk)?;
@@ -152,7 +152,7 @@ mod tests {
 
     #[test]
     fn test_kem_p434() {
-        let params = sike_p434_params(None, None);
+        let params = sike_p434_params(None, None).unwrap();
 
         let kem = KEM::setup(params);
 
@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_kem_p503() {
-        let params = sike_p503_params(None, None);
+        let params = sike_p503_params(None, None).unwrap();
 
         let kem = KEM::setup(params);
 
@@ -190,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_kem_p610() {
-        let params = sike_p610_params(None, None);
+        let params = sike_p610_params(None, None).unwrap();
 
         let kem = KEM::setup(params);
 
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_kem_p751() {
-        let params = sike_p751_params(None, None);
+        let params = sike_p751_params(None, None).unwrap();
 
         let kem = KEM::setup(params);
 
@@ -231,7 +231,8 @@ mod tests {
         let params = sike_p434_params(
             Some(P434_TWO_TORSION_STRATEGY.to_vec()),
             Some(P434_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let kem = KEM::setup(params);
 
@@ -253,7 +254,8 @@ mod tests {
         let params = sike_p503_params(
             Some(P503_TWO_TORSION_STRATEGY.to_vec()),
             Some(P503_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let kem = KEM::setup(params);
 
@@ -275,7 +277,8 @@ mod tests {
         let params = sike_p610_params(
             Some(P610_TWO_TORSION_STRATEGY.to_vec()),
             Some(P610_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let kem = KEM::setup(params);
 
@@ -297,7 +300,8 @@ mod tests {
         let params = sike_p751_params(
             Some(P751_TWO_TORSION_STRATEGY.to_vec()),
             Some(P751_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let kem = KEM::setup(params);
 

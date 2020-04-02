@@ -22,10 +22,13 @@ pub struct PrimeFieldP610 {
 
 impl PrimeFieldP610 {
     /// Parse a string into and element of the finite field
-    pub fn from_string(s: &str) -> Self {
-        let val = Integer::from_str_radix(s, 16).unwrap();
+    pub fn from_string(s: &str) -> Result<Self, String> {
+        let val = match Integer::from_str_radix(s, 16) {
+            Ok(v) => v,
+            Err(_e) => return Err(String::from("Cannot parse from string")),
+        };
 
-        Self { val }
+        Ok(Self { val })
     }
 }
 
@@ -115,10 +118,12 @@ impl FiniteField for PrimeFieldP610 {
         self.val.to_digits::<u8>(MsfBe)
     }
 
-    fn from_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
         let s = hex::encode(bytes);
-        Self {
-            val: Integer::from_str_radix(&s, 16).unwrap(),
-        }
+        let val = match Integer::from_str_radix(&s, 16) {
+            Ok(v) => v,
+            Err(_e) => return Err(String::from("Cannot parse from bytes")),
+        };
+        Ok(Self { val })
     }
 }

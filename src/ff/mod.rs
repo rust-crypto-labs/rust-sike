@@ -16,7 +16,7 @@ pub use crate::ff::{
 };
 
 /// Finite field element
-pub trait FiniteField {
+pub trait FiniteField: Sized {
     /// Check if the element is the additive identity of the field
     fn is_zero(&self) -> bool;
 
@@ -54,7 +54,7 @@ pub trait FiniteField {
     fn into_bytes(self) -> Vec<u8>;
 
     /// Converts a bytes representation to an element of the finite field
-    fn from_bytes(bytes: &[u8]) -> Self;
+    fn from_bytes(bytes: &[u8]) -> Result<Self, String>;
 }
 
 /// Given a specific finite field 𝔽ₚ, represents an element of
@@ -169,11 +169,11 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
     }
 
     /// Element from byte representation (ref `ostofp2` Algorithm 1.2.4.)
-    fn from_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
         let n = bytes.len() / 2;
-        let a = F::from_bytes(&bytes[..n]);
-        let b = F::from_bytes(&bytes[n..]);
-        Self::from(a, b)
+        let a = F::from_bytes(&bytes[..n])?;
+        let b = F::from_bytes(&bytes[n..])?;
+        Ok(Self::from(a, b))
     }
 }
 
@@ -185,10 +185,10 @@ mod tests {
 
     #[test]
     fn test_conversion_ff434_bytes() {
-        let num = PrimeFieldP434::from_string(SIKE_P434_XP20);
+        let num = PrimeFieldP434::from_string(SIKE_P434_XP20).unwrap();
 
         let b = num.clone().into_bytes();
-        let num_recovered = PrimeFieldP434::from_bytes(&b);
+        let num_recovered = PrimeFieldP434::from_bytes(&b).unwrap();
 
         println!("{:?}", num);
         println!("{:?}", num_recovered);
@@ -198,12 +198,12 @@ mod tests {
 
     #[test]
     fn test_conversion_quadratic_bytes() {
-        let num1 = PrimeFieldP434::from_string(SIKE_P434_XP20);
-        let num2 = PrimeFieldP434::from_string(SIKE_P434_XP21);
+        let num1 = PrimeFieldP434::from_string(SIKE_P434_XP20).unwrap();
+        let num2 = PrimeFieldP434::from_string(SIKE_P434_XP21).unwrap();
 
         let q = QuadraticExtension::from(num1, num2);
         let b = q.clone().into_bytes();
-        let q_recovered = QuadraticExtension::from_bytes(&b);
+        let q_recovered = QuadraticExtension::from_bytes(&b).unwrap();
 
         println!("{:?}", q);
         println!("{:?}", q_recovered);

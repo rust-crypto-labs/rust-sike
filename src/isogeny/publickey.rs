@@ -35,12 +35,12 @@ impl<K: FiniteField> PublicKey<K> {
     }
 
     /// Creates a new public key for given three points (represented as bytes)
-    pub fn from_bytes(part1: &[u8], part2: &[u8], part3: &[u8]) -> Self {
-        Self {
-            x1: K::from_bytes(part1),
-            x2: K::from_bytes(part2),
-            x3: K::from_bytes(part3),
-        }
+    pub fn from_bytes(part1: &[u8], part2: &[u8], part3: &[u8]) -> Result<Self, String> {
+        Ok(Self {
+            x1: K::from_bytes(part1)?,
+            x2: K::from_bytes(part2)?,
+            x3: K::from_bytes(part3)?,
+        })
     }
 }
 
