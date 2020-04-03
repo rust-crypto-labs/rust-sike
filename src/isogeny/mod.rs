@@ -160,7 +160,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         x_q: K,
         x_qmp: K,
         curve: &Curve<K>,
-    ) -> Point<K> {
+    ) -> Result<Point<K>, String> {
         let mut p0 = Point::from_x(x_q);
         let mut p1 = Point::from_x(x_p);
         let mut p2 = Point::from_x(x_qmp);
@@ -169,7 +169,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let two = one.add(&one);
         let four = two.add(&two);
 
-        let a_24_plus = &curve.a.add(&two).div(&four);
+        let a_24_plus = &curve.a.add(&two).div(&four)?;
 
         // Start with low weight bits
         for &m_i in m.iter().rev() {
@@ -184,13 +184,13 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             }
         }
 
-        p1
+        Ok(p1)
     }
 
     /// Recovering Montgomery curve coefficient (ref `get_A`, Algorithm 10 p. 57)
     ///  * Input: x_p, x_q, x_(Q-P)
     ///  * Output: A
-    fn from_points(x_p: K, x_q: K, x_qmp: K) -> Curve<K> {
+    fn from_points(x_p: K, x_q: K, x_qmp: K) -> Result<Curve<K>, String> {
         let t1 = x_p.add(&x_q); //1.
         let t0 = x_p.mul(&x_q); //2.
         let a = x_qmp.mul(&t1); //3.
@@ -203,12 +203,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
 
         let t0 = t0.add(&t0); //9.
         let a = a.mul(&a); // 10.
-        let t0 = t0.inv(); //11.
-        let a = a.mul(&t0); // 12.
+        let a = a.div(&t0)?; // 11 and 12.
 
         let a = a.sub(&t1); // 13.
 
-        Curve::from_coeffs(a, K::one())
+        Ok(Curve::from_coeffs(a, K::one()))
     }
 
     /// Computing the two-isogenous curve (ref `2_iso_curve` Algorithm 11 p.57)
@@ -667,7 +666,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let xp2 = self.params.xp2.clone();
         let xq2 = self.params.xq2.clone();
         let xr2 = self.params.xr2.clone();
-        let s = Self::three_pts_ladder(&sk.to_bits(), xp2, xq2, xr2, &curve);
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp2, xq2, xr2, &curve)?;
 
         // 4.
         let opt = Some((p1, p2, p3));
@@ -682,9 +681,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             Some(p) => p,
             None => return Err(String::from("No points where supplied")),
         };
-        let x1 = p1.x.div(&p1.z);
-        let x2 = p2.x.div(&p2.z);
-        let x3 = p3.x.div(&p3.z);
+        let x1 = p1.x.div(&p1.z)?;
+        let x2 = p2.x.div(&p2.z)?;
+        let x3 = p3.x.div(&p3.z)?;
 
         // 6.
         Ok(PublicKey { x1, x2, x3 })
@@ -714,7 +713,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let xq3 = self.params.xq3.clone();
         let xr3 = self.params.xr3.clone();
 
-        let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve);
+        let s = Self::three_pts_ladder(&sk.to_bits(), xp3, xq3, xr3, &curve)?;
 
         // 4.
         let opt = Some((p1, p2, p3));
@@ -729,9 +728,9 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
             Some(p) => p,
             None => return Err(String::from("No points where supplied")),
         };
-        let x1 = p1.x.div(&p1.z);
-        let x2 = p2.x.div(&p2.z);
-        let x3 = p3.x.div(&p3.z);
+        let x1 = p1.x.div(&p1.z)?;
+        let x2 = p2.x.div(&p2.z)?;
+        let x3 = p3.x.div(&p3.z)?;
 
         // 6.
         Ok(PublicKey { x1, x2, x3 })
@@ -747,14 +746,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let four = two.add(&two);
 
         // 1.
-        let curve = match Curve::from_public_key(pk) {
-            Some(c) => c,
-            None => return Err(String::from("Incorrect public key!")),
-        };
+        let curve = Curve::from_public_key(pk)?;
 
         // 2.
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
-        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
+        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve)?;
 
         // 3.
         let curve_plus = Curve::from_coeffs(curve.a.add(&two), four.clone());
@@ -772,7 +768,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         );
 
         // 6, 7.
-        Ok(curve.j_invariant())
+        Ok(curve.j_invariant()?)
     }
 
     /// Establishing shared keys on the 3-torsion (ref `isoex_3` Algorithm 24 p.63)
@@ -784,14 +780,11 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         let two = one.add(&one);
 
         // 1.
-        let curve = match Curve::from_public_key(pk) {
-            Some(c) => c,
-            None => return Err(String::from("Incorrect public key!")),
-        };
+        let curve = Curve::from_public_key(pk)?;
 
         // 2.
         let (x1, x2, x3) = (&pk.x1, &pk.x2, &pk.x3);
-        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve);
+        let s = Self::three_pts_ladder(&sk.to_bits(), x1.clone(), x2.clone(), x3.clone(), &curve)?;
 
         // 3.
         let curve_pm = Curve::from_coeffs(curve.a.add(&two), curve.a.sub(&two));
@@ -809,7 +802,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         );
 
         // 6, 7.
-        Ok(curve.j_invariant())
+        Ok(curve.j_invariant()?)
     }
 }
 
@@ -938,7 +931,7 @@ mod tests {
         };
         let curve = Curve::starting_curve();
 
-        let j: QuadraticExtension<PrimeFieldP434> = curve.j_invariant();
+        let j: QuadraticExtension<PrimeFieldP434> = curve.j_invariant().unwrap();
 
         // 287496 + 0i
         assert_eq!(j, str_to_p434("00046308", "00000000").unwrap())

@@ -13,6 +13,7 @@ use std::fmt::Debug;
 
 use rug::{integer::Order::MsfBe, Integer};
 
+// Parsing a constant value, tests ensure no panic
 static P503_PRIME: Lazy<Integer> = Lazy::new(|| Integer::from_str_radix(SIKE_P503_P, 16).unwrap());
 
 /// Finite field defined by the prime number SIKE_P503_P
@@ -24,12 +25,9 @@ pub struct PrimeFieldP503 {
 impl PrimeFieldP503 {
     /// Parse a string into and element of the finite field
     pub fn from_string(s: &str) -> Result<Self, String> {
-        let val = match Integer::from_str_radix(s, 16) {
-            Ok(v) => v,
-            Err(_e) => return Err(String::from("Cannot parse from string")),
-        };
-
-        Ok(Self { val })
+        Integer::from_str_radix(&s, 16)
+            .or_else(|_| Err(String::from("Cannot parse from string")))
+            .and_then(|val| Ok(Self { val }))
     }
 }
 
@@ -80,10 +78,11 @@ impl FiniteField for PrimeFieldP503 {
     }
 
     #[inline]
-    fn inv(&self) -> Self {
-        Self {
-            val: Integer::from(&self.val).invert(Self::order()).unwrap(),
-        }
+    fn inv(&self) -> Result<Self, String> {
+        Integer::from(&self.val)
+            .invert(Self::order())
+            .or_else(|_| Err(String::from("Cannot invert")))
+            .and_then(|val| Ok(Self { val }))
     }
 
     #[inline]
@@ -106,8 +105,8 @@ impl FiniteField for PrimeFieldP503 {
     }
 
     #[inline]
-    fn div(&self, other: &Self) -> Self {
-        self.mul(&other.inv())
+    fn div(&self, other: &Self) -> Result<Self, String> {
+        Ok(self.mul(&other.inv()?))
     }
 
     #[inline]
@@ -121,10 +120,9 @@ impl FiniteField for PrimeFieldP503 {
 
     fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
         let s = hex::encode(bytes);
-        let val = match Integer::from_str_radix(&s, 16) {
-            Ok(v) => v,
-            Err(_e) => return Err(String::from("Cannot parse from bytes")),
-        };
-        Ok(Self { val })
+
+        Integer::from_str_radix(&s, 16)
+            .or_else(|_| Err(String::from("Cannot parse from bytes")))
+            .and_then(|val| Ok(Self { val }))
     }
 }

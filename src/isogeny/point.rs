@@ -36,7 +36,10 @@ impl<K: FiniteField + Clone> PartialEq<Self> for Point<K> {
         } else if other_zero {
             false
         } else {
-            self.x.div(&self.z).equals(&other.x.div(&other.z))
+            // Z / Z' are not zero and operation take place on finite field, div cannot panic
+            let ratio = self.x.div(&self.z).unwrap();
+            let other_ratio = &other.x.div(&other.z).unwrap();
+            ratio.equals(&other_ratio)
         }
     }
 }

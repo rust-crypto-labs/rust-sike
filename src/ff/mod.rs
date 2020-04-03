@@ -33,7 +33,7 @@ pub trait FiniteField: Sized {
     fn neg(&self) -> Self;
 
     /// Returns the multiplicative inverse of the element
-    fn inv(&self) -> Self;
+    fn inv(&self) -> Result<Self, String>;
 
     /// Defines the addition of two elements
     fn add(&self, other: &Self) -> Self;
@@ -45,7 +45,7 @@ pub trait FiniteField: Sized {
     fn mul(&self, other: &Self) -> Self;
 
     /// Defines the divison of two elements
-    fn div(&self, other: &Self) -> Self;
+    fn div(&self, other: &Self) -> Result<Self, String>;
 
     /// Checks if two elements are equal
     fn equals(&self, other: &Self) -> bool;
@@ -119,8 +119,8 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
         self.add(&other.neg())
     }
 
-    fn div(&self, other: &Self) -> Self {
-        self.mul(&other.inv())
+    fn div(&self, other: &Self) -> Result<Self, String> {
+        Ok(self.mul(&other.inv()?))
     }
 
     fn mul(&self, other: &Self) -> Self {
@@ -136,15 +136,15 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
         }
     }
 
-    fn inv(&self) -> Self {
+    fn inv(&self) -> Result<Self, String> {
         let asq = self.a.mul(&self.a);
         let bsq = self.b.mul(&self.b);
-        let inv_norm = asq.add(&bsq).inv();
+        let inv_norm = asq.add(&bsq).inv()?;
 
-        Self {
+        Ok(Self {
             a: inv_norm.mul(&self.a),
             b: inv_norm.mul(&self.b.neg()),
-        }
+        })
     }
 
     fn equals(&self, other: &Self) -> bool {
@@ -238,7 +238,7 @@ mod tests {
 
         println!("eight_i = {:?}", eight_i);
 
-        let two_plus_two_i = eight_i.div(&x);
+        let two_plus_two_i = eight_i.div(&x).unwrap();
 
         println!("two_plus_two_i = {:?}", two_plus_two_i);
 
