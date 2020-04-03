@@ -450,12 +450,14 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 4.
         while !queue.is_empty() {
             let s_i = if i <= strategy.len() {
+                // Valid conversion on 32 ad 64 bits arch, cannot panic
                 strategy[i - 1].try_into().unwrap()
             } else {
                 1
             };
 
             // 5.
+            // Queue is not empty, cannot panic
             let (h, p) = queue.pop_back().unwrap();
 
             // 6.
@@ -470,6 +472,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 // 9.
                 while !queue.is_empty() {
                     // 10.
+                    // Queue is not empty, cannot panic
                     let (h_prime, p_prime) = queue.pop_front().unwrap();
 
                     // 11.
@@ -504,7 +507,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 i += 1;
             } else {
                 // 22.
-                panic!("Invalid strategy!")
+                return Err(String::from("Invalid strategy !"))
             }
         }
 
@@ -582,12 +585,14 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
         // 4.
         while !queue.is_empty() {
             let s_i = if i <= strategy.len() {
+                // Valid conversion on 32 ad 64 bits arch, cannot panic
                 strategy[i - 1].try_into().unwrap()
             } else {
                 1
             };
 
             // 5.
+            // Queue is not empty, cannot panic
             let (h, p) = queue.pop_back().unwrap();
 
             // 6.
@@ -602,6 +607,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 // 9.
                 while !queue.is_empty() {
                     // 10.
+                    // Queue is not empty, cannot panic
                     let (h_prime, p_prime) = queue.pop_front().unwrap();
 
                     // 11.
@@ -636,7 +642,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 i += 1;
             } else {
                 // 22.
-                panic!("Invalid strategy!")
+                return Err(String::from("Invalid strategy !"))
             }
         }
 

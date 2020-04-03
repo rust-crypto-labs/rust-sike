@@ -106,10 +106,6 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     }
 
     /// Encrypt a message
-    ///
-    /// # Panics
-    ///
-    /// The function will panic if the message length is incorrect, of if the public key is incorrect
     #[inline]
     pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Result<Ciphertext, String> {
         // 4.
@@ -142,10 +138,6 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
     }
 
     /// Decrypts a message
-    ///
-    /// # Panics
-    ///
-    /// The function will panic if the public key is incorrect
     #[inline]
     pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Result<Message, String> {
         // 10.
