@@ -16,7 +16,7 @@ pub use crate::ff::{
 };
 
 /// Finite field element
-pub trait FiniteField {
+pub trait FiniteField: Sized {
     /// Check if the element is the additive identity of the field
     fn is_zero(&self) -> bool;
 
@@ -33,7 +33,7 @@ pub trait FiniteField {
     fn neg(&self) -> Self;
 
     /// Returns the multiplicative inverse of the element
-    fn inv(&self) -> Self;
+    fn inv(&self) -> Result<Self, String>;
 
     /// Defines the addition of two elements
     fn add(&self, other: &Self) -> Self;
@@ -45,16 +45,16 @@ pub trait FiniteField {
     fn mul(&self, other: &Self) -> Self;
 
     /// Defines the divison of two elements
-    fn div(&self, other: &Self) -> Self;
+    fn div(&self, other: &Self) -> Result<Self, String>;
 
     /// Checks if two elements are equal
     fn equals(&self, other: &Self) -> bool;
 
     /// Converts the element to a bytes representation
-    fn to_bytes(self) -> Vec<u8>;
+    fn into_bytes(self) -> Vec<u8>;
 
     /// Converts a bytes representation to an element of the finite field
-    fn from_bytes(bytes: &[u8]) -> Self;
+    fn from_bytes(bytes: &[u8]) -> Result<Self, String>;
 }
 
 /// Given a specific finite field 𝔽ₚ, represents an element of
@@ -119,8 +119,8 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
         self.add(&other.neg())
     }
 
-    fn div(&self, other: &Self) -> Self {
-        self.mul(&other.inv())
+    fn div(&self, other: &Self) -> Result<Self, String> {
+        Ok(self.mul(&other.inv()?))
     }
 
     fn mul(&self, other: &Self) -> Self {
@@ -136,26 +136,26 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
         }
     }
 
-    fn inv(&self) -> Self {
+    fn inv(&self) -> Result<Self, String> {
         let asq = self.a.mul(&self.a);
         let bsq = self.b.mul(&self.b);
-        let inv_norm = asq.add(&bsq).inv();
+        let inv_norm = asq.add(&bsq).inv()?;
 
-        Self {
+        Ok(Self {
             a: inv_norm.mul(&self.a),
             b: inv_norm.mul(&self.b.neg()),
-        }
+        })
     }
 
     fn equals(&self, other: &Self) -> bool {
         self.a.equals(&other.a) && self.b.equals(&other.b)
     }
 
-    fn to_bytes(self) -> Vec<u8> {
+    fn into_bytes(self) -> Vec<u8> {
         use crate::utils::conversion::concatenate;
 
-        let part1 = self.a.to_bytes();
-        let part2 = self.b.to_bytes();
+        let part1 = self.a.into_bytes();
+        let part2 = self.b.into_bytes();
 
         // Left padding to the nearest power of 2
         let p21 = part1.len().next_power_of_two();
@@ -169,11 +169,11 @@ impl<F: FiniteField + Debug> FiniteField for QuadraticExtension<F> {
     }
 
     /// Element from byte representation (ref `ostofp2` Algorithm 1.2.4.)
-    fn from_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
         let n = bytes.len() / 2;
-        let a = F::from_bytes(&bytes[..n]);
-        let b = F::from_bytes(&bytes[n..]);
-        Self::from(a, b)
+        let a = F::from_bytes(&bytes[..n])?;
+        let b = F::from_bytes(&bytes[n..])?;
+        Ok(Self::from(a, b))
     }
 }
 
@@ -185,10 +185,10 @@ mod tests {
 
     #[test]
     fn test_conversion_ff434_bytes() {
-        let num = PrimeFieldP434::from_string(SIKE_P434_XP20);
+        let num = PrimeFieldP434::from_string(SIKE_P434_XP20).unwrap();
 
-        let b = num.clone().to_bytes();
-        let num_recovered = PrimeFieldP434::from_bytes(&b);
+        let b = num.clone().into_bytes();
+        let num_recovered = PrimeFieldP434::from_bytes(&b).unwrap();
 
         println!("{:?}", num);
         println!("{:?}", num_recovered);
@@ -198,12 +198,12 @@ mod tests {
 
     #[test]
     fn test_conversion_quadratic_bytes() {
-        let num1 = PrimeFieldP434::from_string(SIKE_P434_XP20);
-        let num2 = PrimeFieldP434::from_string(SIKE_P434_XP21);
+        let num1 = PrimeFieldP434::from_string(SIKE_P434_XP20).unwrap();
+        let num2 = PrimeFieldP434::from_string(SIKE_P434_XP21).unwrap();
 
         let q = QuadraticExtension::from(num1, num2);
-        let b = q.clone().to_bytes();
-        let q_recovered = QuadraticExtension::from_bytes(&b);
+        let b = q.clone().into_bytes();
+        let q_recovered = QuadraticExtension::from_bytes(&b).unwrap();
 
         println!("{:?}", q);
         println!("{:?}", q_recovered);
@@ -238,7 +238,7 @@ mod tests {
 
         println!("eight_i = {:?}", eight_i);
 
-        let two_plus_two_i = eight_i.div(&x);
+        let two_plus_two_i = eight_i.div(&x).unwrap();
 
         println!("two_plus_two_i = {:?}", two_plus_two_i);
 

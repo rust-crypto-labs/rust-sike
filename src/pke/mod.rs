@@ -52,7 +52,7 @@ impl Message {
     }
 
     /// Obtain bytes from a `Message`
-    pub fn to_bytes(self) -> Vec<u8> {
+    pub fn into_bytes(self) -> Vec<u8> {
         self.bytes
     }
 }
@@ -94,88 +94,83 @@ impl<K: FiniteField + Clone + Debug> PKE<K> {
 
     /// Generate a keypair
     #[inline]
-    pub fn gen(&self) -> (SecretKey, PublicKey<K>) {
+    pub fn gen(&self) -> Result<(SecretKey, PublicKey<K>), String> {
         // 1.
-        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize);
+        let sk3 = SecretKey::get_random_secret_key(self.params.keyspace3 as usize)?;
 
         // 2.
-        let pk3 = self.isogenies.isogen3(&sk3);
+        let pk3 = self.isogenies.isogen3(&sk3)?;
 
         // 3.
-        (sk3, pk3)
+        Ok((sk3, pk3))
     }
 
     /// Encrypt a message
-    ///
-    /// # Panics
-    ///
-    /// The function will panic if the message length is incorrect, of if the public key is incorrect
     #[inline]
-    pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Ciphertext {
+    pub fn enc(&self, pk: &PublicKey<K>, m: Message) -> Result<Ciphertext, String> {
         // 4.
-        let sk2 = SecretKey::get_random_secret_key(self.params.keyspace2 as usize);
+        let sk2 = SecretKey::get_random_secret_key(self.params.keyspace2 as usize)?;
 
         // 5.
-        let c0: PublicKey<K> = self.isogenies.isogen2(&sk2);
+        let c0: PublicKey<K> = self.isogenies.isogen2(&sk2)?;
 
         // 6.
-        let j = self.isogenies.isoex2(&sk2, &pk);
+        let j = self.isogenies.isoex2(&sk2, &pk)?;
 
         // 7.
         let h = self.hash_function_f(j);
 
         // 8.
-        assert_eq!(h.len(), m.bytes.len());
+        if h.len() != m.bytes.len() {
+            return Err(String::from("Incorrect Hash"));
+        }
+
         let c1_bytes = Self::xor(&m.bytes, &h);
 
         // 9.
-        let (part1, part2, part3) = c0.to_bytes();
-        Ciphertext {
+        let (part1, part2, part3) = c0.into_bytes();
+        Ok(Ciphertext {
             bytes00: part1,
             bytes01: part2,
             bytes02: part3,
             bytes1: c1_bytes,
-        }
+        })
     }
 
     /// Decrypts a message
-    ///
-    /// # Panics
-    ///
-    /// The function will panic if the public key is incorrect
     #[inline]
-    pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Message {
+    pub fn dec(&self, sk: &SecretKey, c: Ciphertext) -> Result<Message, String> {
         // 10.
-        let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02);
+        let c0 = &PublicKey::from_bytes(&c.bytes00, &c.bytes01, &c.bytes02)?;
 
-        let j: K = self.isogenies.isoex3(sk, c0);
+        let j: K = self.isogenies.isoex3(sk, c0)?;
 
         // 11.
         let h = self.hash_function_f(j);
 
         // 12.
-        assert_eq!(h.len(), c.bytes1.len());
+        if h.len() != c.bytes1.len() {
+            return Err(String::from("Incorrect Hash"));
+        }
+
         let m = Self::xor(&h, &c.bytes1);
 
         // 13.
-        Message { bytes: m }
+        Ok(Message { bytes: m })
     }
 
     /// Computes the F function
     pub fn hash_function_f(&self, j: K) -> Vec<u8> {
-        shake::shake256(&j.to_bytes(), self.params.secparam / 8)
+        shake::shake256(&j.into_bytes(), self.params.secparam / 8)
     }
 
     /// Computes the bitwise XOR between two sequences
     pub fn xor(input1: &[u8], input2: &[u8]) -> Vec<u8> {
-        let mut result = vec![0; input1.len()];
-        let couples = input1.iter().zip(input2.iter());
-
-        for (pos, (x, y)) in couples.enumerate() {
-            result[pos] = x ^ y;
-        }
-
-        result
+        input1
+            .iter()
+            .zip(input2.iter())
+            .map(|(x, y)| x ^ y)
+            .collect()
     }
 }
 
@@ -192,27 +187,28 @@ mod tests {
         let params = sike_p434_params(
             Some(P434_TWO_TORSION_STRATEGY.to_vec()),
             Some(P434_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -220,27 +216,28 @@ mod tests {
         let params = sike_p503_params(
             Some(P503_TWO_TORSION_STRATEGY.to_vec()),
             Some(P503_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -248,27 +245,28 @@ mod tests {
         let params = sike_p610_params(
             Some(P610_TWO_TORSION_STRATEGY.to_vec()),
             Some(P610_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
@@ -276,126 +274,127 @@ mod tests {
         let params = sike_p751_params(
             Some(P751_TWO_TORSION_STRATEGY.to_vec()),
             Some(P751_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        )
+        .unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
     fn test_pke_p434() {
-        let params = sike_p434_params(None, None);
+        let params = sike_p434_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
     fn test_pke_p503() {
-        let params = sike_p503_params(None, None);
+        let params = sike_p503_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
     fn test_pke_p610() {
-        let params = sike_p610_params(None, None);
+        let params = sike_p610_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 
     #[test]
     fn test_pke_p751() {
-        let params = sike_p751_params(None, None);
+        let params = sike_p751_params(None, None).unwrap();
 
         let pke = PKE::setup(params.clone());
 
         // Alice generates a keypair, she published her pk
         println!("[Debug] Key generation");
-        let (sk, pk) = pke.gen();
+        let (sk, pk) = pke.gen().unwrap();
 
         // Bob writes a message
         let msg = Message::from_bytes(vec![0; params.secparam / 8]);
         // Bob encrypts the message using Alice's pk
         println!("[Debug] Encryption");
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
 
         // Bob sends the ciphertext to Alice
         // Alice decrypts the message using her sk
         println!("[Debug] Decryption");
-        let msg_recovered = pke.dec(&sk, ciphertext);
+        let msg_recovered = pke.dec(&sk, ciphertext).unwrap();
 
         // Alice should correctly recover Bob's plaintext message
-        assert_eq!(msg_recovered.to_bytes(), msg.to_bytes());
+        assert_eq!(msg_recovered.into_bytes(), msg.into_bytes());
     }
 }

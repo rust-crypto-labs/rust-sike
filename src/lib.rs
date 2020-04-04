@@ -28,7 +28,8 @@
 //! ```
 
 #![warn(missing_docs)]
-
+#![deny(clippy::mem_forget)]
+#[forbid(unsafe_code)]
 mod constants;
 mod ff;
 mod isogeny;

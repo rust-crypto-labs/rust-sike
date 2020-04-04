@@ -14,13 +14,13 @@ mod benchmarks {
     };
 
     pub fn bench_p434_pke_std(c: &mut Criterion) {
-        let params = sike_p434_params(None, None);
+        let params = sike_p434_params(None, None).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp434 PKE (no opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
         let _msg_recovered = pke.dec(&sk, ciphertext.clone());
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
@@ -36,13 +36,13 @@ mod benchmarks {
         let params = sike_p434_params(
             Some(P434_TWO_TORSION_STRATEGY.to_vec()),
             Some(P434_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp434 PKE (opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
         let _msg_recovered = pke.dec(&sk, ciphertext.clone());
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
@@ -55,13 +55,13 @@ mod benchmarks {
     }
 
     pub fn bench_p434_kem_std(c: &mut Criterion) {
-        let params = sike_p434_params(None, None);
+        let params = sike_p434_params(None, None).unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp434 KEM (no opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
-        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
+        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
@@ -76,12 +76,13 @@ mod benchmarks {
         let params = sike_p434_params(
             Some(P434_TWO_TORSION_STRATEGY.to_vec()),
             Some(P434_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let kem = KEM::setup(params);
+
         let mut group = c.benchmark_group("SIKEp434 KEM (opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
-        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
+        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
@@ -93,14 +94,14 @@ mod benchmarks {
     }
 
     pub fn bench_p503_pke_std(c: &mut Criterion) {
-        let params = sike_p503_params(None, None);
+        let params = sike_p503_params(None, None).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp503 PKE (no opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
-        let _msg_recovered = pke.dec(&sk, ciphertext.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
+        let _msg_recovered = pke.dec(&sk, ciphertext.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
@@ -115,14 +116,14 @@ mod benchmarks {
         let params = sike_p503_params(
             Some(P503_TWO_TORSION_STRATEGY.to_vec()),
             Some(P503_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp503 PKE (opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
-        let _msg_recovered = pke.dec(&sk, ciphertext.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
+        let _msg_recovered = pke.dec(&sk, ciphertext.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
@@ -134,13 +135,13 @@ mod benchmarks {
     }
 
     pub fn bench_p503_kem_std(c: &mut Criterion) {
-        let params = sike_p503_params(None, None);
+        let params = sike_p503_params(None, None).unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp503 KEM (no opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
-        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
+        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
@@ -155,13 +156,13 @@ mod benchmarks {
         let params = sike_p503_params(
             Some(P503_TWO_TORSION_STRATEGY.to_vec()),
             Some(P503_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp503 KEM (opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
-        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
+        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
@@ -173,14 +174,14 @@ mod benchmarks {
     }
 
     pub fn bench_p610_pke_std(c: &mut Criterion) {
-        let params = sike_p610_params(None, None);
+        let params = sike_p610_params(None, None).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp610 PKE (no opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
-        let _msg_recovered = pke.dec(&sk, ciphertext.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
+        let _msg_recovered = pke.dec(&sk, ciphertext.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
@@ -195,14 +196,14 @@ mod benchmarks {
         let params = sike_p610_params(
             Some(P610_TWO_TORSION_STRATEGY.to_vec()),
             Some(P610_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp610 PKE (opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
-        let _msg_recovered = pke.dec(&sk, ciphertext.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
+        let _msg_recovered = pke.dec(&sk, ciphertext.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
@@ -214,13 +215,13 @@ mod benchmarks {
     }
 
     pub fn bench_p610_kem_std(c: &mut Criterion) {
-        let params = sike_p610_params(None, None);
+        let params = sike_p610_params(None, None).unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp610 KEM (no opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
-        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
+        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
@@ -235,12 +236,12 @@ mod benchmarks {
         let params = sike_p610_params(
             Some(P610_TWO_TORSION_STRATEGY.to_vec()),
             Some(P610_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp610 KEM (opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
         let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
@@ -253,14 +254,14 @@ mod benchmarks {
     }
 
     pub fn bench_p751_pke_std(c: &mut Criterion) {
-        let params = sike_p751_params(None, None);
+        let params = sike_p751_params(None, None).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp751 PKE (no opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
-        let _msg_recovered = pke.dec(&sk, ciphertext.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
+        let _msg_recovered = pke.dec(&sk, ciphertext.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
@@ -275,14 +276,14 @@ mod benchmarks {
         let params = sike_p751_params(
             Some(P751_TWO_TORSION_STRATEGY.to_vec()),
             Some(P751_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
         let mut group = c.benchmark_group("SIKEp751 PKE (opti)");
-        let (sk, pk) = pke.gen();
-        let ciphertext = pke.enc(&pk, msg.clone());
-        let _msg_recovered = pke.dec(&sk, ciphertext.clone());
+        let (sk, pk) = pke.gen().unwrap();
+        let ciphertext = pke.enc(&pk, msg.clone()).unwrap();
+        let _msg_recovered = pke.dec(&sk, ciphertext.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| pke.gen()));
         group.bench_function("Encryption", |b| b.iter(|| pke.enc(&pk, msg.clone())));
@@ -294,13 +295,13 @@ mod benchmarks {
     }
 
     pub fn bench_p751_kem_std(c: &mut Criterion) {
-        let params = sike_p751_params(None, None);
+        let params = sike_p751_params(None, None).unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp751 KEM (no opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
-        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
+        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));
@@ -315,13 +316,13 @@ mod benchmarks {
         let params = sike_p751_params(
             Some(P751_TWO_TORSION_STRATEGY.to_vec()),
             Some(P751_THREE_TORSION_STRATEGY.to_vec()),
-        );
+        ).unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp751 KEM (opti)");
-        let (s, sk3, pk3) = kem.keygen();
-        let (c, _k) = kem.encaps(&pk3);
-        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone());
+        let (s, sk3, pk3) = kem.keygen().unwrap();
+        let (c, _k) = kem.encaps(&pk3).unwrap();
+        let _k_recovered = kem.decaps(&s, &sk3, &pk3, c.clone()).unwrap();
 
         group.bench_function("Keygen", |b| b.iter(|| kem.keygen()));
         group.bench_function("Encapsulation", |b| b.iter(|| kem.encaps(&pk3)));

@@ -26,17 +26,21 @@ impl<K: FiniteField + std::fmt::Debug> std::fmt::Debug for PublicKey<K> {
 
 impl<K: FiniteField> PublicKey<K> {
     /// Converts the public key to a sequence of bytes (for each point)
-    pub fn to_bytes(self) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
-        (self.x1.to_bytes(), self.x2.to_bytes(), self.x3.to_bytes())
+    pub fn into_bytes(self) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
+        (
+            self.x1.into_bytes(),
+            self.x2.into_bytes(),
+            self.x3.into_bytes(),
+        )
     }
 
     /// Creates a new public key for given three points (represented as bytes)
-    pub fn from_bytes(part1: &[u8], part2: &[u8], part3: &[u8]) -> Self {
-        Self {
-            x1: K::from_bytes(part1),
-            x2: K::from_bytes(part2),
-            x3: K::from_bytes(part3),
-        }
+    pub fn from_bytes(part1: &[u8], part2: &[u8], part3: &[u8]) -> Result<Self, String> {
+        Ok(Self {
+            x1: K::from_bytes(part1)?,
+            x2: K::from_bytes(part2)?,
+            x3: K::from_bytes(part3)?,
+        })
     }
 }
 

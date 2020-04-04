@@ -64,7 +64,7 @@ impl<K: FiniteField + Clone> Curve<K> {
 
     /// Montgomery j-invariant (ref Algorithm 9 p.56)
     #[inline]
-    pub fn j_invariant(&self) -> K {
+    pub fn j_invariant(&self) -> Result<K, String> {
         let j = self.a.mul(&self.a); // 1.
         let t1 = self.c.mul(&self.c); //2.
         let t0 = t1.add(&t1); // 3.
@@ -81,21 +81,19 @@ impl<K: FiniteField + Clone> Curve<K> {
         let t0 = t0.mul(&t1); // 12.
         let t0 = t0.add(&t0); // 13.
         let t0 = t0.add(&t0); // 14.
-        let j = j.inv(); // 15.
-        let j = t0.mul(&j);
 
-        j
+        t0.div(&j) // 15.
     }
 
     /// Generates a curve from three elements of 𝔽ₚ(i), or returns None
     /// (ref `cfpk` Algorithm 1.2.1 )
     #[inline]
-    pub fn from_public_key(pk: &PublicKey<K>) -> Option<Curve<K>> {
+    pub fn from_public_key(pk: &PublicKey<K>) -> Result<Curve<K>, String> {
         let (x_p, x_q, x_r) = (&pk.x1, &pk.x2, &pk.x3);
 
         // 1.
         if x_p.is_zero() || x_q.is_zero() || x_r.is_zero() {
-            return None;
+            return Err(String::from("Incorrect public key!"));
         }
 
         // 2.
@@ -109,11 +107,11 @@ impl<K: FiniteField + Clone> Curve<K> {
             .sub(&x_q.mul(&x_r));
         let num = num.mul(&num);
         let denom = four.mul(&x_p).mul(&x_q).mul(&x_r);
-        let frac = num.div(&denom);
+        let frac = num.div(&denom)?;
         let a = frac.sub(&x_p).sub(&x_q).sub(&x_r);
         let c = one;
 
         // 3, 4.
-        Some(Curve::from_coeffs(a, c))
+        Ok(Curve::from_coeffs(a, c))
     }
 }

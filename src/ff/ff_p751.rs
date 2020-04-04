@@ -13,6 +13,7 @@ use std::fmt::Debug;
 
 use rug::{integer::Order::MsfBe, Integer};
 
+// Parsing a constant value, tests ensure no panic
 static P751_PRIME: Lazy<Integer> = Lazy::new(|| Integer::from_str_radix(SIKE_P751_P, 16).unwrap());
 
 /// Finite field defined by the prime number SIKE_P751_P
@@ -23,10 +24,10 @@ pub struct PrimeFieldP751 {
 
 impl PrimeFieldP751 {
     /// Parse a string into and element of the finite field
-    pub fn from_string(s: &str) -> Self {
-        let val = Integer::from_str_radix(s, 16).unwrap();
-
-        Self { val }
+    pub fn from_string(s: &str) -> Result<Self, String> {
+        Integer::from_str_radix(&s, 16)
+            .or_else(|_| Err(String::from("Cannot parse from string")))
+            .and_then(|val| Ok(Self { val }))
     }
 }
 
@@ -77,10 +78,11 @@ impl FiniteField for PrimeFieldP751 {
     }
 
     #[inline]
-    fn inv(&self) -> Self {
-        Self {
-            val: Integer::from(&self.val).invert(Self::order()).unwrap(),
-        }
+    fn inv(&self) -> Result<Self, String> {
+        Integer::from(&self.val)
+            .invert(Self::order())
+            .or_else(|_| Err(String::from("Cannot invert")))
+            .and_then(|val| Ok(Self { val }))
     }
 
     #[inline]
@@ -103,8 +105,8 @@ impl FiniteField for PrimeFieldP751 {
     }
 
     #[inline]
-    fn div(&self, other: &Self) -> Self {
-        self.mul(&other.inv())
+    fn div(&self, other: &Self) -> Result<Self, String> {
+        Ok(self.mul(&other.inv()?))
     }
 
     #[inline]
@@ -112,14 +114,15 @@ impl FiniteField for PrimeFieldP751 {
         self.sub(&other).is_zero()
     }
 
-    fn to_bytes(self) -> Vec<u8> {
+    fn into_bytes(self) -> Vec<u8> {
         self.val.to_digits::<u8>(MsfBe)
     }
 
-    fn from_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
         let s = hex::encode(bytes);
-        Self {
-            val: Integer::from_str_radix(&s, 16).unwrap(),
-        }
+
+        Integer::from_str_radix(&s, 16)
+            .or_else(|_| Err(String::from("Cannot parse from bytes")))
+            .and_then(|val| Ok(Self { val }))
     }
 }
