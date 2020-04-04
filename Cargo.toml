@@ -1,6 +1,6 @@
 [package]
 name = "rust-sike"
-version = "0.1.1"
+version = "0.2.0"
 authors =  ["Rémi Géraud-Stewart <remi.geraud@ens.fr>", "Edmond de Roffignac <edmond.de-roffignac@student.ecp.fr>"]
 edition = "2018"
 description = "Implementation of the key encapsulation mechanism (KEM) and public-key encryption (pke) schemes of the Supersingular Isogeny Key Encapsulation (SIKE) protocol"
