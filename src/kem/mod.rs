@@ -27,8 +27,6 @@ use crate::{
     utils::{conversion, shake},
 };
 
-use rand::prelude::*;
-
 use std::fmt::Debug;
 
 /// Key-encapsulation mechanism (ref Algorithm 2, Section 1.3.10)
@@ -116,7 +114,7 @@ impl<K: FiniteField + Clone + Debug> KEM<K> {
 
     fn random_string(size: usize) -> Vec<u8> {
         let mut result = vec![0; size];
-        rand::rngs::OsRng.fill_bytes(&mut result);
+        getrandom::getrandom(&mut result).unwrap();
         result
     }
 

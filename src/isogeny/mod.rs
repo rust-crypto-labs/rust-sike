@@ -190,7 +190,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
     /// Recovering Montgomery curve coefficient (ref `get_A`, Algorithm 10 p. 57)
     ///  * Input: x_p, x_q, x_(Q-P)
     ///  * Output: A
-    fn from_points(x_p: K, x_q: K, x_qmp: K) -> Result<Curve<K>, String> {
+    fn _from_points(x_p: K, x_q: K, x_qmp: K) -> Result<Curve<K>, String> {
         let t1 = x_p.add(&x_q); //1.
         let t0 = x_p.mul(&x_q); //2.
         let a = x_qmp.mul(&t1); //3.
@@ -507,7 +507,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 i += 1;
             } else {
                 // 22.
-                return Err(String::from("Invalid strategy !"))
+                return Err(String::from("Invalid strategy !"));
             }
         }
 
@@ -642,7 +642,7 @@ impl<K: FiniteField + Clone + Debug> CurveIsogenies<K> {
                 i += 1;
             } else {
                 // 22.
-                return Err(String::from("Invalid strategy !"))
+                return Err(String::from("Invalid strategy !"));
             }
         }
 

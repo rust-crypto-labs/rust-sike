@@ -1,6 +1,7 @@
 //! Utils for SHAKE
 
-use tiny_keccak::{Hasher, Shake};
+use sha3::digest::{ExtendableOutput, Update, XofReader};
+use sha3::Shake256;
 
 /// SHAKE-256 wrapper
 ///   * Input: `input` string and `length` of the desired output
@@ -14,8 +15,8 @@ use tiny_keccak::{Hasher, Shake};
 #[inline]
 pub fn shake256(input: &[u8], len: usize) -> Vec<u8> {
     let mut buffer = vec![0; len];
-    let mut shake = Shake::v256();
+    let mut shake = Shake256::default();
     shake.update(input);
-    shake.finalize(&mut buffer);
+    shake.finalize_xof().read(&mut buffer);
     buffer
 }
