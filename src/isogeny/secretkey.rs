@@ -1,6 +1,5 @@
 //! Secret key
 use bitvec::prelude::*;
-use rand::prelude::*;
 
 #[derive(Clone, PartialEq)]
 /// Secret key
@@ -26,7 +25,7 @@ impl SecretKey {
     /// ```
     pub fn get_random_secret_key(size: usize) -> Result<Self, String> {
         let mut bytes = vec![0; size];
-        if let Err(_e) = rand::rngs::OsRng.try_fill_bytes(&mut bytes) {
+        if let Err(_e) = getrandom::getrandom(&mut bytes) {
             return Err(String::from("RNG Error"));
         };
         Ok(Self::from_bytes(&bytes))

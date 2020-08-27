@@ -36,7 +36,8 @@ mod benchmarks {
         let params = sike_p434_params(
             Some(P434_TWO_TORSION_STRATEGY.to_vec()),
             Some(P434_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
@@ -76,7 +77,8 @@ mod benchmarks {
         let params = sike_p434_params(
             Some(P434_TWO_TORSION_STRATEGY.to_vec()),
             Some(P434_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp434 KEM (opti)");
@@ -116,7 +118,8 @@ mod benchmarks {
         let params = sike_p503_params(
             Some(P503_TWO_TORSION_STRATEGY.to_vec()),
             Some(P503_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
@@ -156,7 +159,8 @@ mod benchmarks {
         let params = sike_p503_params(
             Some(P503_TWO_TORSION_STRATEGY.to_vec()),
             Some(P503_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp503 KEM (opti)");
@@ -196,7 +200,8 @@ mod benchmarks {
         let params = sike_p610_params(
             Some(P610_TWO_TORSION_STRATEGY.to_vec()),
             Some(P610_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
@@ -236,7 +241,8 @@ mod benchmarks {
         let params = sike_p610_params(
             Some(P610_TWO_TORSION_STRATEGY.to_vec()),
             Some(P610_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp610 KEM (opti)");
@@ -276,7 +282,8 @@ mod benchmarks {
         let params = sike_p751_params(
             Some(P751_TWO_TORSION_STRATEGY.to_vec()),
             Some(P751_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let msg = Message::from_bytes(vec![0; params.clone().secparam / 8]);
         let pke = PKE::setup(params);
 
@@ -316,7 +323,8 @@ mod benchmarks {
         let params = sike_p751_params(
             Some(P751_TWO_TORSION_STRATEGY.to_vec()),
             Some(P751_THREE_TORSION_STRATEGY.to_vec()),
-        ).unwrap();
+        )
+        .unwrap();
         let kem = KEM::setup(params);
 
         let mut group = c.benchmark_group("SIKEp751 KEM (opti)");
@@ -360,4 +368,4 @@ criterion_group! {
     targets = benchmarks::bench_p751_pke_std, benchmarks::bench_p751_pke_optim, benchmarks::bench_p751_kem_std, benchmarks::bench_p751_kem_optim
 }
 
-criterion_main!(p434, p503, p610, p751);
+criterion_main!(p751);
