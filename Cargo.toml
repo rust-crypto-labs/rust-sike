@@ -20,6 +20,7 @@ sha3 = "0.9"
 
 [dev-dependencies]
 criterion = "0.3"
+flamegraph = "0.4"
 
 [profile.release]
 opt-level = 3
