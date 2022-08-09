@@ -2,7 +2,7 @@
 
 `rust-sike` is a Rust implementation of the SIKE isogeny-based key encapsulation suite (SIKE [1]), a post-quantum candidate submitted to the NIST standardization process [2].
 
-**==WARNING: As of the 30 july 2022, SIDH (supersingular Diffie-Hellman), the underlying quantum-resistant mechanism of SIKE, has been found to be sensible to an efficient key recovery attacks[3] (recovery time ranging from one hour to less than a day depending on the security level on a single core). Therefore SIDH/SIKE is should not be considered as secure and `rust-sike` should only be used for test or research purpose and under no circumstances for any production code==**
+**WARNING: As of July 30th 2022, SIDH (supersingular Diffie-Hellman), the underlying quantum-resistant mechanism of SIKE, has been found to be sensible to an efficient key recovery attacks [3] (recovery time ranging from one hour to less than a day depending on the security level on a single core). Therefore SIDH/SIKE should not be considered as secure and `rust-sike` should only be used for test or research purpose and under no circumstances for any production code**
 
 ## Why `rust-sike`?
 
@@ -19,7 +19,7 @@ The SIKE submission already comes with reference implementations, including opti
 * All the parameters described in the NIST submission: `p434`, `p503`, `p610`, and `p751`.
 * Optimised tree-traversal strategies
 
-The updated specification (17 april 2019) is used as a basis for implementation.
+The updated specification (April 17th 2019) is used as a basis for implementation.
 
 ### Unsupported features and caveats
 
